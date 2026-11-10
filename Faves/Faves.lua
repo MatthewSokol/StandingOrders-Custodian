@@ -224,17 +224,40 @@ end
 -- dragging, a bag-sort or auto-deposit addon), so any Always on me item found in the bank while it's
 -- open is moved straight back to your bags. One per pass, with a pause, like the buyback.
 
-local function BankBags()
-  local bags = { BANK_CONTAINER or -1 }
-  local first = NUM_BAGS + 1
-  for b = first, first + (NUM_BANKBAGSLOTS or 6) - 1 do bags[#bags + 1] = b end
+-- The player's own bags (never treated as bank): backpack, bags and the reagent bag.
+local function IsPlayerBag(b)
   local bi = Enum and Enum.BagIndex
-  if bi then
-    if bi.Reagentbank then bags[#bags + 1] = bi.Reagentbank end
-    for i = 1, 5 do
-      local tab = bi["AccountBankTab_" .. i]
-      if tab then bags[#bags + 1] = tab end
+  return (b >= 0 and b <= NUM_BAGS) or (bi and b == bi.ReagentBag) or false
+end
+
+-- Every bank container. Forever's bank is tabs (each its own container) listed by C_Bank, like
+-- retail; the old Classic IDs (-1, bank bag slots) are only used when the client has no tabs.
+local function BankBags()
+  local bags, seen = {}, {}
+  local function add(b)
+    if type(b) == "number" and not seen[b] and not IsPlayerBag(b) then
+      seen[b] = true
+      bags[#bags + 1] = b
     end
+  end
+  local bi = Enum and Enum.BagIndex or {}
+  if C_Bank and C_Bank.FetchPurchasedBankTabIDs and Enum and Enum.BankType then
+    for _, kind in ipairs({ Enum.BankType.Character, Enum.BankType.Account }) do
+      local ok, ids = pcall(C_Bank.FetchPurchasedBankTabIDs, kind)
+      if ok and type(ids) == "table" then
+        for _, id in ipairs(ids) do add(id) end
+      end
+    end
+  end
+  for i = 1, 6 do add(bi["CharacterBankTab_" .. i]) end
+  for i = 1, 5 do add(bi["AccountBankTab_" .. i]) end
+  add(bi.Bank)
+  add(bi.Reagentbank)
+  for i = 1, 7 do add(bi["BankBag_" .. i]) end
+  if #bags == 0 then
+    add(BANK_CONTAINER or -1)
+    local first = (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAGS) + 1
+    for b = first, first + (NUM_BANKBAGSLOTS or 7) - 1 do add(b) end
   end
   return bags
 end
@@ -261,10 +284,14 @@ local warnedFull = {}
 local function RescueBank()
   if bankRescuing or not bankOpen then return end
   if GetCursorInfo() then return end -- wait until you've let go of whatever you're holding
-  for _, bag in ipairs(BankBags()) do
+  local bags, slots, busy = BankBags(), 0, false
+  for _, bag in ipairs(bags) do
     for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
+      slots = slots + 1
       local info = C.GetContainerItemInfo(bag, slot)
-      if info and info.itemID and not info.isLocked and KS.GetLevel(info.itemID) >= ONME then
+      if info and info.itemID and info.isLocked and KS.GetLevel(info.itemID) >= ONME then
+        busy = true -- still moving into the bank: look again shortly
+      elseif info and info.itemID and KS.GetLevel(info.itemID) >= ONME then
         C.PickupContainerItem(bag, slot)
         if not PutInBags() then
           ClearCursor() -- puts it back where it was
@@ -287,6 +314,14 @@ local function RescueBank()
         return
       end
     end
+  end
+  Debug("bank scan: %d containers (%s), %d slots, nothing to move", #bags, table.concat(bags, ","), slots)
+  if busy then
+    bankRescuing = true
+    C_Timer.After(0.5, function()
+      bankRescuing = false
+      RescueBank()
+    end)
   end
 end
 
@@ -816,7 +851,8 @@ local function Status()
   print("  destroy guard: " .. (StaticPopup_Show and "on" or "OFF"))
   print("  tooltip line: " .. ((TooltipDataProcessor and "on") or "OFF"))
   print("  trade/mail/vendor buyback guards: on (vendor open: " .. tostring(merchantOpen) .. ")")
-  print("  bank guard (Always on me): on (bank open: " .. tostring(bankOpen) .. ")")
+  print("  bank guard (Always on me): on (bank open: " .. tostring(bankOpen) ..
+    (bankOpen and (", containers " .. table.concat(BankBags(), ",")) or "") .. ")")
   if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ArkInventory") then
     print("  |cffffd100ArkInventory is loaded: Alt+Click, bag icons and the disenchant guard only work in the default bags.|r")
   end
@@ -871,6 +907,7 @@ f:RegisterEvent("MERCHANT_UPDATE")
 f:RegisterEvent("BANKFRAME_OPENED")
 f:RegisterEvent("BANKFRAME_CLOSED")
 f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
+pcall(f.RegisterEvent, f, "BANK_TABS_CHANGED") -- tabbed bank only
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
 f:RegisterEvent("MAIL_SEND_INFO_UPDATE")
@@ -900,10 +937,12 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     QueueRescue()
   elseif event == "BANKFRAME_OPENED" then
     bankOpen = true
+    local bags = BankBags()
+    Log("bank opened: containers %s", table.concat(bags, ","))
     QueueBankRescue()
   elseif event == "BANKFRAME_CLOSED" then
     bankOpen = false
-  elseif event == "PLAYERBANKSLOTS_CHANGED" then
+  elseif event == "PLAYERBANKSLOTS_CHANGED" or event == "BANK_TABS_CHANGED" then
     QueueBankRescue()
   elseif event == "CURRENT_SPELL_CAST_CHANGED" then
     OnSpellCastChanged()
