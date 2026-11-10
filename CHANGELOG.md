@@ -4,7 +4,7 @@
 
 First release. Item protection used to be part of SellAll; it's now its own addon so it works with any vendor addon.
 
-- **Item levels**, shared across your characters:
+- **Item levels**, for all your characters or just one (Alt+Shift+Left-click an item to switch, `/faves scope` for the default):
   - **Junk** marks items you're happy to lose (SellAll sells them when a vendor opens).
   - **Normal** is the default.
   - **Confirm** currently acts as Locked.

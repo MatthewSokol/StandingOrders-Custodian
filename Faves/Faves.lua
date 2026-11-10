@@ -85,17 +85,70 @@ KS.LevelText = LevelText
 ---------------------------------------------------------------------------------------------------
 -- Levels and the guard every action goes through
 
-function KS.GetLevel(id) return (id and db and db.items[id]) or NORMAL end
+-- Marks are account wide (FavesDB.items) or for one character (FavesCharDB.items). A character mark
+-- wins, so a character can also override an account-wide mark (stored as Normal to clear it there).
+local cdb -- FavesCharDB
+
+function KS.GetLevel(id)
+  if not id then return NORMAL end
+  return (cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL
+end
+
+-- "char" when this character has its own mark for the item, "account" for an account-wide one, else nil.
+function KS.GetItemScope(id)
+  if id and cdb and cdb.items[id] then return "char" end
+  if id and db and db.items[id] then return "account" end
+end
+
+-- Where new marks go (Alt+Click, /faves <level> <item>): "account" (default) or "char".
+function KS.GetScope() return (db and db.scope) or "account" end
+function KS.SetScope(scope)
+  db.scope = (scope == "char") and "char" or "account"
+end
+
+local function ScopeText(scope)
+  return scope == "char" and " |cff9d9d9d(this character)|r" or ""
+end
 
 -- True when the item must not leave your bags without you lowering its level first.
 function KS.IsLocked(id) return KS.GetLevel(id) >= CONFIRM end
 
 local RefreshBags -- defined with the bag hooks below
 
-function KS.SetLevel(id, level, link)
+-- opts (optional): { scope = "account"|"char", quiet = true }. The old third-argument link still works.
+function KS.SetLevel(id, level, link, opts)
   if not id then return end
-  db.items[id] = (level ~= NORMAL) and level or nil
-  Print("%s is now %s.", link or ItemLink(id), LevelText(level))
+  opts = opts or {}
+  local scope = opts.scope or KS.GetScope()
+  if scope == "char" then
+    -- Normal only needs storing here when it has to override an account-wide mark.
+    cdb.items[id] = (level ~= NORMAL or db.items[id]) and level or nil
+  else
+    db.items[id] = (level ~= NORMAL) and level or nil
+    cdb.items[id] = nil -- an account-wide change replaces this character's own mark
+  end
+  if not opts.quiet then
+    Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
+  end
+  RefreshBags()
+end
+
+-- Moves an item's mark between account wide and this character only (Alt+Shift+Click).
+function KS.ToggleItemScope(id, link)
+  link = link or ItemLink(id)
+  local mine, shared = cdb.items[id], db.items[id]
+  if mine then
+    db.items[id] = (mine ~= NORMAL) and mine or nil
+    cdb.items[id] = nil
+    Print("%s is now %s for all characters.", link, LevelText(KS.GetLevel(id)))
+  elseif shared then
+    cdb.items[id] = shared
+    db.items[id] = nil
+    Print("%s is now %s%s; your other characters no longer have it marked.", link, LevelText(shared), ScopeText("char"))
+  else
+    Print("%s isn't marked. Alt+Click it first.", link)
+    return
+  end
   RefreshBags()
 end
 
@@ -446,6 +499,13 @@ local function PreClick(btn, mouse)
   local info = bag and slot and C.GetContainerItemInfo(bag, slot)
   if not info or not info.itemID then return end
 
+  -- Alt+Shift+Left-click moves the mark between all characters and this character only.
+  if IsAltKeyDown() and IsShiftKeyDown() and not IsControlKeyDown() and mouse == "LeftButton" then
+    btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
+    KS.ToggleItemScope(info.itemID, info.hyperlink)
+    return
+  end
+
   -- Alt+Left-click raises protection (Junk > Normal > Confirm > Locked); Alt+Right-click lowers it.
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
     local cur = KS.GetLevel(info.itemID)
@@ -643,7 +703,7 @@ local function HookTooltip()
   if not (TooltipDataProcessor and Enum and Enum.TooltipDataType) then return end
   TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tip, data)
     local level = KS.GetLevel(data and data.id)
-    if level ~= NORMAL then tip:AddLine("Faves: " .. LevelText(level)) end
+    if level ~= NORMAL then tip:AddLine("Faves: " .. LevelText(level) .. ScopeText(KS.GetItemScope(data.id))) end
   end)
 end
 
@@ -656,6 +716,7 @@ local INTRO_TEXT = table.concat({
   "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. For now Confirm works the same as Locked.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
+  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
   "- Selling it: it's bought straight back while the vendor is open (SellAll's Sell All skips it)",
@@ -720,11 +781,13 @@ end
 
 local function ListItems()
   local any = false
-  for _, level in ipairs({ JUNK, CONFIRM, LOCK, ONME }) do
-    for id, l in pairs(db.items) do
-      if l == level then
-        any = true
-        Print("%s: %s", LevelText(level), ItemLink(id))
+  for _, level in ipairs({ JUNK, NORMAL, CONFIRM, LOCK, ONME }) do
+    for _, scope in ipairs({ "account", "char" }) do
+      for id, l in pairs(scope == "char" and cdb.items or db.items) do
+        if l == level then
+          any = true
+          Print("%s: %s%s", LevelText(level), ItemLink(id), ScopeText(scope))
+        end
       end
     end
   end
@@ -733,17 +796,20 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /faves junk|normal|confirm|lock|onme <item link or ID> - set an item's level")
+  print("  /faves junk|normal|confirm|lock|onme <item link or ID> [char|account] - set an item's level")
   print("  /faves list - show marked items")
+  print("  /faves scope account|char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /faves status - check which guards are active")
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /faves log [n] - show the last n guard log lines (default 25)")
   print("  /faves debug - toggle debug messages")
-  print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it.")
+  print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it,")
+  print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
 end
 
 local function Status()
   Print("Status:")
+  print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
     ", last cast: " .. (castRecord and (castRecord.kind .. " " .. tostring(castRecord.name or castRecord.id)) or "none") .. ")")
@@ -763,9 +829,17 @@ SlashCmdList.FAVES = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
   if LEVEL_CMDS[cmd] and rest ~= "" then
+    local scope
+    local item, word = rest:match("^(.-)%s+(%a+)$")
+    if word and (word:lower() == "char" or word:lower() == "account") then
+      rest, scope = item, word:lower()
+    end
     local id = LinkID(rest) or tonumber(rest)
     if not id then return Err("Shift-click an item into the command, or give its item ID.") end
-    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id))
+    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope })
+  elseif cmd == "scope" and (rest == "char" or rest == "account") then
+    KS.SetScope(rest)
+    Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
   elseif cmd == "list" then
     ListItems()
   elseif cmd == "status" then
@@ -808,6 +882,9 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     FavesDB = FavesDB or {}
     db = FavesDB
     db.items = db.items or {}
+    FavesCharDB = FavesCharDB or {}
+    cdb = FavesCharDB
+    cdb.items = cdb.items or {}
   elseif event == "PLAYER_LOGIN" then
     HookBags()
     HookCasts()

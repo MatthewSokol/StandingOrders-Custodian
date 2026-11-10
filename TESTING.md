@@ -12,6 +12,15 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] `/faves list` says nothing is marked
 - [ ] `/faves status` shows every guard on
 - [ ] Mark an item, log in a second character: the mark is there too (levels are account wide)
+
+## 1b. Per-character marks
+- [ ] Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
+- [ ] Log in a second character: that item isn't marked there
+- [ ] Alt+Shift+Left-click it again on the first character: back to all characters
+- [ ] `/faves scope char`, then Alt+Click a new item: it's marked for this character only; `/faves scope account` switches back
+- [ ] `/faves lock <item> char` marks for this character only
+- [ ] Mark an item Locked account wide, then `/faves normal <item> char`: Normal on this character, still Locked on others
+- [ ] `/faves list` shows both kinds, character marks labelled
 - [ ] `/reload` a few times: no errors at login or when the bags first open
 - [ ] Works with SellAll disabled (Faves alone loads with no errors)
 

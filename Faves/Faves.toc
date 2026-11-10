@@ -4,6 +4,7 @@
 ## Author: MatthewSokol
 ## Version: 1.0.0
 ## SavedVariables: FavesDB
+## SavedVariablesPerCharacter: FavesCharDB
 ## IconTexture: Interface\Icons\INV_Misc_Key_03
 ## Category: Inventory
 ## X-Website: https://github.com/MatthewSokol/Faves

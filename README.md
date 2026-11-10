@@ -6,7 +6,12 @@ Pairs with [SellAll](https://github.com/MatthewSokol/SellAll), a one-click Sell 
 
 ## Item levels
 
-Levels are per item ID and shared across all your characters.
+Levels are per item ID. A mark applies to all your characters, or to one character only:
+
+- **Alt+Shift+Left-click** an item to move its mark between all characters and this character only.
+- `/faves scope char` makes new marks this-character-only by default (`/faves scope account` switches back). SellAll's settings panel has the same switch.
+- A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal).
+- Tooltips and `/faves list` show *(this character)* for character marks.
 
 | Level | Icon | What happens |
 |---|---|---|
@@ -16,7 +21,7 @@ Levels are per item ID and shared across all your characters.
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|normal|confirm|lock|onme <shift-clicked item or ID>`. `/faves list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/faves list` shows every marked item. Item tooltips show the level.
 
 ## Guards
 
@@ -32,6 +37,10 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 | Bank (Always on me only) | While the bank is open, the item is moved straight back to your bags (if they have room) |
 
 **Limits:** Alt+Click, bag icons and the disenchant guard only work in the default bags (not ArkInventory). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
+
+## Marking one specific copy of an item
+
+Not supported yet: marks are per item ID, so every copy of an item shares a level. See [docs/specific-item-instances.md](docs/specific-item-instances.md) for what it would take.
 
 ## For addon authors
 
