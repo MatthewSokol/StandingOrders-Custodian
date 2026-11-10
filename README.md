@@ -16,13 +16,28 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Level | Icon | What happens |
 |---|---|---|
 | Junk | coin | Safe to lose. SellAll sells these automatically when a vendor opens |
-| Mail | letter | To send to your bank character (for a mailing addon). SellAll never sells these. Unbound BoE greens and blues are marked Mail automatically, unless you took them from a player's mail (your other characters included; AH mail doesn't count). Turn this off with `/faves automail off` |
+| Mail | letter | To send to your bank character (for a mailing addon). SellAll never sells these |
 | Normal | none | The default |
 | Confirm | star | Levelling favorite. Meant to ask before it's lost; until that window exists it acts as **Locked** |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
 Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/faves list` shows every marked item. Item tooltips show the level.
+
+## Auto-marks
+
+New items in your bags are marked for you (all on by default; turn each off in `/faves settings`):
+
+| Item | Becomes |
+|---|---|
+| Gray | Junk |
+| White gear, weapons and junk with no profession or quest use | Junk |
+| Crafting materials, white and up (cloth, herbs, ore, leather...) | Mail |
+| Bind on Equip, green and up, not yet bound | Mail |
+
+Quest items, food and drink, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is anything VendorFlip is holding to flip. **Items you got on purpose are left alone** on the character that got them: traded to you, bought on the AH or from a vendor, or mailed to you by a player (your other characters included). If another character had already auto-marked one, it's Normal on this character.
+
+Only unmarked items are marked, and each item only once: change an auto-marked item's level and it stays changed. Auto-marks apply to all your characters.
 
 ## Guards
 
@@ -55,4 +70,4 @@ if Faves and Faves.GetLevel(itemID) == Faves.LEVELS.MAIL then --[[ send it to th
 
 ## Commands
 
-`/faves help`, `/faves intro` (what protection covers, also shown once on first login), `/faves status` (which guards are active), `/faves log` (recent guard decisions), `/faves debug`.
+`/faves settings` (auto-marks and where new marks go), `/faves help`, `/faves intro` (what protection covers, also shown once on first login), `/faves status` (which guards are active), `/faves log` (recent guard decisions), `/faves debug`.

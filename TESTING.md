@@ -48,10 +48,12 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] Mail: a Locked attachment is removed, Normal attachments stay
 - [ ] Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
-- [ ] Looting an unbound BoE green or blue marks it Mail (letter icon, chat line); a soulbound or white one isn't
-- [ ] A BoE taken from another character's mail isn't marked Mail (and stays Normal on that character if it was Mail); one bought on the AH is
-- [ ] Changing an auto-marked item to Normal sticks after /reload and more loot
-- [ ] `/faves automail off` stops auto-marking; SellAll's Sell All and Up to skip Mail items
+- [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, white cloth/herbs/ore become Mail, an unbound BoE green or blue becomes Mail
+- [ ] Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
+- [ ] Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
+- [ ] Changing an auto-marked item's level sticks after /reload and more loot
+- [ ] /faves settings: each switch stops its rule; turning one back on marks matching items in your bags
+- [ ] With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /faves settings
 - [ ] Alt+Right-click steps it back down
 - [ ] At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] Icons and tooltip lines show in the combined bag

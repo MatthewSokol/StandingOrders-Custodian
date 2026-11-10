@@ -4,7 +4,8 @@
 -- Levels (stored per item ID, account wide):
 --   Junk     safe to get rid of (SellAll sells these automatically when a vendor opens)
 --   Mail     to be mailed to a bank character (for a mailing addon; SellAll never sells these).
---            Unbound BoE greens and blues are marked Mail automatically, except ones from a player's mail
+--   Auto-marks (on by default, /faves settings): grays and useless whites become Junk, crafting
+--   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
 --   Normal   the default, stored as nil
 --   Confirm  "levelling favorite": meant to ask first. No confirm window yet, so for now it acts as Locked
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
@@ -742,80 +743,290 @@ local function OnSpellcastSent(target, spellID)
 end
 
 ---------------------------------------------------------------------------------------------------
--- Auto-marking Mail: unbound BoE greens and blues become Mail when they're in your bags, ready for a
--- mailing addon to send them to a bank character. Not items taken from a player's mail (your other
--- characters included): those were sent to this character to keep. AH mail doesn't count as a
--- player's. Each item ID is only looked at once, so a level you change by hand stays.
+-- Auto-marks. Unmarked items in your bags get a level by these rules (each can be turned off in
+-- /faves settings):
+--   gray                                        -> Junk
+--   white with no profession or quest use        -> Junk  (gear, weapons, gray-ish junk)
+--   crafting materials (white and up, unbound)   -> Mail
+--   unbound Bind on Equip (green and up)         -> Mail
+-- Quest items, consumables, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
+-- anything VendorFlip is holding to flip. Items you got on purpose (traded to you, bought on the AH or
+-- from a vendor, or mailed to you by a player) are left alone on the character that got them.
+-- Each item ID is only decided once (FavesDB.autoSeen), so a level you change by hand stays.
 
-local BIND_ON_EQUIP = 2
+KS.AUTO_MARKS = true -- SellAll checks this and leaves auto-marking to Faves
 
-local function AutoMailOn() return db and db.autoMail ~= false end
+local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, boeMail = true, matsMail = true, keepReceived = true }
+local AUTO_KEYS = { "grayJunk", "whiteJunk", "boeMail", "matsMail", "keepReceived" }
 
--- Called for mail you take items from (TakeInboxItem, AutoLootMailItem, and the addons that use them).
-local function OnTakeMail(index, attach)
-  if not (db and index) then return end
-  local _, _, sender, _, _, _, _, _, _, _, _, canReply, isGM = GetInboxHeaderInfo(index)
-  local invoice = GetInboxInvoiceInfo and GetInboxInvoiceInfo(index)
-  local fromPlayer = canReply and not isGM and not invoice
-  local first, last = attach or 1, attach or (ATTACHMENTS_MAX_RECEIVE or 16)
-  for a = first, last do
-    local link = GetInboxItemLink(index, a)
-    local id = LinkID(link)
-    if id then
-      Log("mail item %s from %s (%s)", link, tostring(sender), fromPlayer and "player" or "not a player")
-      if fromPlayer then
-        db.autoMailSeen[id] = true
-        -- Already auto-marked Mail on another character: this one keeps it.
-        if KS.GetLevel(id) == MAIL and db.autoMailed[id] then
-          KS.SetLevel(id, NORMAL, link, { scope = "char", quiet = true })
-          Print("%s came from %s, so it stays Normal on this character instead of Mail.", link, tostring(sender))
-        end
-      end
-    end
+local CLASS = (Enum and Enum.ItemClass) or {}
+local CONSUMABLE, CONTAINER, WEAPON, REAGENT, PROJECTILE, TRADEGOODS, RECIPE, QUIVER, QUEST, KEY, MISC =
+  CLASS.Consumable or 0, CLASS.Container or 1, CLASS.Weapon or 2, CLASS.Reagent or 5, CLASS.Projectile or 6,
+  CLASS.Tradegoods or 7, CLASS.Recipe or 9, CLASS.Quiver or 11, CLASS.Questitem or 12, CLASS.Key or 13,
+  CLASS.Miscellaneous or 15
+local ARMOR = CLASS.Armor or 4
+local NEVER_JUNK_CLASS = { [CONSUMABLE] = true, [CONTAINER] = true, [PROJECTILE] = true, [RECIPE] = true,
+  [QUIVER] = true, [KEY] = true }
+local NEVER_JUNK_SLOT = { INVTYPE_BODY = true, INVTYPE_TABARD = true }
+local BIND_ON_PICKUP, BIND_ON_EQUIP = 1, 2
+local GetItemInfoInstant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+
+function KS.GetAuto(key) return db and db.auto and db.auto[key] end
+function KS.SetAuto(key, on)
+  if not (db and AUTO_DEFAULTS[key] ~= nil) then return end
+  db.auto[key] = on and true or false
+  if on then KS.QueueAutoMark() end
+end
+
+local function HeldByVendorFlip(id)
+  local VF = _G.VendorFlip
+  if not (VF and VF.IsHeld) then return false end
+  local ok, held = pcall(VF.IsHeld, id)
+  return ok and held == true
+end
+
+-- The level the rules give an item, false when the rules leave it alone for good, or nil when it
+-- can't be decided yet (item data not loaded, or the deciding rule is off: decide again later).
+local function AutoLevel(info, bag, slot)
+  local id = info.itemID
+  local name, _, _, _, _, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
+  if not name then return nil end
+  if not classID and GetItemInfoInstant then
+    local _, _, _, loc, _, cls, sub = GetItemInfoInstant(id)
+    equipLoc, classID, subclassID = equipLoc or loc, cls, sub
+  end
+  local quest = classID == QUEST
+  if not quest and C.GetContainerItemQuestInfo then
+    local q = C.GetContainerItemQuestInfo(bag, slot)
+    quest = q and (q.isQuestItem or q.questID) and true or false
+  end
+  if quest then return false end
+
+  local quality, auto = info.quality, db.auto
+  local crafting = classID == TRADEGOODS or classID == REAGENT or isCrafting == true
+  if quality == 0 then
+    if info.hasNoValue then return false end -- can't be sold anyway
+    if not auto.grayJunk then return nil end
+    return JUNK
+  end
+  if crafting then
+    if info.isBound or bindType == BIND_ON_PICKUP then return false end
+    if not auto.matsMail then return nil end
+    return MAIL
+  end
+  if quality == 1 then
+    if info.hasNoValue or NEVER_JUNK_CLASS[classID] or NEVER_JUNK_SLOT[equipLoc] then return false end
+    local junkish = classID == WEAPON or classID == ARMOR or (classID == MISC and subclassID == 0)
+    if not junkish then return false end
+    if not auto.whiteJunk then return nil end
+    return JUNK
+  end
+  if quality and quality >= 2 and bindType == BIND_ON_EQUIP and not info.isBound then
+    if not auto.boeMail then return nil end
+    return MAIL
+  end
+  return false
+end
+
+-- An item this character got on purpose: auto-marks leave it alone here, and an auto-mark already
+-- made on another character is overridden with Normal for this one.
+local function OverrideHere(id, link, how)
+  local auto = db.autoMarked[id]
+  if auto and db.items[id] == auto and not cdb.items[id] then
+    KS.SetLevel(id, NORMAL, link, { scope = "char", quiet = true })
+    Print("%s was %s; you %s, so it's Normal on this character.", link or ItemLink(id), LevelText(auto), how)
   end
 end
 
-local function HookMail()
-  if TakeInboxItem then hooksecurefunc("TakeInboxItem", OnTakeMail) end
-  if AutoLootMailItem then hooksecurefunc("AutoLootMailItem", function(index) OnTakeMail(index) end) end
+local function KeepHere(id, link, how)
+  if not (db and cdb and id) or not db.auto.keepReceived then return end
+  cdb.kept[id] = how
+  Log("kept item %d here: %s", id, how)
+  OverrideHere(id, link, how)
 end
 
-local function AutoMail()
-  if not AutoMailOn() then return end
-  local marked = {}
+local tradeOpen = false
+
+local function AutoMark()
+  if not db or tradeOpen then return end
+  local marked = { [JUNK] = {}, [MAIL] = {} }
   for bag = 0, NUM_BAGS do
     for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
       local info = C.GetContainerItemInfo(bag, slot)
       local id = info and info.itemID
-      if id and not db.autoMailSeen[id] and (info.quality == 2 or info.quality == 3) and not info.isBound then
-        local bindType = select(14, GetItemInfo(id))
-        if bindType ~= nil then -- nil: item data not loaded yet, look again next time
-          db.autoMailSeen[id] = true
-          if bindType == BIND_ON_EQUIP and not KS.GetItemScope(id) then
-            db.autoMailed[id] = true
-            KS.SetLevel(id, MAIL, info.hyperlink, { scope = "account", quiet = true })
-            marked[#marked + 1] = info.hyperlink
-          end
+      if id and cdb.kept[id] and db.auto.keepReceived then
+        OverrideHere(id, info.hyperlink, cdb.kept[id]) -- catches marks made on another character since
+      elseif id and not db.autoSeen[id] and not KS.GetItemScope(id) and not HeldByVendorFlip(id) then
+        local level = AutoLevel(info, bag, slot)
+        if level ~= nil then db.autoSeen[id] = true end
+        if level then
+          db.autoMarked[id] = level
+          KS.SetLevel(id, level, info.hyperlink, { scope = "account", quiet = true })
+          table.insert(marked[level], info.hyperlink)
         end
       end
     end
   end
-  if #marked > 0 then
-    local shown = table.concat(marked, ", ", 1, math.min(#marked, 5))
-    if #marked > 5 then shown = shown .. (" and %d more"):format(#marked - 5) end
-    Print("Marked as %s: %s. (/faves automail off to stop this)", LevelText(MAIL), shown)
-    Log("auto-marked %d items as Mail", #marked)
+  for _, level in ipairs({ JUNK, MAIL }) do
+    local list = marked[level]
+    if #list > 0 then
+      local shown = table.concat(list, ", ", 1, math.min(#list, 5))
+      if #list > 5 then shown = shown .. (" and %d more"):format(#list - 5) end
+      Print("Marked as %s: %s. (/faves settings to change this)", LevelText(level), shown)
+      Log("auto-marked %d items as %s", #list, NAMES[level])
+    end
   end
 end
 
-local autoMailQueued = false
-local function QueueAutoMail()
-  if autoMailQueued or not AutoMailOn() then return end
-  autoMailQueued = true
-  C_Timer.After(0.5, function()
-    autoMailQueued = false
-    AutoMail()
+local autoQueued = false
+function KS.QueueAutoMark(delay)
+  if autoQueued or not db then return end
+  autoQueued = true
+  C_Timer.After(delay or 0.5, function()
+    autoQueued = false
+    AutoMark()
   end)
+end
+
+-- Where items you got on purpose come from.
+local function OnTakeMail(index, attach)
+  if not (db and index) then return end
+  local _, _, sender, _, _, _, _, _, _, _, _, canReply, isGM = GetInboxHeaderInfo(index)
+  local invoice = GetInboxInvoiceInfo and GetInboxInvoiceInfo(index)
+  local how
+  if invoice == "buyer" then how = "bought it on the AH"
+  elseif canReply and not isGM and not invoice then how = "got it in the mail from " .. tostring(sender) end
+  for a = attach or 1, attach or (ATTACHMENTS_MAX_RECEIVE or 16) do
+    local link = GetInboxItemLink(index, a)
+    if link then
+      Log("mail item %s from %s (%s)", link, tostring(sender), how or "auto-marks apply")
+      if how then KeepHere(LinkID(link), link, how) end
+    end
+  end
+end
+
+local function KeepTradeItems()
+  for i = 1, (MAX_TRADABLE_ITEMS or 6) do
+    local link = GetTradeTargetItemLink(i)
+    if link then KeepHere(LinkID(link), link, "got it in a trade") end
+  end
+end
+
+local function HookReceipts()
+  if TakeInboxItem then hooksecurefunc("TakeInboxItem", OnTakeMail) end
+  if AutoLootMailItem then hooksecurefunc("AutoLootMailItem", function(index) OnTakeMail(index) end) end
+  if BuyMerchantItem then
+    hooksecurefunc("BuyMerchantItem", function(index)
+      local link = GetMerchantItemLink(index)
+      if link then KeepHere(LinkID(link), link, "bought it from a vendor") end
+    end)
+  end
+  if C_AuctionHouse and C_AuctionHouse.ConfirmCommoditiesPurchase then
+    hooksecurefunc(C_AuctionHouse, "ConfirmCommoditiesPurchase", function(itemID)
+      KeepHere(itemID, nil, "bought it on the AH")
+    end)
+  end
+end
+
+---------------------------------------------------------------------------------------------------
+-- Settings panel (/faves settings, or Esc > Options > AddOns > Faves)
+
+local category
+local refreshers = {}
+
+local function RefreshPanel() for _, fn in ipairs(refreshers) do fn() end end
+
+local function Check(panel, text, anchor, y, onClick)
+  local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  cb:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, y or -2)
+  cb.Text:SetText(text)
+  cb:SetScript("OnClick", onClick)
+  return cb
+end
+
+local function Note(panel, text, anchor, x, y)
+  local fs = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  fs:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", x or 0, y or -4)
+  fs:SetWidth(560)
+  fs:SetJustifyH("LEFT")
+  fs:SetText(text)
+  return fs
+end
+
+local function Header(panel, text, anchor, y)
+  local fs = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+  fs:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, y or -18)
+  fs:SetText(text)
+  return fs
+end
+
+local AUTO_TEXT = {
+  grayJunk = "Gray items become |cff9d9d9dJunk|r",
+  whiteJunk = "White gear, weapons and junk (no profession or quest use) become |cff9d9d9dJunk|r",
+  matsMail = "Crafting materials (white and up: cloth, herbs, ore, leather...) become |cff4fb3ffMail|r",
+  boeMail = "Bind on Equip items (green and up, not yet bound) become |cff4fb3ffMail|r",
+  keepReceived = "Except items you got on purpose: traded to you, bought on the AH or from a vendor, or mailed by a player",
+}
+
+local function CreatePanel()
+  local panel = CreateFrame("Frame")
+  panel.name = "Faves"
+
+  local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+  title:SetPoint("TOPLEFT", 16, -16)
+  title:SetText("Faves")
+
+  local prev = Header(panel, "Auto-mark items in your bags", title, -16)
+  local first = true
+  for _, key in ipairs(AUTO_KEYS) do
+    local cb = Check(panel, AUTO_TEXT[key], prev, first and -6 or -2, function(self)
+      KS.SetAuto(key, self:GetChecked())
+    end)
+    if key == "keepReceived" then cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -10) end
+    refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
+    prev, first = cb, false
+  end
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, food, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Auto-marks apply to all your characters.", prev, 26, -2)
+
+  prev = Header(panel, "New marks (Alt+Click, /faves <level>)", prev)
+  local acct = Check(panel, "Apply to all my characters", prev, -6, function()
+    KS.SetScope("account")
+    RefreshPanel()
+  end)
+  local char = Check(panel, "Apply to this character only", acct, -2, function()
+    KS.SetScope("char")
+    RefreshPanel()
+  end)
+  refreshers[#refreshers + 1] = function()
+    acct:SetChecked(KS.GetScope() ~= "char")
+    char:SetChecked(KS.GetScope() == "char")
+  end
+  prev = Note(panel, "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less, Alt+Shift+Left-click to move its mark between all characters and this one.", char, 26, -2)
+
+  local intro = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+  intro:SetSize(170, 24)
+  intro:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
+  intro:SetText("What Faves protects")
+  intro:SetScript("OnClick", function() KS:ShowIntro() end)
+
+  panel:SetScript("OnShow", RefreshPanel)
+  if Settings and Settings.RegisterCanvasLayoutCategory then
+    category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    Settings.RegisterAddOnCategory(category)
+  elseif InterfaceOptions_AddCategory then
+    InterfaceOptions_AddCategory(panel)
+    category = panel
+  end
+end
+
+function KS.OpenSettings()
+  if not category then return end
+  if Settings and Settings.OpenToCategory and category.GetID then
+    Settings.OpenToCategory(category:GetID())
+  elseif InterfaceOptionsFrame_OpenToCategory then
+    InterfaceOptionsFrame_OpenToCategory(category)
+    InterfaceOptionsFrame_OpenToCategory(category)
+  end
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -833,12 +1044,13 @@ end
 -- One-time intro: what Confirm/Locked protect, and what they don't yet. Shown until "Got it" is
 -- clicked; bump INTRO_VERSION when the list changes so everyone sees the new one once.
 
-local INTRO_VERSION = 3
+local INTRO_VERSION = 4
 local INTRO_TEXT = table.concat({
   "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. For now Confirm works the same as Locked.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
-  "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character. Unbound BoE greens and blues are marked Mail automatically, unless they came from another player's or character's mail (/faves automail off turns this off).",
+  "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
+  "New items are marked for you: grays and white gear with no use become Junk, crafting materials and unbound BoE items become Mail. Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /faves settings.",
   "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
@@ -922,7 +1134,7 @@ local function Help()
   print("  /faves junk|mail|normal|confirm|lock|onme <item link or ID> [char|account] - set an item's level")
   print("  /faves list - show marked items")
   print("  /faves scope account|char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
-  print("  /faves automail on|off - mark unbound BoE greens and blues as Mail (now " .. (AutoMailOn() and "on" or "off") .. ")")
+  print("  /faves settings - auto-marking (Junk and Mail) and where new marks go")
   print("  /faves status - check which guards are active")
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /faves log [n] - show the last n guard log lines (default 25)")
@@ -933,7 +1145,9 @@ end
 
 local function Status()
   Print("Status:")
-  print("  auto-mark BoE greens/blues as Mail: " .. (AutoMailOn() and "on" or "off"))
+  local on = {}
+  for _, key in ipairs(AUTO_KEYS) do if KS.GetAuto(key) then on[#on + 1] = key end end
+  print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/faves settings)")
   print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
@@ -966,10 +1180,12 @@ SlashCmdList.FAVES = function(msg)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then
     KS.SetScope(rest)
     Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
-  elseif cmd == "automail" and (rest == "on" or rest == "off") then
-    db.autoMail = (rest == "on")
-    Print("Auto-marking BoE greens and blues as Mail is %s.", rest)
-    if rest == "on" then QueueAutoMail() end
+  elseif cmd == "settings" or cmd == "config" or cmd == "options" then
+    KS.OpenSettings()
+  elseif cmd == "automail" and (rest == "on" or rest == "off") then -- older command: both Mail rules
+    KS.SetAuto("boeMail", rest == "on")
+    KS.SetAuto("matsMail", rest == "on")
+    Print("Auto-marking Mail (BoE items and crafting materials) is %s.", rest)
   elseif cmd == "list" then
     ListItems()
   elseif cmd == "status" then
@@ -1004,6 +1220,9 @@ f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 pcall(f.RegisterEvent, f, "BANK_TABS_CHANGED") -- tabbed bank only
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
+f:RegisterEvent("TRADE_SHOW")
+f:RegisterEvent("TRADE_CLOSED")
+f:RegisterEvent("TRADE_ACCEPT_UPDATE")
 f:RegisterEvent("MAIL_SEND_INFO_UPDATE")
 f:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
 f:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
@@ -1016,15 +1235,24 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     FavesCharDB = FavesCharDB or {}
     cdb = FavesCharDB
     cdb.items = cdb.items or {}
-    db.autoMailSeen = db.autoMailSeen or {} -- item IDs auto-mail has already decided on
-    db.autoMailed = db.autoMailed or {}     -- item IDs it marked Mail
+    cdb.kept = cdb.kept or {}            -- item IDs this character got on purpose: no auto-marks here
+    db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
+    db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
+    for id in pairs(db.autoMailed or {}) do db.autoMarked[id] = db.autoMarked[id] or MAIL end
+    db.auto = db.auto or {}
+    if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
+    for key, on in pairs(AUTO_DEFAULTS) do
+      if db.auto[key] == nil then db.auto[key] = on end
+    end
+    db.autoMailSeen, db.autoMailed, db.autoMail = nil, nil, nil
   elseif event == "PLAYER_LOGIN" then
     HookBags()
     HookCasts()
     HookTooltip()
     HookDestroy()
-    HookMail()
-    C_Timer.After(5, QueueAutoMail)
+    HookReceipts()
+    CreatePanel()
+    KS.QueueAutoMark(5)
     if db.introSeen ~= INTRO_VERSION then C_Timer.After(4, function() KS:ShowIntro() end) end
   elseif event == "MERCHANT_SHOW" then
     merchantOpen = true
@@ -1048,9 +1276,18 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     OnSpellcastSent(arg2, arg4) -- unit, target, castGUID, spellID
   elseif event == "BAG_UPDATE_DELAYED" then
     RefreshBags()
-    QueueAutoMail()
+    KS.QueueAutoMark()
     if merchantOpen then QueueRescue() end
     if bankOpen then QueueBankRescue() end
+  elseif event == "TRADE_SHOW" then
+    tradeOpen = true -- no auto-marks until the trade is over and its items are known
+  elseif event == "TRADE_ACCEPT_UPDATE" then
+    if arg1 == 1 or arg2 == 1 then KeepTradeItems() end
+  elseif event == "TRADE_CLOSED" then
+    C_Timer.After(1, function()
+      tradeOpen = false
+      KS.QueueAutoMark()
+    end)
   elseif event == "TRADE_PLAYER_ITEM_CHANGED" then
     if arg1 then CheckTrade(arg1) end
   elseif event == "MAIL_SEND_INFO_UPDATE" then
