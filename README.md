@@ -14,8 +14,9 @@ Levels are per item ID and shared across all your characters.
 | Normal | none | The default |
 | Confirm | star | Levelling favorite. Meant to ask before it's lost; until that window exists it acts as **Locked** |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
+| Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|normal|confirm|lock <shift-clicked item or ID>`. `/faves list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|normal|confirm|lock|onme <shift-clicked item or ID>`. `/faves list` shows every marked item. Item tooltips show the level.
 
 ## Guards
 
@@ -28,6 +29,7 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 | Destroy | The delete confirmation is closed and the item goes back to your bag |
 | Trade | The item is taken back out of the trade window |
 | Mail | The attachment is removed |
+| Bank (Always on me only) | While the bank is open, the item is moved straight back to your bags (if they have room) |
 
 **Limits:** Alt+Click, bag icons and the disenchant guard only work in the default bags (not ArkInventory). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
@@ -36,7 +38,7 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 ```lua
 if Faves and Faves.IsLocked(itemID) then --[[ skip it ]] end
 if Faves and Faves.Guard(itemID, link, "disenchant") then return end -- shows the error for you
-local level = Faves and Faves.GetLevel(itemID) -- Faves.LEVELS.JUNK / NORMAL / CONFIRM / LOCK
+local level = Faves and Faves.GetLevel(itemID) -- Faves.LEVELS.JUNK / NORMAL / CONFIRM / LOCK / ONME
 ```
 
 ## Commands

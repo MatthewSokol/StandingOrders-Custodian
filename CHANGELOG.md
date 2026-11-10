@@ -9,6 +9,7 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - **Normal** is the default.
   - **Confirm** currently acts as Locked.
   - **Locked** is protected from everything below.
+  - **Always on me** is Locked and also stays out of the bank.
 
   Alt+Left-click an item in your bags to make it more protected, Alt+Right-click to make it less protected. Bag icons and a tooltip line show each item's level.
 - **Guards** for every action that would lose a Locked item:
@@ -16,6 +17,7 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - Disenchant, Prospecting, Milling: protected bag slots turn red and the click is blocked.
   - Destroy: the delete popup closes.
   - Trade and mail: the item is removed from the window.
+  - Bank (Always on me only): the item is moved straight back to your bags.
 - **One-time intro** listing what protection covers and what it doesn't yet (`/faves intro` reopens it).
 - Levels set in earlier SellAll test builds are brought over automatically.
 - `Faves.IsLocked`, `Faves.GetLevel` and `Faves.Guard` for other addons.

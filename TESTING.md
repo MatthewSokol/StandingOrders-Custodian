@@ -38,12 +38,15 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] Destroy: dragging a Locked item out of the bags closes the delete popup, item kept
 - [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] Mail: a Locked attachment is removed, Normal attachments stay
-- [ ] Alt+Left-click steps an item through Junk, Normal, Confirm, Locked
+- [ ] Alt+Left-click steps an item through Junk, Normal, Confirm, Locked, Always on me
 - [ ] Alt+Right-click steps it back down
 - [ ] At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] Icons and tooltip lines show in the combined bag
 - [ ] Icons and tooltip lines show in separate bags
 - [ ] Icons and tooltip lines show in bank bags
+- [ ] Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag) is moved back to your bags; a Locked item stays banked
+- [ ] Bank with full bags: one "bags are full" error, the item stays in the bank
+- [ ] Opening the bank with an Always on me item already in it moves it out
 
 ## 5. Edge cases
 - [ ] In combat: opening bags and Alt+Click give no "action blocked" errors

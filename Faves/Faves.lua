@@ -6,6 +6,7 @@
 --   Normal   the default, stored as nil
 --   Confirm  "levelling favorite": meant to ask first. No confirm window yet, so for now it acts as Locked
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
+--   On me    "Always on me": Locked, and also kept out of the bank (moved straight back to your bags)
 --
 -- Other addons: Faves.GetLevel(itemID), Faves.IsLocked(itemID), Faves.LEVELS, and
 -- Faves.Guard(itemID, link, action), which shows the error and returns true when the action must stop.
@@ -14,16 +15,20 @@ local ADDON = ...
 local KS = {}
 _G.Faves = KS
 
-local JUNK, NORMAL, CONFIRM, LOCK = 1, 2, 3, 4
-KS.LEVELS = { JUNK = JUNK, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK }
+local JUNK, NORMAL, CONFIRM, LOCK, ONME = 1, 2, 3, 4, 5
+KS.LEVELS = { JUNK = JUNK, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
 
-local NAMES = { [JUNK] = "Junk", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked" }
-local COLORS = { [JUNK] = "ff9d9d9d", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040" }
+local NAMES = { [JUNK] = "Junk", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
+local COLORS = { [JUNK] = "ff9d9d9d", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
 local ICONS = {
   [JUNK] = "Interface\\Buttons\\UI-GroupLoot-Coin-Up",
   [CONFIRM] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
   [LOCK] = "Interface\\Icons\\INV_Misc_Key_03",
+  [ONME] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_3", -- purple diamond
 }
+-- The lowest level each action is blocked at. Anything not listed (sell, disenchant, destroy, trade,
+-- mail, ...) is blocked from Confirm up.
+local GUARD_FROM = { bank = ONME }
 -- Spells that destroy the item you click: Disenchant, Prospecting, Milling (ignored if the client lacks them).
 local DESTRUCTIVE_SPELLS = { 13262, 31252, 51005 }
 local DELETE_POPUPS = { DELETE_ITEM = true, DELETE_GOOD_ITEM = true, DELETE_QUEST_ITEM = true, DELETE_GOOD_QUEST_ITEM = true }
@@ -35,6 +40,7 @@ local NUM_BAGS = NUM_BAG_SLOTS or 4
 
 local db
 local merchantOpen = false
+local bankOpen = false
 
 ---------------------------------------------------------------------------------------------------
 -- Output
@@ -95,11 +101,13 @@ end
 
 -- The one check for any action that would lose an item. Returns true (and shows the error) when the
 -- item is locked, so callers just do: if Faves.Guard(id, link, "sell") then <undo or block> end
+-- Some actions are only blocked at higher levels (banking: Always on me only).
 function KS.Guard(id, link, action)
-  if not KS.IsLocked(id) then return false end
   local level = KS.GetLevel(id)
-  Err(("%s is %s. Unfavorite it to %s it (Alt+Right-click it in your bags, or /faves normal <item>).")
-    :format(link or ItemLink(id), NAMES[level], action))
+  if level < (GUARD_FROM[action] or CONFIRM) then return false end
+  local how = (action == "bank") and "Lower it to Locked to bank it" or ("Unfavorite it to %s it"):format(action)
+  Err(("%s is %s. %s (Alt+Right-click it in your bags, or /faves normal <item>).")
+    :format(link or ItemLink(id), NAMES[level], how))
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
   return true
 end
@@ -155,6 +163,87 @@ local function QueueRescue()
   C_Timer.After(0.2, function()
     rescueQueued = false
     RescueBuyback()
+  end)
+end
+
+---------------------------------------------------------------------------------------------------
+-- Guard: bank. Like selling, putting an item in the bank can't be blocked beforehand (right-click,
+-- dragging, a bag-sort or auto-deposit addon), so any Always on me item found in the bank while it's
+-- open is moved straight back to your bags. One per pass, with a pause, like the buyback.
+
+local function BankBags()
+  local bags = { BANK_CONTAINER or -1 }
+  local first = NUM_BAGS + 1
+  for b = first, first + (NUM_BANKBAGSLOTS or 6) - 1 do bags[#bags + 1] = b end
+  local bi = Enum and Enum.BagIndex
+  if bi then
+    if bi.Reagentbank then bags[#bags + 1] = bi.Reagentbank end
+    for i = 1, 5 do
+      local tab = bi["AccountBankTab_" .. i]
+      if tab then bags[#bags + 1] = tab end
+    end
+  end
+  return bags
+end
+
+-- Puts the item on the cursor into the first normal player bag with room. True when it landed.
+local function PutInBags()
+  for bag = 0, NUM_BAGS do
+    local free, bagType = C.GetContainerNumFreeSlots(bag)
+    if free and free > 0 and (bagType == 0 or bagType == nil) then
+      if bag == 0 then
+        PutItemInBackpack()
+      else
+        PutItemInBag(C.ContainerIDToInventoryID(bag))
+      end
+      if not GetCursorInfo() then return true end
+    end
+  end
+  return false
+end
+
+local bankRescuing = false
+local warnedFull = {}
+
+local function RescueBank()
+  if bankRescuing or not bankOpen then return end
+  if GetCursorInfo() then return end -- wait until you've let go of whatever you're holding
+  for _, bag in ipairs(BankBags()) do
+    for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
+      local info = C.GetContainerItemInfo(bag, slot)
+      if info and info.itemID and not info.isLocked and KS.GetLevel(info.itemID) >= ONME then
+        C.PickupContainerItem(bag, slot)
+        if not PutInBags() then
+          ClearCursor() -- puts it back where it was
+          if not warnedFull[info.itemID] then
+            warnedFull[info.itemID] = true
+            Err(("%s is Always on me, but your bags are full so it can't come back out of the bank.")
+              :format(info.hyperlink))
+          end
+          Log("no bag room to move item %d out of the bank", info.itemID)
+          return
+        end
+        warnedFull[info.itemID] = nil
+        KS.Guard(info.itemID, info.hyperlink, "bank")
+        Print("Moved %s back to your bags.", info.hyperlink)
+        bankRescuing = true
+        C_Timer.After(0.5, function()
+          bankRescuing = false
+          RescueBank()
+        end)
+        return
+      end
+    end
+  end
+end
+
+local bankQueued = false
+local function QueueBankRescue()
+  if bankQueued or not bankOpen then return end
+  bankQueued = true
+  C_Timer.After(0.2, function()
+    bankQueued = false
+    RescueBank()
   end)
 end
 
@@ -360,7 +449,7 @@ local function PreClick(btn, mouse)
   -- Alt+Left-click raises protection (Junk > Normal > Confirm > Locked); Alt+Right-click lowers it.
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
     local cur = KS.GetLevel(info.itemID)
-    local new = math.max(JUNK, math.min(LOCK, cur + (mouse == "LeftButton" and 1 or -1)))
+    local new = math.max(JUNK, math.min(ONME, cur + (mouse == "LeftButton" and 1 or -1)))
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     if new == cur then
       Print("%s is already %s.", info.hyperlink, LevelText(cur))
@@ -562,9 +651,10 @@ end
 -- One-time intro: what Confirm/Locked protect, and what they don't yet. Shown until "Got it" is
 -- clicked; bump INTRO_VERSION when the list changes so everyone sees the new one once.
 
-local INTRO_VERSION = 1
+local INTRO_VERSION = 2
 local INTRO_TEXT = table.concat({
   "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. For now Confirm works the same as Locked.",
+  "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "",
   "|cff33ff99Protected against|r",
@@ -572,6 +662,7 @@ local INTRO_TEXT = table.concat({
   "- Disenchant, Prospecting, Milling: the click is blocked",
   "- Destroying: the delete popup closes",
   "- Trade and mail: the item is taken back out",
+  "- Bank (Always on me only): it's moved straight back to your bags",
   "",
   "|cff33ff99Still allowed|r",
   "- Enchants, oils and scrolls",
@@ -629,7 +720,7 @@ end
 
 local function ListItems()
   local any = false
-  for _, level in ipairs({ JUNK, CONFIRM, LOCK }) do
+  for _, level in ipairs({ JUNK, CONFIRM, LOCK, ONME }) do
     for id, l in pairs(db.items) do
       if l == level then
         any = true
@@ -642,7 +733,7 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /faves junk|normal|confirm|lock <item link or ID> - set an item's level")
+  print("  /faves junk|normal|confirm|lock|onme <item link or ID> - set an item's level")
   print("  /faves list - show marked items")
   print("  /faves status - check which guards are active")
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
@@ -659,12 +750,13 @@ local function Status()
   print("  destroy guard: " .. (StaticPopup_Show and "on" or "OFF"))
   print("  tooltip line: " .. ((TooltipDataProcessor and "on") or "OFF"))
   print("  trade/mail/vendor buyback guards: on (vendor open: " .. tostring(merchantOpen) .. ")")
+  print("  bank guard (Always on me): on (bank open: " .. tostring(bankOpen) .. ")")
   if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ArkInventory") then
     print("  |cffffd100ArkInventory is loaded: Alt+Click, bag icons and the disenchant guard only work in the default bags.|r")
   end
 end
 
-local LEVEL_CMDS = { junk = JUNK, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK }
+local LEVEL_CMDS = { junk = JUNK, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
 SLASH_FAVES1 = "/faves"
 SlashCmdList.FAVES = function(msg)
@@ -702,6 +794,9 @@ f:RegisterEvent("PLAYER_LOGIN")
 f:RegisterEvent("MERCHANT_SHOW")
 f:RegisterEvent("MERCHANT_CLOSED")
 f:RegisterEvent("MERCHANT_UPDATE")
+f:RegisterEvent("BANKFRAME_OPENED")
+f:RegisterEvent("BANKFRAME_CLOSED")
+f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
 f:RegisterEvent("MAIL_SEND_INFO_UPDATE")
@@ -726,6 +821,13 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     merchantOpen = false
   elseif event == "MERCHANT_UPDATE" then
     QueueRescue()
+  elseif event == "BANKFRAME_OPENED" then
+    bankOpen = true
+    QueueBankRescue()
+  elseif event == "BANKFRAME_CLOSED" then
+    bankOpen = false
+  elseif event == "PLAYERBANKSLOTS_CHANGED" then
+    QueueBankRescue()
   elseif event == "CURRENT_SPELL_CAST_CHANGED" then
     OnSpellCastChanged()
   elseif event == "UNIT_SPELLCAST_SENT" then
@@ -733,6 +835,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
   elseif event == "BAG_UPDATE_DELAYED" then
     RefreshBags()
     if merchantOpen then QueueRescue() end
+    if bankOpen then QueueBankRescue() end
   elseif event == "TRADE_PLAYER_ITEM_CHANGED" then
     if arg1 then CheckTrade(arg1) end
   elseif event == "MAIL_SEND_INFO_UPDATE" then

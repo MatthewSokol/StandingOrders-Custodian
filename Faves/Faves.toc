@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Faves
-## Notes: Mark items Junk, Confirm or Locked. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident.
+## Notes: Mark items Junk, Confirm, Locked or Always on me. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident; Always on me items also stay out of the bank.
 ## Author: MatthewSokol
 ## Version: 1.0.0
 ## SavedVariables: FavesDB
