@@ -16,12 +16,13 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Level | Icon | What happens |
 |---|---|---|
 | Junk | coin | Safe to lose. SellAll sells these automatically when a vendor opens |
+| Mail | letter | To send to your bank character (for a mailing addon). SellAll never sells these. Unbound BoE greens and blues are marked Mail automatically, unless you took them from a player's mail (your other characters included; AH mail doesn't count). Turn this off with `/faves automail off` |
 | Normal | none | The default |
 | Confirm | star | Levelling favorite. Meant to ask before it's lost; until that window exists it acts as **Locked** |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/faves list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/faves junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/faves list` shows every marked item. Item tooltips show the level.
 
 ## Guards
 
@@ -47,7 +48,9 @@ Not supported yet: marks are per item ID, so every copy of an item shares a leve
 ```lua
 if Faves and Faves.IsLocked(itemID) then --[[ skip it ]] end
 if Faves and Faves.Guard(itemID, link, "disenchant") then return end -- shows the error for you
-local level = Faves and Faves.GetLevel(itemID) -- Faves.LEVELS.JUNK / NORMAL / CONFIRM / LOCK / ONME
+local level = Faves and Faves.GetLevel(itemID) -- Faves.LEVELS.JUNK / MAIL / NORMAL / CONFIRM / LOCK / ONME
+-- MAIL is 1.5 (between JUNK 1 and NORMAL 2), so compare with Faves.LEVELS, not with level + 1.
+if Faves and Faves.GetLevel(itemID) == Faves.LEVELS.MAIL then --[[ send it to the bank character ]] end
 ```
 
 ## Commands

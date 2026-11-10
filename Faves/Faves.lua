@@ -3,6 +3,8 @@
 --
 -- Levels (stored per item ID, account wide):
 --   Junk     safe to get rid of (SellAll sells these automatically when a vendor opens)
+--   Mail     to be mailed to a bank character (for a mailing addon; SellAll never sells these).
+--            Unbound BoE greens and blues are marked Mail automatically, except ones from a player's mail
 --   Normal   the default, stored as nil
 --   Confirm  "levelling favorite": meant to ask first. No confirm window yet, so for now it acts as Locked
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
@@ -15,13 +17,17 @@ local ADDON = ...
 local KS = {}
 _G.Faves = KS
 
-local JUNK, NORMAL, CONFIRM, LOCK, ONME = 1, 2, 3, 4, 5
-KS.LEVELS = { JUNK = JUNK, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
+-- Mail sits between Junk and Normal. It's 1.5 rather than renumbering, so saved marks and addons that
+-- compare against the old numbers (SellAll: Normal 2, Confirm 3) keep working.
+local JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME = 1, 1.5, 2, 3, 4, 5
+KS.LEVELS = { JUNK = JUNK, MAIL = MAIL, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
+local ORDER = { JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
 
-local NAMES = { [JUNK] = "Junk", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
-local COLORS = { [JUNK] = "ff9d9d9d", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
+local NAMES = { [JUNK] = "Junk", [MAIL] = "Mail", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
+local COLORS = { [JUNK] = "ff9d9d9d", [MAIL] = "ff4fb3ff", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
 local ICONS = {
   [JUNK] = "Interface\\Buttons\\UI-GroupLoot-Coin-Up",
+  [MAIL] = "Interface\\Icons\\INV_Letter_15",
   [CONFIRM] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
   [LOCK] = "Interface\\Icons\\INV_Misc_Key_03",
   [ONME] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_3", -- purple diamond
@@ -541,10 +547,14 @@ local function PreClick(btn, mouse)
     return
   end
 
-  -- Alt+Left-click raises protection (Junk > Normal > Confirm > Locked); Alt+Right-click lowers it.
+  -- Alt+Left-click raises protection (Junk > Mail > Normal > Confirm > Locked > Always on me);
+  -- Alt+Right-click lowers it.
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
     local cur = KS.GetLevel(info.itemID)
-    local new = math.max(JUNK, math.min(ONME, cur + (mouse == "LeftButton" and 1 or -1)))
+    local i = 3
+    for n, level in ipairs(ORDER) do if level == cur then i = n end end
+    i = math.max(1, math.min(#ORDER, i + (mouse == "LeftButton" and 1 or -1)))
+    local new = ORDER[i]
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     if new == cur then
       Print("%s is already %s.", info.hyperlink, LevelText(cur))
@@ -732,6 +742,83 @@ local function OnSpellcastSent(target, spellID)
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Auto-marking Mail: unbound BoE greens and blues become Mail when they're in your bags, ready for a
+-- mailing addon to send them to a bank character. Not items taken from a player's mail (your other
+-- characters included): those were sent to this character to keep. AH mail doesn't count as a
+-- player's. Each item ID is only looked at once, so a level you change by hand stays.
+
+local BIND_ON_EQUIP = 2
+
+local function AutoMailOn() return db and db.autoMail ~= false end
+
+-- Called for mail you take items from (TakeInboxItem, AutoLootMailItem, and the addons that use them).
+local function OnTakeMail(index, attach)
+  if not (db and index) then return end
+  local _, _, sender, _, _, _, _, _, _, _, _, canReply, isGM = GetInboxHeaderInfo(index)
+  local invoice = GetInboxInvoiceInfo and GetInboxInvoiceInfo(index)
+  local fromPlayer = canReply and not isGM and not invoice
+  local first, last = attach or 1, attach or (ATTACHMENTS_MAX_RECEIVE or 16)
+  for a = first, last do
+    local link = GetInboxItemLink(index, a)
+    local id = LinkID(link)
+    if id then
+      Log("mail item %s from %s (%s)", link, tostring(sender), fromPlayer and "player" or "not a player")
+      if fromPlayer then
+        db.autoMailSeen[id] = true
+        -- Already auto-marked Mail on another character: this one keeps it.
+        if KS.GetLevel(id) == MAIL and db.autoMailed[id] then
+          KS.SetLevel(id, NORMAL, link, { scope = "char", quiet = true })
+          Print("%s came from %s, so it stays Normal on this character instead of Mail.", link, tostring(sender))
+        end
+      end
+    end
+  end
+end
+
+local function HookMail()
+  if TakeInboxItem then hooksecurefunc("TakeInboxItem", OnTakeMail) end
+  if AutoLootMailItem then hooksecurefunc("AutoLootMailItem", function(index) OnTakeMail(index) end) end
+end
+
+local function AutoMail()
+  if not AutoMailOn() then return end
+  local marked = {}
+  for bag = 0, NUM_BAGS do
+    for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
+      local info = C.GetContainerItemInfo(bag, slot)
+      local id = info and info.itemID
+      if id and not db.autoMailSeen[id] and (info.quality == 2 or info.quality == 3) and not info.isBound then
+        local bindType = select(14, GetItemInfo(id))
+        if bindType ~= nil then -- nil: item data not loaded yet, look again next time
+          db.autoMailSeen[id] = true
+          if bindType == BIND_ON_EQUIP and not KS.GetItemScope(id) then
+            db.autoMailed[id] = true
+            KS.SetLevel(id, MAIL, info.hyperlink, { scope = "account", quiet = true })
+            marked[#marked + 1] = info.hyperlink
+          end
+        end
+      end
+    end
+  end
+  if #marked > 0 then
+    local shown = table.concat(marked, ", ", 1, math.min(#marked, 5))
+    if #marked > 5 then shown = shown .. (" and %d more"):format(#marked - 5) end
+    Print("Marked as %s: %s. (/faves automail off to stop this)", LevelText(MAIL), shown)
+    Log("auto-marked %d items as Mail", #marked)
+  end
+end
+
+local autoMailQueued = false
+local function QueueAutoMail()
+  if autoMailQueued or not AutoMailOn() then return end
+  autoMailQueued = true
+  C_Timer.After(0.5, function()
+    autoMailQueued = false
+    AutoMail()
+  end)
+end
+
+---------------------------------------------------------------------------------------------------
 -- Tooltip line
 
 local function HookTooltip()
@@ -746,11 +833,12 @@ end
 -- One-time intro: what Confirm/Locked protect, and what they don't yet. Shown until "Got it" is
 -- clicked; bump INTRO_VERSION when the list changes so everyone sees the new one once.
 
-local INTRO_VERSION = 2
+local INTRO_VERSION = 3
 local INTRO_TEXT = table.concat({
   "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. For now Confirm works the same as Locked.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
+  "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character. Unbound BoE greens and blues are marked Mail automatically, unless they came from another player's or character's mail (/faves automail off turns this off).",
   "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
@@ -816,7 +904,7 @@ end
 
 local function ListItems()
   local any = false
-  for _, level in ipairs({ JUNK, NORMAL, CONFIRM, LOCK, ONME }) do
+  for _, level in ipairs(ORDER) do
     for _, scope in ipairs({ "account", "char" }) do
       for id, l in pairs(scope == "char" and cdb.items or db.items) do
         if l == level then
@@ -831,9 +919,10 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /faves junk|normal|confirm|lock|onme <item link or ID> [char|account] - set an item's level")
+  print("  /faves junk|mail|normal|confirm|lock|onme <item link or ID> [char|account] - set an item's level")
   print("  /faves list - show marked items")
   print("  /faves scope account|char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /faves automail on|off - mark unbound BoE greens and blues as Mail (now " .. (AutoMailOn() and "on" or "off") .. ")")
   print("  /faves status - check which guards are active")
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /faves log [n] - show the last n guard log lines (default 25)")
@@ -844,6 +933,7 @@ end
 
 local function Status()
   Print("Status:")
+  print("  auto-mark BoE greens/blues as Mail: " .. (AutoMailOn() and "on" or "off"))
   print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
@@ -858,7 +948,7 @@ local function Status()
   end
 end
 
-local LEVEL_CMDS = { junk = JUNK, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
 SLASH_FAVES1 = "/faves"
 SlashCmdList.FAVES = function(msg)
@@ -876,6 +966,10 @@ SlashCmdList.FAVES = function(msg)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then
     KS.SetScope(rest)
     Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
+  elseif cmd == "automail" and (rest == "on" or rest == "off") then
+    db.autoMail = (rest == "on")
+    Print("Auto-marking BoE greens and blues as Mail is %s.", rest)
+    if rest == "on" then QueueAutoMail() end
   elseif cmd == "list" then
     ListItems()
   elseif cmd == "status" then
@@ -922,11 +1016,15 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     FavesCharDB = FavesCharDB or {}
     cdb = FavesCharDB
     cdb.items = cdb.items or {}
+    db.autoMailSeen = db.autoMailSeen or {} -- item IDs auto-mail has already decided on
+    db.autoMailed = db.autoMailed or {}     -- item IDs it marked Mail
   elseif event == "PLAYER_LOGIN" then
     HookBags()
     HookCasts()
     HookTooltip()
     HookDestroy()
+    HookMail()
+    C_Timer.After(5, QueueAutoMail)
     if db.introSeen ~= INTRO_VERSION then C_Timer.After(4, function() KS:ShowIntro() end) end
   elseif event == "MERCHANT_SHOW" then
     merchantOpen = true
@@ -950,6 +1048,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     OnSpellcastSent(arg2, arg4) -- unit, target, castGUID, spellID
   elseif event == "BAG_UPDATE_DELAYED" then
     RefreshBags()
+    QueueAutoMail()
     if merchantOpen then QueueRescue() end
     if bankOpen then QueueBankRescue() end
   elseif event == "TRADE_PLAYER_ITEM_CHANGED" then

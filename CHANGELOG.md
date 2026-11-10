@@ -6,6 +6,7 @@ First release. Item protection used to be part of SellAll; it's now its own addo
 
 - **Item levels**, for all your characters or just one (Alt+Shift+Left-click an item to switch, `/faves scope` for the default):
   - **Junk** marks items you're happy to lose (SellAll sells them when a vendor opens).
+  - **Mail** marks items to send to your bank character. Unbound BoE greens and blues are marked Mail automatically, except ones taken from a player's mail (`/faves automail off` turns it off).
   - **Normal** is the default.
   - **Confirm** currently acts as Locked.
   - **Locked** is protected from everything below.

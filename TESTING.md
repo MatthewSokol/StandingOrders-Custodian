@@ -47,7 +47,11 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] Destroy: dragging a Locked item out of the bags closes the delete popup, item kept
 - [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] Mail: a Locked attachment is removed, Normal attachments stay
-- [ ] Alt+Left-click steps an item through Junk, Normal, Confirm, Locked, Always on me
+- [ ] Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
+- [ ] Looting an unbound BoE green or blue marks it Mail (letter icon, chat line); a soulbound or white one isn't
+- [ ] A BoE taken from another character's mail isn't marked Mail (and stays Normal on that character if it was Mail); one bought on the AH is
+- [ ] Changing an auto-marked item to Normal sticks after /reload and more loot
+- [ ] `/faves automail off` stops auto-marking; SellAll's Sell All and Up to skip Mail items
 - [ ] Alt+Right-click steps it back down
 - [ ] At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] Icons and tooltip lines show in the combined bag
