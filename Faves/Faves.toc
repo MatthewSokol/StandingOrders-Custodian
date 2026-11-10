@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: Faves
+## Notes: Mark items Junk, Confirm or Locked. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident.
+## Author: MatthewSokol
+## Version: 1.0.0
+## SavedVariables: FavesDB
+## IconTexture: Interface\Icons\INV_Misc_Key_03
+## Category: Inventory
+## X-Website: https://github.com/MatthewSokol/Faves
+## X-License: MIT
+
+Faves.lua
