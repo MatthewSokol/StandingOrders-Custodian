@@ -61,4 +61,4 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
 - [ ] Release tagged on `main` (for example `v1.0.0`) and pushed
 - [ ] Zip uploaded to CurseForge with the `CHANGELOG.md` entry as the release notes
-- [ ] Released before (or together with) SellAll, which requires it
+- [ ] Released before (or together with) SellAll, whose warning links to it
