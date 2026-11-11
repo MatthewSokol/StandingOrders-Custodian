@@ -48,7 +48,10 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] Mail: a Locked attachment is removed, Normal attachments stay
 - [ ] Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
-- [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, white cloth/herbs/ore become Mail, an unbound BoE green or blue becomes Mail
+- [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
+- [ ] Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
+- [ ] Opening a profession window takes the Mail mark off materials its recipes use; /faves status lists professions and which still need their window opened
+- [ ] Enchanting materials (Strange Dust, Lesser Magic Essence, shards) are never auto-marked
 - [ ] Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
 - [ ] Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
 - [ ] Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them are removed at login

@@ -32,14 +32,16 @@ New items in your bags are marked for you (all on by default; turn each off in `
 |---|---|
 | Gray | Junk |
 | White gear, weapons and junk with no profession or quest use | Junk |
-| Crafting materials, white and up (cloth, herbs, ore, leather...) | Mail |
+| Crafting materials none of this character's professions use (cloth, herbs, ore, leather...) | Mail, on this character only |
 | Bind on Equip, green and up, not yet bound | Mail |
 
 **Per-character items** are never auto-marked: consumables (food, drink, potions, scrolls...), reagents (ankhs, light feathers, powders...) and trade goods that vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of these, so when you mark one, the mark is for that character only (add `account` to the command, or Alt+Shift+Left-click it, to share it). Faves knows the common vendor trade goods and learns the rest from every vendor you open.
 
+**Crafting materials follow your professions.** Each character reads the reagents of its known recipes whenever you open one of its profession windows. A material that none of its recipes use is marked Mail for that character only; one that a recipe uses is left alone (and loses an earlier Mail mark). Until a profession's window has been opened once, Faves guesses from the item's kind (cloth for Tailoring and First Aid, herbs for Alchemy...) and leaves items it can't place unmarked until it knows. `/faves status` lists your professions and which ones still need their window opened. Enchanting materials (dusts, essences, shards) are never auto-marked.
+
 Quest items, bags, ammo, recipes, keys, shirts and tabards are left alone too, and so is anything VendorFlip is holding to flip. **Items you got on purpose are left alone** on the character that got them: traded to you, bought on the AH or from a vendor, or mailed to you by a player (your other characters included). If another character had already auto-marked one, it's Normal on this character.
 
-Only unmarked items are marked, and each item only once: change an auto-marked item's level and it stays changed. Auto-marks apply to all your characters.
+Only unmarked items are marked, and each item only once: change an auto-marked item's level and it stays changed. Junk and BoE Mail marks apply to all your characters; crafting-material Mail marks to one.
 
 ## Guards
 

@@ -784,7 +784,8 @@ end
 -- /faves settings):
 --   gray                                        -> Junk
 --   white with no profession or quest use        -> Junk  (gear, weapons, gray-ish junk)
---   crafting materials (white and up, unbound)   -> Mail
+--   crafting materials (white and up, unbound)   -> Mail on this character, when none of its
+--                                                   professions use them (see Professions)
 --   unbound Bind on Equip (green and up)         -> Mail
 -- Quest items, consumables, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
 -- anything VendorFlip is holding to flip. Items you got on purpose (traded to you, bought on the AH or
@@ -822,8 +823,205 @@ local function HeldByVendorFlip(id)
   return ok and held == true
 end
 
+---------------------------------------------------------------------------------------------------
+-- Professions: which crafting materials this character uses. The reliable answer is the reagents of
+-- the recipes it knows, read whenever one of its profession windows opens (FavesCharDB.recipeMats).
+-- For a profession whose window hasn't been opened yet, the item's kind is used as a guess; when the
+-- kind can't tell, the item waits. Enchanting materials are never auto-marked.
+
+local ENCHANTING_SUBCLASS = 12 -- Trade Goods: Enchanting
+local ENCHANT_MATS = {}
+for _, id in ipairs({
+  10940, 11083, 11137, 11176, 16204,                                     -- dusts
+  10938, 10939, 10998, 11082, 11134, 11135, 11174, 11175, 16202, 16203,  -- essences
+  10978, 11084, 11138, 11139, 11177, 11178, 14343, 14344, 20725,         -- shards, Nexus Crystal
+}) do ENCHANT_MATS[id] = true end
+
+local function IsEnchantingMat(id, classID, subclassID)
+  return (ENCHANT_MATS[id] or (classID == TRADEGOODS and subclassID == ENCHANTING_SUBCLASS)) and true or false
+end
+
+function KS.IsEnchantingMat(id)
+  if not (id and GetItemInfoInstant) then return ENCHANT_MATS[id] or false end
+  local _, _, _, _, _, classID, subclassID = GetItemInfoInstant(id)
+  return IsEnchantingMat(id, classID, subclassID)
+end
+
+-- Gathering professions have no recipes (Mining does: smelting).
+local GATHERING = { [182] = true, [393] = true, [356] = true, Herbalism = true, Skinning = true, Fishing = true }
+local CRAFTING_NAMES = { Alchemy = true, Blacksmithing = true, Enchanting = true, Engineering = true,
+  Leatherworking = true, Tailoring = true, Mining = true, Cooking = true, ["First Aid"] = true,
+  Jewelcrafting = true, Inscription = true }
+-- Trade Goods subclass -> the professions that might use it (the guess before recipes are seen).
+-- Subclasses not listed (plain Trade Goods, Elemental, Other...) can't be guessed.
+local SUBCLASS_PROFS = {
+  [1] = { Engineering = true }, [2] = { Engineering = true }, [3] = { Engineering = true }, -- Parts, Explosives, Devices
+  [4] = { Jewelcrafting = true },
+  [5] = { Tailoring = true, ["First Aid"] = true },                                        -- Cloth
+  [6] = { Leatherworking = true },
+  [7] = { Blacksmithing = true, Engineering = true, Mining = true, Jewelcrafting = true },  -- Metal & Stone
+  [8] = { Cooking = true },                                                                -- Meat
+  [9] = { Alchemy = true, Inscription = true },                                            -- Herb
+  [16] = { Inscription = true },
+}
+
+-- This character's crafting professions (name -> true), or nil when the client can't say.
+local function MyProfessions()
+  if GetProfessions and GetProfessionInfo then
+    local profs, list = {}, { GetProfessions() }
+    for i = 1, 6 do
+      local index = list[i]
+      if index then
+        local name, _, _, _, _, _, line = GetProfessionInfo(index)
+        if name and not GATHERING[line or 0] and not GATHERING[name] then profs[name] = true end
+      end
+    end
+    return profs
+  end
+  if GetNumSkillLines and GetSkillLineInfo then
+    local profs, any = {}, false
+    for i = 1, GetNumSkillLines() do
+      local name, isHeader = GetSkillLineInfo(i)
+      if name and not isHeader then
+        any = true
+        if CRAFTING_NAMES[name] then profs[name] = true end
+      end
+    end
+    if any then return profs end
+  end
+end
+
+-- Professions for this pass of auto-marks: what the client says plus every one whose recipes we've
+-- read. nil when neither is known yet.
+local profState
+local function ProfessionState()
+  if profState ~= nil then return profState or nil end
+  local detected = MyProfessions()
+  if not detected and not next(cdb.scanned) then
+    profState = false
+    return nil
+  end
+  local unscanned = {}
+  for name in pairs(detected or {}) do
+    if not cdb.scanned[name] then unscanned[#unscanned + 1] = name end
+  end
+  profState = { unscanned = unscanned }
+  return profState
+end
+
+-- true when this character's professions use the item, false when none do, nil when it can't tell yet.
+local function UsedHere(id, subclassID)
+  if cdb.recipeMats[id] then return true end
+  local state = ProfessionState()
+  if not state then return nil end
+  if #state.unscanned == 0 then return false end
+  local could = SUBCLASS_PROFS[subclassID]
+  if not could then return nil end
+  for _, name in ipairs(state.unscanned) do
+    if could[name] then return nil end
+  end
+  return false
+end
+
+-- The reagents of a profession's known recipes, from its window. Mail marks this character's
+-- auto-marks put on items it turns out to use come off again.
+local function RecordRecipes(prof, mats)
+  if not (cdb and prof and prof ~= "" and next(mats)) then return end
+  local count, new = 0, 0
+  for id in pairs(mats) do
+    count = count + 1
+    if not cdb.recipeMats[id] then
+      cdb.recipeMats[id] = prof
+      new = new + 1
+    end
+  end
+  local first = not cdb.scanned[prof]
+  cdb.scanned[prof] = true
+  local freed = {}
+  for id, level in pairs(cdb.autoMarked) do
+    if cdb.recipeMats[id] then
+      if cdb.items[id] == level then
+        cdb.items[id] = nil
+        freed[#freed + 1] = ItemLink(id)
+      end
+      cdb.autoMarked[id] = nil
+      cdb.autoSeen[id] = true -- decided: used here
+    end
+  end
+  if first or new > 0 then
+    Log("%s recipes read: %d reagents, %d new", prof, count, new)
+    profState = nil
+    KS.QueueAutoMark()
+  end
+  if #freed > 0 then
+    Print("Your %s uses %s, so %s no longer Mail.", prof, table.concat(freed, ", "), #freed > 1 and "they're" or "it's")
+    RefreshBags()
+  end
+end
+
+local function AddReagent(mats, link)
+  local id = LinkID(link)
+  if id then mats[id] = true end
+end
+
+local function ScanTradeSkill()
+  if IsTradeSkillLinked and IsTradeSkillLinked() then return end -- someone else's
+  local mats, prof = {}, nil
+  if GetNumTradeSkills and GetTradeSkillLine and (GetNumTradeSkills() or 0) > 0 then
+    prof = GetTradeSkillLine()
+    for i = 1, GetNumTradeSkills() do
+      local _, kind = GetTradeSkillInfo(i)
+      if kind ~= "header" and kind ~= "subheader" then
+        for r = 1, (GetTradeSkillNumReagents(i) or 0) do AddReagent(mats, GetTradeSkillReagentItemLink(i, r)) end
+      end
+    end
+  elseif C_TradeSkillUI and C_TradeSkillUI.GetAllRecipeIDs and C_TradeSkillUI.GetRecipeSchematic then
+    if C_TradeSkillUI.IsTradeSkillLinked and C_TradeSkillUI.IsTradeSkillLinked() then return end
+    local base = C_TradeSkillUI.GetBaseProfessionInfo and C_TradeSkillUI.GetBaseProfessionInfo()
+    prof = base and base.professionName
+    for _, recipeID in ipairs(C_TradeSkillUI.GetAllRecipeIDs() or {}) do
+      local recipe = C_TradeSkillUI.GetRecipeInfo(recipeID)
+      if recipe and recipe.learned then
+        local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false)
+        for _, slotInfo in ipairs(schematic and schematic.reagentSlotSchematics or {}) do
+          for _, reagent in ipairs(slotInfo.reagents or {}) do
+            if reagent.itemID then mats[reagent.itemID] = true end
+          end
+        end
+      end
+    end
+  end
+  RecordRecipes(prof, mats)
+end
+
+-- The Craft window (Enchanting on older clients).
+local function ScanCraft()
+  if not (GetNumCrafts and GetCraftReagentItemLink) then return end
+  local prof = (GetCraftDisplaySkillLine and GetCraftDisplaySkillLine()) or (GetCraftName and GetCraftName())
+  local mats = {}
+  for i = 1, (GetNumCrafts() or 0) do
+    local _, _, kind = GetCraftInfo(i)
+    if kind ~= "header" then
+      for r = 1, (GetCraftNumReagents(i) or 0) do AddReagent(mats, GetCraftReagentItemLink(i, r)) end
+    end
+  end
+  RecordRecipes(prof, mats)
+end
+
+local scanQueued = {}
+local function QueueScan(fn)
+  if scanQueued[fn] then return end
+  scanQueued[fn] = true
+  C_Timer.After(0.3, function()
+    scanQueued[fn] = nil
+    local ok, err = pcall(fn)
+    if not ok then Log("recipe scan failed: %s", tostring(err)) end
+  end)
+end
+
 -- The level the rules give an item, false when the rules leave it alone for good, or nil when it
 -- can't be decided yet (item data not loaded, or the deciding rule is off: decide again later).
+-- The second value is "char" when the decision is for this character only.
 local function AutoLevel(info, bag, slot)
   local id = info.itemID
   local name, _, _, _, _, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
@@ -840,8 +1038,10 @@ local function AutoLevel(info, bag, slot)
   end
   if quest then return false end
 
+  if IsEnchantingMat(id, classID, subclassID) then return false end
+
   local quality, auto = info.quality, db.auto
-  local crafting = classID == TRADEGOODS or classID == REAGENT or isCrafting == true
+  local crafting = classID == TRADEGOODS or isCrafting == true
   if quality == 0 then
     if info.hasNoValue then return false end -- can't be sold anyway
     if not auto.grayJunk then return nil end
@@ -850,7 +1050,10 @@ local function AutoLevel(info, bag, slot)
   if crafting then
     if info.isBound or bindType == BIND_ON_PICKUP then return false end
     if not auto.matsMail then return nil end
-    return MAIL
+    local used = UsedHere(id, subclassID)
+    if used == nil then return nil end
+    if used then return false, "char" end
+    return MAIL, "char"
   end
   if quality == 1 then
     if info.hasNoValue or NEVER_JUNK_CLASS[classID] or NEVER_JUNK_SLOT[equipLoc] then return false end
@@ -869,6 +1072,13 @@ end
 -- An item this character got on purpose: auto-marks leave it alone here, and an auto-mark already
 -- made on another character is overridden with Normal for this one.
 local function OverrideHere(id, link, how)
+  local mine = cdb.autoMarked[id]
+  if mine and cdb.items[id] == mine then
+    cdb.items[id] = nil
+    cdb.autoMarked[id] = nil
+    Print("%s is no longer %s: you %s.", link or ItemLink(id), LevelText(mine), how)
+    RefreshBags()
+  end
   local auto = db.autoMarked[id]
   if auto and db.items[id] == auto and not cdb.items[id] then
     KS.SetLevel(id, NORMAL, link, { scope = "char", quiet = true })
@@ -918,35 +1128,66 @@ local function LearnVendorMats()
   end
 end
 
+-- Crafting materials used to be marked Mail for all characters. They're per character now, so the
+-- old marks come off once and every character decides again.
+local function MigrateAutoMarks()
+  if (db.autoVersion or 1) >= 2 then return end
+  local n = 0
+  for id, level in pairs(db.autoMarked) do
+    if level == MAIL and ItemClass(id) == CLASS_TRADEGOODS then
+      if db.items[id] == level then db.items[id] = nil end
+      db.autoMarked[id] = nil
+      n = n + 1
+    end
+  end
+  for id in pairs(db.autoSeen) do
+    if ItemClass(id) == CLASS_TRADEGOODS then db.autoSeen[id] = nil end
+  end
+  db.autoVersion = 2
+  if n > 0 then
+    Print("Crafting materials are now Mail per character, and only when none of that character's professions use them. Took the old Mail mark off %d of them.", n)
+    Log("migrated auto-marks: %d account-wide crafting Mail marks removed", n)
+    RefreshBags()
+  end
+end
+
 local tradeOpen = false
 
 local function AutoMark()
   if not db or tradeOpen then return end
-  local marked = { [JUNK] = {}, [MAIL] = {} }
+  local marked = { [JUNK] = {}, [MAIL] = {}, here = {} }
+  profState = nil
   for bag = 0, NUM_BAGS do
     for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
       local info = C.GetContainerItemInfo(bag, slot)
       local id = info and info.itemID
       if id and cdb.kept[id] and db.auto.keepReceived then
         OverrideHere(id, info.hyperlink, cdb.kept[id]) -- catches marks made on another character since
-      elseif id and not db.autoSeen[id] and not KS.GetItemScope(id) and not HeldByVendorFlip(id) then
-        local level = AutoLevel(info, bag, slot)
-        if level ~= nil then db.autoSeen[id] = true end
+      elseif id and not db.autoSeen[id] and not cdb.autoSeen[id] and not KS.GetItemScope(id)
+          and not HeldByVendorFlip(id) then
+        local level, scope = AutoLevel(info, bag, slot)
+        local here = scope == "char"
+        if level ~= nil then (here and cdb.autoSeen or db.autoSeen)[id] = true end
         if level then
-          db.autoMarked[id] = level
-          KS.SetLevel(id, level, info.hyperlink, { scope = "account", quiet = true })
-          table.insert(marked[level], info.hyperlink)
+          (here and cdb.autoMarked or db.autoMarked)[id] = level
+          KS.SetLevel(id, level, info.hyperlink, { scope = here and "char" or "account", quiet = true })
+          table.insert(here and marked.here or marked[level], info.hyperlink)
         end
       end
     end
   end
-  for _, level in ipairs({ JUNK, MAIL }) do
-    local list = marked[level]
+  for _, key in ipairs({ JUNK, MAIL, "here" }) do
+    local list = marked[key]
     if #list > 0 then
       local shown = table.concat(list, ", ", 1, math.min(#list, 5))
       if #list > 5 then shown = shown .. (" and %d more"):format(#list - 5) end
-      Print("Marked as %s: %s. (/faves settings to change this)", LevelText(level), shown)
-      Log("auto-marked %d items as %s", #list, NAMES[level])
+      if key == "here" then
+        Print("Marked as %s on this character (none of your professions use them): %s. (/faves settings)",
+          LevelText(MAIL), shown)
+      else
+        Print("Marked as %s: %s. (/faves settings to change this)", LevelText(key), shown)
+      end
+      Log("auto-marked %d items as %s", #list, key == "here" and "Mail (this character)" or NAMES[key])
     end
   end
 end
@@ -1036,7 +1277,7 @@ end
 local AUTO_TEXT = {
   grayJunk = "Gray items become |cff9d9d9dJunk|r",
   whiteJunk = "White gear, weapons and junk (no profession or quest use) become |cff9d9d9dJunk|r",
-  matsMail = "Crafting materials (white and up: cloth, herbs, ore, leather...) become |cff4fb3ffMail|r",
+  matsMail = "Crafting materials none of this character's professions use become |cff4fb3ffMail|r (this character only)",
   boeMail = "Bind on Equip items (green and up, not yet bound) become |cff4fb3ffMail|r",
   keepReceived = "Except items you got on purpose: traded to you, bought on the AH or from a vendor, or mailed by a player",
 }
@@ -1059,7 +1300,7 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Auto-marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Faves knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
   prev = Header(panel, "New marks (Alt+Click, /faves <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
@@ -1123,7 +1364,7 @@ local INTRO_TEXT = table.concat({
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
-  "New items are marked for you: grays and white gear with no use become Junk, crafting materials and unbound BoE items become Mail. Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /faves settings.",
+  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /faves settings.",
   "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
   "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
   "",
@@ -1222,6 +1463,11 @@ local function Status()
   local on = {}
   for _, key in ipairs(AUTO_KEYS) do if KS.GetAuto(key) then on[#on + 1] = key end end
   print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/faves settings)")
+  local profs, parts = MyProfessions() or {}, {}
+  for name in pairs(cdb.scanned) do profs[name] = true end
+  for name in pairs(profs) do parts[#parts + 1] = name .. (cdb.scanned[name] and "" or " (open its window once)") end
+  table.sort(parts)
+  print("  professions: " .. (#parts > 0 and table.concat(parts, ", ") or "none found"))
   print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
@@ -1295,6 +1541,9 @@ pcall(f.RegisterEvent, f, "BANK_TABS_CHANGED") -- tabbed bank only
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
 f:RegisterEvent("TRADE_SHOW")
+for _, event in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_UPDATE", "TRADE_SKILL_LIST_UPDATE", "CRAFT_SHOW", "CRAFT_UPDATE" }) do
+  pcall(f.RegisterEvent, f, event) -- whichever this client has
+end
 f:RegisterEvent("TRADE_CLOSED")
 f:RegisterEvent("TRADE_ACCEPT_UPDATE")
 f:RegisterEvent("MAIL_SEND_INFO_UPDATE")
@@ -1310,6 +1559,10 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     cdb = FavesCharDB
     cdb.items = cdb.items or {}
     db.vendorMats = db.vendorMats or {}  -- trade goods seen on a vendor: per-character items
+    cdb.autoSeen = cdb.autoSeen or {}     -- item IDs decided for this character only
+    cdb.autoMarked = cdb.autoMarked or {} -- item ID -> level auto-marks gave it on this character
+    cdb.recipeMats = cdb.recipeMats or {} -- item ID -> a profession of this character that uses it
+    cdb.scanned = cdb.scanned or {}       -- professions whose recipes have been read
     cdb.kept = cdb.kept or {}            -- item IDs this character got on purpose: no auto-marks here
     db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
@@ -1328,6 +1581,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     HookReceipts()
     CreatePanel()
     DropPersonalAutoMarks()
+    MigrateAutoMarks()
     KS.QueueAutoMark(5)
     if db.introSeen ~= INTRO_VERSION then C_Timer.After(4, function() KS:ShowIntro() end) end
   elseif event == "MERCHANT_SHOW" then
@@ -1357,6 +1611,10 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     KS.QueueAutoMark()
     if merchantOpen then QueueRescue() end
     if bankOpen then QueueBankRescue() end
+  elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_UPDATE" or event == "TRADE_SKILL_LIST_UPDATE" then
+    QueueScan(ScanTradeSkill)
+  elseif event == "CRAFT_SHOW" or event == "CRAFT_UPDATE" then
+    QueueScan(ScanCraft)
   elseif event == "TRADE_SHOW" then
     tradeOpen = true -- no auto-marks until the trade is over and its items are known
   elseif event == "TRADE_ACCEPT_UPDATE" then
