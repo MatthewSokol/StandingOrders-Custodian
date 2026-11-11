@@ -8,6 +8,7 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - **Junk** marks items you're happy to lose (SellAll sells them when a vendor opens).
   - **Mail** marks items to send to your bank character.
 - **Auto-marks**, each one switchable in `/faves settings`: grays and white gear with no profession or quest use become Junk; crafting materials and unbound BoE items become Mail. Items traded to you, bought (AH or vendor) or mailed to you by a player are left alone.
+- **Per-character items:** consumables, reagents and vendor trade goods (thread, vials, flux, dyes...) are never auto-marked, and marking one marks it for that character only.
   - **Normal** is the default.
   - **Confirm** currently acts as Locked.
   - **Locked** is protected from everything below.

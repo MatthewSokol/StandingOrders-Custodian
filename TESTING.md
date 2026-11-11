@@ -51,6 +51,9 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, white cloth/herbs/ore become Mail, an unbound BoE green or blue becomes Mail
 - [ ] Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
 - [ ] Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
+- [ ] Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them are removed at login
+- [ ] Alt+Clicking one of those marks it "(this character)" even with new marks set to all characters
+- [ ] A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
 - [ ] Changing an auto-marked item's level sticks after /reload and more loot
 - [ ] /faves settings: each switch stops its rule; turning one back on marks matching items in your bags
 - [ ] With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /faves settings

@@ -35,7 +35,9 @@ New items in your bags are marked for you (all on by default; turn each off in `
 | Crafting materials, white and up (cloth, herbs, ore, leather...) | Mail |
 | Bind on Equip, green and up, not yet bound | Mail |
 
-Quest items, food and drink, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is anything VendorFlip is holding to flip. **Items you got on purpose are left alone** on the character that got them: traded to you, bought on the AH or from a vendor, or mailed to you by a player (your other characters included). If another character had already auto-marked one, it's Normal on this character.
+**Per-character items** are never auto-marked: consumables (food, drink, potions, scrolls...), reagents (ankhs, light feathers, powders...) and trade goods that vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of these, so when you mark one, the mark is for that character only (add `account` to the command, or Alt+Shift+Left-click it, to share it). Faves knows the common vendor trade goods and learns the rest from every vendor you open.
+
+Quest items, bags, ammo, recipes, keys, shirts and tabards are left alone too, and so is anything VendorFlip is holding to flip. **Items you got on purpose are left alone** on the character that got them: traded to you, bought on the AH or from a vendor, or mailed to you by a player (your other characters included). If another character had already auto-marked one, it's Normal on this character.
 
 Only unmarked items are marked, and each item only once: change an auto-marked item's level and it stays changed. Auto-marks apply to all your characters.
 

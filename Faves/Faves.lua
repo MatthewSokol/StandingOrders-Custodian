@@ -122,11 +122,48 @@ function KS.IsLocked(id) return KS.GetLevel(id) >= CONFIRM end
 
 local RefreshBags -- defined with the bag hooks below
 
+-- Per-character items: consumables, spell reagents (ankhs, feathers, powders...) and trade goods that
+-- vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of
+-- these, so they're never auto-marked, and a mark on one stays on that character unless you ask for
+-- all characters (/faves <level> <item> account, or Alt+Shift+Left-click).
+local ITEM_CLASS = (Enum and Enum.ItemClass) or {}
+local CLASS_CONSUMABLE = ITEM_CLASS.Consumable or 0
+local CLASS_REAGENT = ITEM_CLASS.Reagent or 5
+local CLASS_TRADEGOODS = ITEM_CLASS.Tradegoods or 7
+-- Vendor trade goods known up front; the rest are learned from every vendor you open (FavesDB.vendorMats).
+local VENDOR_MATS = {}
+for _, id in ipairs({
+  2320, 2321, 4291, 8343, 14341,             -- Coarse, Fine, Silken, Heavy Silken, Rune Thread
+  3371, 3372, 8925, 18256,                   -- Empty, Leaded, Crystal, Imbued Vial
+  2880, 3466,                                -- Weak, Strong Flux
+  4289, 2324,                                -- Salt, Bleach
+  2325, 2604, 2605, 4340, 4341, 4342, 6260, 6261, 10290, -- dyes
+  2678, 2692, 3713,                          -- Mild, Hot, Soothing Spices
+  6217, 4470, 3857, 4399, 4400,              -- Copper Rod, Simple Wood, Coal, Wooden Stock, Heavy Stock
+}) do VENDOR_MATS[id] = true end
+
+local GetInstant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+local function ItemClass(id)
+  if GetInstant then return select(6, GetInstant(id)) end
+  return select(12, GetItemInfo(id))
+end
+
+function KS.IsVendorMat(id)
+  return (VENDOR_MATS[id] or (db and db.vendorMats and db.vendorMats[id])) and true or false
+end
+
+function KS.IsPersonal(id)
+  if not id then return false end
+  local class = ItemClass(id)
+  if class == CLASS_CONSUMABLE or class == CLASS_REAGENT then return true end
+  return class == CLASS_TRADEGOODS and KS.IsVendorMat(id)
+end
+
 -- opts (optional): { scope = "account"|"char", quiet = true }. The old third-argument link still works.
 function KS.SetLevel(id, level, link, opts)
   if not id then return end
   opts = opts or {}
-  local scope = opts.scope or KS.GetScope()
+  local scope = opts.scope or (KS.IsPersonal(id) and "char") or KS.GetScope()
   if scope == "char" then
     -- Normal only needs storing here when it has to override an account-wide mark.
     cdb.items[id] = (level ~= NORMAL or db.items[id]) and level or nil
@@ -791,6 +828,7 @@ local function AutoLevel(info, bag, slot)
   local id = info.itemID
   local name, _, _, _, _, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
   if not name then return nil end
+  if KS.IsPersonal(id) then return false end -- consumables, reagents, vendor trade goods
   if not classID and GetItemInfoInstant then
     local _, _, _, loc, _, cls, sub = GetItemInfoInstant(id)
     equipLoc, classID, subclassID = equipLoc or loc, cls, sub
@@ -843,6 +881,41 @@ local function KeepHere(id, link, how)
   cdb.kept[id] = how
   Log("kept item %d here: %s", id, how)
   OverrideHere(id, link, how)
+end
+
+-- Auto-marks on per-character items (from before they were left alone, or before a vendor showed
+-- that an item is sold there) are taken off again.
+local function DropPersonalAutoMarks()
+  local n = 0
+  for id, level in pairs(db.autoMarked) do
+    if KS.IsPersonal(id) then
+      if db.items[id] == level then db.items[id] = nil end
+      db.autoMarked[id] = nil
+      n = n + 1
+    end
+  end
+  if n > 0 then
+    Print("Took auto-marks off %d consumables, reagents and vendor trade goods: mark those yourself, per character.", n)
+    Log("dropped %d auto-marks on per-character items", n)
+    RefreshBags()
+  end
+end
+
+-- Trade goods this vendor sells become per-character items.
+local function LearnVendorMats()
+  if not (db and GetMerchantNumItems) then return end
+  local new = 0
+  for i = 1, GetMerchantNumItems() do
+    local id = LinkID(GetMerchantItemLink(i))
+    if id and not KS.IsVendorMat(id) and ItemClass(id) == CLASS_TRADEGOODS then
+      db.vendorMats[id] = true
+      new = new + 1
+    end
+  end
+  if new > 0 then
+    Log("learned %d vendor trade goods", new)
+    DropPersonalAutoMarks()
+  end
 end
 
 local tradeOpen = false
@@ -986,7 +1059,7 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, food, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Auto-marks apply to all your characters.", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Auto-marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
   prev = Header(panel, "New marks (Alt+Click, /faves <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
@@ -1051,6 +1124,7 @@ local INTRO_TEXT = table.concat({
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
   "New items are marked for you: grays and white gear with no use become Junk, crafting materials and unbound BoE items become Mail. Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /faves settings.",
+  "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
   "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
@@ -1235,6 +1309,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     FavesCharDB = FavesCharDB or {}
     cdb = FavesCharDB
     cdb.items = cdb.items or {}
+    db.vendorMats = db.vendorMats or {}  -- trade goods seen on a vendor: per-character items
     cdb.kept = cdb.kept or {}            -- item IDs this character got on purpose: no auto-marks here
     db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
@@ -1252,14 +1327,17 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     HookDestroy()
     HookReceipts()
     CreatePanel()
+    DropPersonalAutoMarks()
     KS.QueueAutoMark(5)
     if db.introSeen ~= INTRO_VERSION then C_Timer.After(4, function() KS:ShowIntro() end) end
   elseif event == "MERCHANT_SHOW" then
+    LearnVendorMats()
     merchantOpen = true
     QueueRescue()
   elseif event == "MERCHANT_CLOSED" then
     merchantOpen = false
   elseif event == "MERCHANT_UPDATE" then
+    LearnVendorMats()
     QueueRescue()
   elseif event == "BANKFRAME_OPENED" then
     bankOpen = true
