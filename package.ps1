@@ -7,7 +7,7 @@ $src = Join-Path $PSScriptRoot "Faves"
 
 $tag = $null
 if (-not $Version) {
-    $tag = git -C $PSScriptRoot describe --tags --exact-match 2>$null
+    $tag = git -C $PSScriptRoot describe --tags --exact-match --match "v[0-9]*" 2>$null
     if (-not $tag) { Write-Error "HEAD has no release tag. Tag the release on main first (git tag vX.Y.Z), or pass -Version for a test build."; exit 1 }
     $Version = $tag -replace "^v", ""
 }

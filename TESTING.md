@@ -70,9 +70,9 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 
 ## 6. Release
 - [ ] CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
-- [ ] Version picked from the PRs' bump levels since the last release; `## [Unreleased]` in `CHANGELOG.md` renamed to `## [<version>] - <date>` and merged to `main`
-- [ ] Release tagged on `main` (for example `v1.0.0`, a lightweight tag) and pushed
+- [ ] Candidate picked (dev-routine `pipeline.js candidates`; default the newest) and release prep passed. Its `## [<version>]` entry is already in `CHANGELOG.md`.
+- [ ] Release tag `v<version>` made on the candidate's commit on `main` (`pipeline.js released <version>`, a lightweight tag) and pushed by name (`git push origin v<version>`), after your go-ahead
 - [ ] `powershell -File ./package.ps1` builds `dist\Faves-<version>.zip` from the tag
 - [ ] The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
-- [ ] Zip uploaded to CurseForge with the `CHANGELOG.md` entry as the release notes
+- [ ] Zip uploaded to CurseForge with the entries of every candidate since the last release as the release notes
 - [ ] Released before (or together with) SellAll, whose warning links to it

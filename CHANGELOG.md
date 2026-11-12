@@ -1,7 +1,8 @@
 # Changelog
 
 All notable changes to Faves. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
-follow [Semantic Versioning](https://semver.org/) and come from the release tag.
+follow [Semantic Versioning](https://semver.org/) and come from git tags: each merged change
+gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
