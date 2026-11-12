@@ -46,6 +46,7 @@ local IsCurrentSpell = (C_Spell and C_Spell.IsCurrentSpell) or IsCurrentSpell
 local NUM_BAGS = NUM_BAG_SLOTS or 4
 
 local db
+local mechanic -- MechanicLib, when the optional Mechanic dev tool is installed
 local merchantOpen = false
 local bankOpen = false
 
@@ -71,6 +72,7 @@ local function Log(msg, ...)
     while #db.log > 200 do table.remove(db.log, 1) end
   end
   Debug(msg)
+  if mechanic then mechanic:Log(ADDON, msg, mechanic.Categories and mechanic.Categories.CORE) end
 end
 
 local function Err(msg)
@@ -635,9 +637,12 @@ end
 local function UpdateFrame(frame)
   -- Hook even while hidden: the default UI can fill a bag frame just before showing it.
   if not (frame and frame.EnumerateValidItems) then return end
+  -- On Forever the enumerator can yield empty slots (nil): skip them rather than stop with an error.
   for _, btn in frame:EnumerateValidItems() do
-    HookButton(btn)
-    UpdateButton(btn)
+    if type(btn) == "table" then
+      HookButton(btn)
+      UpdateButton(btn)
+    end
   end
 end
 
@@ -1032,7 +1037,7 @@ local function AutoLevel(info, bag, slot)
     equipLoc, classID, subclassID = equipLoc or loc, cls, sub
   end
   local quest = classID == QUEST
-  if not quest and C.GetContainerItemQuestInfo then
+  if not quest and bag and C.GetContainerItemQuestInfo then
     local q = C.GetContainerItemQuestInfo(bag, slot)
     quest = q and (q.isQuestItem or q.questID) and true or false
   end
@@ -1427,6 +1432,188 @@ function KS:ShowIntro()
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Self-tests and Mechanic. /faves selftest runs read-only checks of this install and saves them in
+-- FavesDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
+-- is installed (optional, never required: !Mechanic), Faves also registers with it, so the checks show
+-- in its Tests tab and the guard log in its Console. Nothing here changes marks or moves items.
+
+local VERSION = (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version"))
+  or (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version")) or "?"
+
+-- Items the auto-mark rules must get right. "want" is the level, or false for "left alone".
+local SAMPLES = {
+  { id = 6948, want = false, why = "no vendor price" },             -- Hearthstone
+  { id = 10940, want = false, why = "enchanting material" },        -- Strange Dust
+  { id = 2320, want = false, why = "vendor trade good" },           -- Coarse Thread
+  { id = 4540, want = false, why = "consumable" },                  -- Tough Hunk of Bread
+  { id = 17030, want = false, why = "reagent" },                    -- Ankh
+  { id = 4865, want = JUNK, rule = "grayJunk", why = "gray" },       -- Ruined Pelt
+  { id = 25, want = JUNK, rule = "whiteJunk", why = "white weapon" }, -- Worn Shortsword
+}
+
+local function Detail(label, value, status) return { label = label, value = tostring(value), status = status } end
+
+local function Result(details, message)
+  local fails, warns = 0, 0
+  for _, d in ipairs(details) do
+    if d.status == "fail" then fails = fails + 1 elseif d.status == "warn" then warns = warns + 1 end
+  end
+  local passed = fails == 0
+  return { passed = passed, warnings = warns, details = details,
+    message = message or (passed and (warns > 0 and ("ok, %d warning(s)"):format(warns) or "ok")
+      or ("%d failed"):format(fails)) }
+end
+
+local TESTS = {
+  { id = "levels", name = "Levels and guards", run = function()
+    local d = {}
+    local ordered = true
+    for i = 2, #ORDER do if not (ORDER[i] > ORDER[i - 1]) then ordered = false end end
+    d[#d + 1] = Detail("levels in order", ordered and "yes" or "no", ordered and "pass" or "fail")
+    local lockOk = not KS.IsLocked(nil) and KS.GetLevel(nil) == NORMAL
+    d[#d + 1] = Detail("unmarked items are Normal and unlocked", lockOk and "yes" or "no", lockOk and "pass" or "fail")
+    local apiOk = KS.LEVELS.MAIL == MAIL and KS.LEVELS.NORMAL == 2 and KS.LEVELS.CONFIRM == 3
+    d[#d + 1] = Detail("LEVELS numbers other addons rely on", apiOk and "unchanged" or "CHANGED", apiOk and "pass" or "fail")
+    d[#d + 1] = Detail("bank blocked from", NAMES[GUARD_FROM.bank], GUARD_FROM.bank == ONME and "pass" or "fail")
+    return Result(d)
+  end },
+  { id = "saved", name = "Saved marks", run = function()
+    local d, bad = {}, 0
+    for _, t in ipairs({ db.items, cdb.items }) do
+      for id, level in pairs(t) do
+        if type(id) ~= "number" or not NAMES[level] then bad = bad + 1 end
+      end
+    end
+    d[#d + 1] = Detail("marks with an unknown level", bad, bad == 0 and "pass" or "fail")
+    local missing = {}
+    for _, key in ipairs(AUTO_KEYS) do
+      if type(db.auto[key]) ~= "boolean" then missing[#missing + 1] = key end
+    end
+    d[#d + 1] = Detail("auto-mark settings", #missing == 0 and "all set" or table.concat(missing, ", "),
+      #missing == 0 and "pass" or "fail")
+    return Result(d)
+  end },
+  { id = "hooks", name = "Guards hooked", run = function()
+    local d = {}
+    d[#d + 1] = Detail("bag buttons hooked", hookedCount, hookedCount > 0 and "pass" or "warn")
+    d[#d + 1] = Detail("destroy guard (StaticPopup_Show)", StaticPopup_Show and "on" or "missing", StaticPopup_Show and "pass" or "fail")
+    d[#d + 1] = Detail("tooltip line", TooltipDataProcessor and "on" or "missing", TooltipDataProcessor and "pass" or "warn")
+    d[#d + 1] = Detail("disenchant guard (IsCurrentSpell)", IsCurrentSpell and "available" or "missing", IsCurrentSpell and "pass" or "warn")
+    local bags = BankBags()
+    d[#d + 1] = Detail("bank containers", table.concat(bags, ","), #bags > 0 and "pass" or "fail")
+    return Result(d)
+  end },
+  { id = "automarks", name = "Auto-mark rules on sample items", run = function()
+    local d = {}
+    for _, s in ipairs(SAMPLES) do
+      local name, _, quality, _, _, _, _, _, _, _, sellPrice = GetItemInfo(s.id)
+      if not name then
+        if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(s.id) end
+        d[#d + 1] = Detail("item " .. s.id, "not loaded yet: run again", "warn")
+      elseif s.rule and not db.auto[s.rule] then
+        d[#d + 1] = Detail(name, s.rule .. " is off", "warn")
+      else
+        local info = { itemID = s.id, quality = quality, hasNoValue = (sellPrice or 0) == 0, isBound = false }
+        local got = AutoLevel(info)
+        local ok = (got or false) == s.want
+        d[#d + 1] = Detail(name .. " (" .. s.why .. ")", got and NAMES[got] or (got == nil and "undecided" or "left alone"),
+          ok and "pass" or "fail")
+      end
+    end
+    return Result(d)
+  end },
+  { id = "professions", name = "Professions for crafting materials", run = function()
+    local d = {}
+    local profs = MyProfessions()
+    d[#d + 1] = Detail("professions detected", profs and "yes" or "no (recipes only)", profs and "pass" or "warn")
+    for name in pairs(profs or {}) do
+      d[#d + 1] = Detail(name, cdb.scanned[name] and "recipes read" or "open its window once",
+        cdb.scanned[name] and "pass" or "warn")
+    end
+    return Result(d)
+  end },
+  { id = "errors", name = "No Faves Lua errors", run = function()
+    local d = {}
+    local bg = _G.BugGrabber
+    if not (bg and bg.GetDB) then
+      d[#d + 1] = Detail("BugGrabber", "not installed: can't check", "warn")
+      return Result(d)
+    end
+    local n, first = 0, nil
+    for _, err in ipairs(bg:GetDB() or {}) do
+      local text = tostring(err.message) .. tostring(err.stack)
+      if text:find("Faves[/\\]") then
+        n = n + 1
+        first = first or tostring(err.message)
+      end
+    end
+    d[#d + 1] = Detail("errors from Faves files", n, n == 0 and "pass" or "fail")
+    if first then d[#d + 1] = Detail("first", first:sub(1, 200), "fail") end
+    return Result(d)
+  end },
+}
+
+local testsByID, testResults = {}, {}
+for _, t in ipairs(TESTS) do testsByID[t.id] = t end
+
+local function RunTest(id)
+  local t = testsByID[id]
+  if not t then return end
+  local start = debugprofilestop and debugprofilestop()
+  local ok, res = pcall(t.run)
+  if not ok then res = { passed = false, message = "test error: " .. tostring(res), details = {} } end
+  res.duration = start and (debugprofilestop() - start) / 1000 or nil
+  testResults[id] = res
+  return res
+end
+
+-- Runs every check, saves the results, and reports them to Mechanic's console when it's there.
+function KS.SelfTest(quiet)
+  local summary = { version = VERSION, at = date("%Y-%m-%d %H:%M:%S"), passed = true, tests = {} }
+  for _, t in ipairs(TESTS) do
+    local res = RunTest(t.id)
+    summary.tests[t.id] = res
+    if not res.passed then summary.passed = false end
+  end
+  if db then db.selfTest = summary end
+  local fails = 0
+  for _, t in ipairs(TESTS) do
+    local res = testResults[t.id]
+    if not res.passed then fails = fails + 1 end
+    if not quiet or not res.passed then
+      Print("%s %s: %s", res.passed and "|cff33ff99ok|r  " or "|cffff4040FAIL|r", t.name, res.message)
+      for _, dd in ipairs(res.details) do
+        if dd.status ~= "pass" then print(("    %s %s: %s"):format(dd.status, dd.label, dd.value)) end
+      end
+    end
+  end
+  Log("self-test %s: %d of %d checks failed", summary.passed and "passed" or "FAILED", fails, #TESTS)
+  return summary
+end
+
+local function RegisterMechanic()
+  local LS = _G.LibStub
+  local ML = LS and LS("MechanicLib-1.0", true)
+  if not (ML and ML.Register) then return end
+  mechanic = ML
+  local defs = {}
+  for _, t in ipairs(TESTS) do defs[#defs + 1] = { id = t.id, name = t.name, category = "Faves" } end
+  ML:Register(ADDON, {
+    version = VERSION,
+    getDebugBuffer = function() return db and db.log or {} end,
+    clearDebugBuffer = function() if db then db.log = {} end end,
+    tests = {
+      getAll = function() return defs end,
+      getCategories = function() return { "Faves" } end,
+      run = RunTest,
+      runAll = function() KS.SelfTest(true) end,
+      getResult = function(id) return testResults[id] end,
+    },
+  })
+  Log("registered with Mechanic")
+end
+
+---------------------------------------------------------------------------------------------------
 -- Slash commands
 
 local function ListItems()
@@ -1454,6 +1641,7 @@ local function Help()
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /faves log [n] - show the last n guard log lines (default 25)")
   print("  /faves debug - toggle debug messages")
+  print("  /faves selftest - check this install (results are saved for bug reports)")
   print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it,")
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
 end
@@ -1517,6 +1705,8 @@ SlashCmdList.FAVES = function(msg)
     local n = tonumber(rest) or 25
     Print("Last %d guard log lines (of %d):", math.min(n, #log), #log)
     for i = math.max(1, #log - n + 1), #log do print("  " .. log[i]) end
+  elseif cmd == "selftest" or cmd == "test" then
+    KS.SelfTest()
   elseif cmd == "debug" then
     db.debug = not db.debug
     Print("Debug messages %s.", db.debug and "on" or "off")
@@ -1580,6 +1770,11 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     HookDestroy()
     HookReceipts()
     CreatePanel()
+    RegisterMechanic()
+    -- Ask for the self-test sample items now so they're loaded when a test runs.
+    if C_Item and C_Item.RequestLoadItemDataByID then
+      for _, sample in ipairs(SAMPLES) do C_Item.RequestLoadItemDataByID(sample.id) end
+    end
     DropPersonalAutoMarks()
     MigrateAutoMarks()
     KS.QueueAutoMark(5)

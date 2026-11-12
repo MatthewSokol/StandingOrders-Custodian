@@ -2,7 +2,7 @@
 
 Run through this before each CurseForge release. To check items off, open a GitHub issue with this list as its body: GitHub makes the boxes clickable and remembers them.
 
-Before you start: `/reload`, `/faves debug`, and keep BugSack open.
+Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`.
 
 ## 1. Fresh install
 - [ ] The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back

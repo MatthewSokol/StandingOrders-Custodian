@@ -24,6 +24,7 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - Bank (Always on me only): the item is moved straight back to your bags.
 - **One-time intro** listing what protection covers and what it doesn't yet (`/faves intro` reopens it).
 - Levels set in earlier SellAll test builds are brought over automatically.
+- `/faves selftest` checks the install and saves the results. With the optional Mechanic dev tool, Faves shows its checks and log there.
 - `Faves.IsLocked`, `Faves.GetLevel` and `Faves.Guard` for other addons.
 
 **Known limits:**

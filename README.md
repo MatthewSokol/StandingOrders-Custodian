@@ -62,6 +62,10 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 
 Not supported yet: marks are per item ID, so every copy of an item shares a level. See [docs/specific-item-instances.md](docs/specific-item-instances.md) for what it would take.
 
+## For addon developers using Mechanic
+
+If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, Faves shows up in its Tests tab (the same checks as `/faves selftest`) and Console (the guard log). Players don't need Mechanic, and Faves doesn't change without it.
+
 ## For addon authors
 
 ```lua
@@ -74,4 +78,4 @@ if Faves and Faves.GetLevel(itemID) == Faves.LEVELS.MAIL then --[[ send it to th
 
 ## Commands
 
-`/faves settings` (auto-marks and where new marks go), `/faves help`, `/faves intro` (what protection covers, also shown once on first login), `/faves status` (which guards are active), `/faves log` (recent guard decisions), `/faves debug`.
+`/faves selftest` (checks this install and saves the results; handy for bug reports), `/faves settings` (auto-marks and where new marks go), `/faves help`, `/faves intro` (what protection covers, also shown once on first login), `/faves status` (which guards are active), `/faves log` (recent guard decisions), `/faves debug`.
