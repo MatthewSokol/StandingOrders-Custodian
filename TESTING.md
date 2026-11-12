@@ -69,9 +69,10 @@ Before you start: `/reload`, `/faves debug`, and keep BugSack open.
 - [ ] After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
 
 ## 6. Release
-- [ ] `powershell -File ./package.ps1` builds `dist\Faves-<version>.zip`
-- [ ] The zip unpacks to a single `Faves\` folder, and that install loads in game
 - [ ] CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
-- [ ] Release tagged on `main` (for example `v1.0.0`) and pushed
+- [ ] Version picked from the PRs' bump levels since the last release; `## [Unreleased]` in `CHANGELOG.md` renamed to `## [<version>] - <date>` and merged to `main`
+- [ ] Release tagged on `main` (for example `v1.0.0`, a lightweight tag) and pushed
+- [ ] `powershell -File ./package.ps1` builds `dist\Faves-<version>.zip` from the tag
+- [ ] The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
 - [ ] Zip uploaded to CurseForge with the `CHANGELOG.md` entry as the release notes
 - [ ] Released before (or together with) SellAll, whose warning links to it

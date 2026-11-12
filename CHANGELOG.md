@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.0.0
+All notable changes to Faves. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
+follow [Semantic Versioning](https://semver.org/) and come from the release tag.
+
+## [Unreleased]
+
+### Added
 
 First release. Item protection used to be part of SellAll; it's now its own addon so it works with any vendor addon.
 
