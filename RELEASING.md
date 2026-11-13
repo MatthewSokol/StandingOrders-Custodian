@@ -36,7 +36,8 @@ fully closed.
 
 **Ids:** every row starts with an outline id (`2.4`), so you can say "2.4 is in trouble". `TESTING.md`'s rows sit under
 row 2.8 (`2.8.3.2` is its row 3.2). With more than one client pass, each pass gets a letter in front (`A.2.4`). Ids only
-need to hold for the pass under way.
+need to hold for the pass under way. Each section folds open and closed: its summary shows the id, title and done count (`7 / 12`, plus open
+problems); finished sections start closed, and a section with an open problem or the row Claude is waiting on stays open.
 
 **Who does each row** (dev-routine's convention; on a checklist page they're badges):
 - **auto executed · \<trigger\>**: Claude runs the row unasked as soon as the trigger is met, and ticks it when it succeeds.
@@ -46,11 +47,17 @@ need to hold for the pass under way.
 - **Both** tags: rows Claude runs that prove themselves, like the gate.
 - **Untagged**: yours to do and tick, because they need eyes in game.
 
-**Stage 1: automated**
+<details open>
+<summary><b>1 Automated</b> · 0 / 2</summary>
+
 - [ ] 1.1 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
 - [ ] 1.2 `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
 
-**Stage 2: smoke, then acceptance**
+</details>
+
+<details open>
+<summary><b>2 Smoke, then acceptance</b> · 0 / 10</summary>
+
 - [ ] 2.1 `<env> snapshot pre-<version>` `auto executed · game closed`
 - [ ] 2.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
 - [ ] 2.3 The intro shows on that first login, and "Got it" closes it
@@ -62,12 +69,18 @@ need to hold for the pass under way.
 - [ ] 2.9 No step is still flagged as a problem
 - [ ] 2.10 Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
 
-**Stage 3: deploy**
+</details>
+
+<details open>
+<summary><b>3 Deploy</b> · 0 / 5</summary>
+
 - [ ] 3.1 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
 - [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
 - [ ] 3.3 Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/faves selftest` passes `auto validated`
 - [ ] 3.4 `<env> restore` `auto executed · after the zip test`
 - [ ] 3.5 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
+
+</details>
 
 A fix sends the build back to stage 1: restamp it, and untick the smoke rows and every row the fix touches.
 

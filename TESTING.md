@@ -4,7 +4,9 @@ Run through this before each CurseForge release. To check items off, open a GitH
 
 Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; on the release checklist these rows sit under row 2.8 (`2.8.3.2`).
 
-## 1. Fresh install
+<details open>
+<summary><b>1 Fresh install</b> · 0 / 7</summary>
+
 - [ ] 1.1 The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
 - [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
 - [ ] 1.3 `/faves intro` reopens it
@@ -13,7 +15,11 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 1.6 `/faves status` shows every guard on
 - [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
 
-## 2. Per-character marks
+</details>
+
+<details open>
+<summary><b>2 Per-character marks</b> · 0 / 9</summary>
+
 - [ ] 2.1 Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
 - [ ] 2.2 Log in a second character: that item isn't marked there
 - [ ] 2.3 Alt+Shift+Left-click it again on the first character: back to all characters
@@ -24,11 +30,19 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 2.8 `/reload` a few times: no errors at login or when the bags first open
 - [ ] 2.9 Works with SellAll disabled (Faves alone loads with no errors)
 
-## 3. Moving from SellAll test builds
+</details>
+
+<details open>
+<summary><b>3 Moving from SellAll test builds</b> · 0 / 2</summary>
+
 - [ ] 3.1 Items marked in an older SellAll build show the same levels after updating both addons
 - [ ] 3.2 SellAll prints how many levels it moved, once; it doesn't repeat after `/reload`
 
-## 4. Disenchant guard
+</details>
+
+<details open>
+<summary><b>4 Disenchant guard</b> · 0 / 9</summary>
+
 - [ ] 4.1 With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
 - [ ] 4.2 `/faves log` shows "targeting started: destructive" and "blocker caught click" lines
 - [ ] 4.3 Disenchant from an action bar button, then click a Locked item: targeting cancels, error shown, item kept
@@ -39,7 +53,11 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 4.8 An oil or scroll can still be applied to a Locked item
 - [ ] 4.9 VendorFlip's Disenchant button refuses a Locked item
 
-## 5. Other guards
+</details>
+
+<details open>
+<summary><b>5 Other guards</b> · 0 / 32</summary>
+
 - [ ] 5.1 A Locked item sold by right-click is bought straight back
 - [ ] 5.2 A Locked item dragged onto the vendor is bought straight back
 - [ ] 5.3 Buyback only ever buys back the Locked item, never a neighbouring buyback slot
@@ -73,7 +91,11 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
 - [ ] 5.32 Opening the bank with an Always on me item already in it moves it out
 
-## 6. Edge cases
+</details>
+
+<details open>
+<summary><b>6 Edge cases</b> · 0 / 8</summary>
+
 - [ ] 6.1 In combat: opening bags and Alt+Click give no "action blocked" errors
 - [ ] 6.2 In combat: potions can still be used from the bags
 - [ ] 6.3 With ArkInventory: `/faves status` says "ArkInventory: supported"
@@ -83,7 +105,11 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 6.7 With ArkInventory: vendor, destroy, trade and mail guards still work
 - [ ] 6.8 After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
 
-## 7. Release
+</details>
+
+<details open>
+<summary><b>7 Release</b> · 0 / 7</summary>
+
 - [ ] 7.1 CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
 - [ ] 7.2 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed
 - [ ] 7.3 Release tag `v<version>` on the candidate's commit on `main` (`pipeline.js released <version>`, lightweight)
@@ -91,3 +117,5 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 7.5 The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
 - [ ] 7.6 After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
 - [ ] 7.7 Released before (or together with) SellAll, whose warning links to it
+
+</details>
