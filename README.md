@@ -18,7 +18,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Junk | coin | Safe to lose. SellAll sells these automatically when a vendor opens |
 | Mail | letter | To send to your bank character (for a mailing addon). SellAll never sells these |
 | Normal | none | The default |
-| Confirm | star | Levelling favorite. Meant to ask before it's lost; until that window exists it acts as **Locked** |
+| Confirm | star | Temp hold. The action is stopped like Locked, then a window asks whether to **allow it once**: do it again within 2 minutes (selling, trading or mailing: until you close that window) |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
@@ -45,7 +45,7 @@ Only unmarked items are marked, and each item only once: change an auto-marked i
 
 ## Guards
 
-Every action that would lose an item goes through one check, `Faves.Guard(itemID, link, action)`. When the item is Confirm or Locked, the action is blocked and you see *"… is Locked. Unfavorite it to … it"*.
+Every action that would lose an item goes through one check, `Faves.Guard(itemID, link, action)`. When the item is Locked, the action is blocked and you see *"… is Locked. Unfavorite it to … it"*. When it's Confirm, it's blocked the same way and a window offers **Allow once**.
 
 | Action | How it's blocked |
 |---|---|

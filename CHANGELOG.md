@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Added
+
+- **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Faves still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
+
 ## [0.1.0] - 2026-11-13
 
 ### Added

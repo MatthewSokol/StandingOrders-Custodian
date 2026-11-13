@@ -5,7 +5,7 @@ KNOWN_EVENTS = {
   ADDON_LOADED = true, PLAYER_LOGIN = true, MERCHANT_SHOW = true, MERCHANT_CLOSED = true, MERCHANT_UPDATE = true,
   BANKFRAME_OPENED = true, BANKFRAME_CLOSED = true, PLAYERBANKSLOTS_CHANGED = true, BAG_UPDATE_DELAYED = true,
   TRADE_PLAYER_ITEM_CHANGED = true, TRADE_SHOW = true, TRADE_CLOSED = true, TRADE_ACCEPT_UPDATE = true,
-  MAIL_SEND_INFO_UPDATE = true, CURRENT_SPELL_CAST_CHANGED = true, UNIT_SPELLCAST_SENT = true,
+  MAIL_SEND_INFO_UPDATE = true, MAIL_CLOSED = true, CURRENT_SPELL_CAST_CHANGED = true, UNIT_SPELLCAST_SENT = true,
   TRADE_SKILL_SHOW = true, TRADE_SKILL_UPDATE = true,
 }
 
@@ -171,8 +171,9 @@ AutoLootMailItem = function() end
 ATTACHMENTS_MAX_RECEIVE = 16
 STUB_TRADE = {}
 GetTradeTargetItemLink = function(i) return STUB_TRADE[i] and link(STUB_TRADE[i]) end
-GetTradePlayerItemLink = function() return nil end
-ClickTradeButton = function() end
+STUB_TRADE_PLAYER = {}
+GetTradePlayerItemLink = function(i) return STUB_TRADE_PLAYER[i] and link(STUB_TRADE_PLAYER[i]) end
+ClickTradeButton = function(i) STUB_TRADE_PLAYER[i] = nil end
 GetSendMailItemLink = function() return nil end
 ATTACHMENTS_MAX_SEND = 12
 STUB_MERCHANT = {}
@@ -203,7 +204,8 @@ end
 CastSpellByName = function() end
 UseAction = function() end
 GetActionInfo = function() return nil end
-StaticPopup_Show = function() end
+StaticPopupDialogs = {}
+StaticPopup_Show = function(which, a1, a2, data) STUB_POPUP = { which = which, a1 = a1, a2 = a2, data = data } end
 StaticPopup_Hide = function() end
 SpellIsTargeting = function() return false end
 SpellStopTargeting = function() end

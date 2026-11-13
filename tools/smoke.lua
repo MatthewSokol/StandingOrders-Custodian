@@ -169,6 +169,31 @@ CALL("Alt+Left-click a mismatched button", stale.__h_PreClick, stale, "LeftButto
 CHECK("mismatched button leaves both items alone", KS.GetLevel(25) == L.CONFIRM and KS.GetLevel(4865) == L.JUNK)
 STUB_ALT = false
 
+-- Confirm (temp hold): the action is stopped, a window offers to allow it once; the pass lasts until
+-- the trade closes, and a disenchant pass is used up by one try.
+KS.SetLevel(2770, L.CONFIRM, nil, { quiet = true, scope = "account" })
+STUB_POPUP = nil
+STUB_TRADE_PLAYER[1] = 2770
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+CHECK("held item taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
+CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "FAVES_CONFIRM" and STUB_POPUP.a2 == "traded")
+CALL("Allow once", StaticPopupDialogs.FAVES_CONFIRM and StaticPopupDialogs.FAVES_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
+STUB_TRADE_PLAYER[1] = 2770
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+CHECK("allowed item stays in the trade", STUB_TRADE_PLAYER[1] == 2770)
+FIRE("TRADE_CLOSED")
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+CHECK("the pass ends when the trade closes", STUB_TRADE_PLAYER[1] == nil)
+STUB_POPUP = nil
+CHECK("disenchant stopped without a pass", KS.Guard(2770, nil, "disenchant") == true)
+CALL("Allow once (disenchant)", StaticPopupDialogs.FAVES_CONFIRM.OnAccept, nil, STUB_POPUP.data)
+CHECK("blocker steps aside for the pass", KS.HasPass(2770))
+CHECK("one disenchant allowed", KS.Guard(2770, nil, "disenchant") == false)
+CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
+STUB_POPUP = nil
+CHECK("Locked and above still just stop, no window", KS.Guard(6948, nil, "sell") == true and STUB_POPUP == nil)
+
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
 table.sort(undefined)

@@ -7,7 +7,7 @@
 --   Auto-marks (on by default, /faves settings): grays and useless whites become Junk, crafting
 --   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
 --   Normal   the default, stored as nil
---   Confirm  "levelling favorite": meant to ask first. No confirm window yet, so for now it acts as Locked
+--   Confirm  "temp hold": stopped like Locked, then a window asks whether to allow the action once
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
 --   On me    "Always on me": Locked, and also kept out of the bank (moved straight back to your bags)
 --
@@ -86,7 +86,6 @@ local function ItemLink(id) return select(2, GetItemInfo(id)) or ("item:" .. id)
 
 local function LevelText(level)
   local text = "|c" .. COLORS[level] .. NAMES[level] .. "|r" -- pipes:ok (a color code)
-  if level == CONFIRM then text = text .. " (no confirm window yet: acts as Locked)" end
   return text
 end
 KS.LevelText = LevelText
@@ -201,15 +200,64 @@ end
 -- The one check for any action that would lose an item. Returns true (and shows the error) when the
 -- item is locked, so callers just do: if Faves.Guard(id, link, "sell") then <undo or block> end
 -- Some actions are only blocked at higher levels (banking: Always on me only).
+-- Confirm ("temp hold") items: the action is still stopped first, then a window asks whether to allow
+-- it once. "Allow once" gives the item a pass and you do the action again. A pass is used up by one
+-- disenchant or destroy within PASS_TIME; for selling, trading and mailing it lasts until that window
+-- closes (the buyback and mail checks run again while it's open).
+local PASS_TIME = 120
+local WINDOW_OF = { sell = "merchant", trade = "trade", mail = "mail" }
+local VERB = { sell = "sold", trade = "traded", mail = "mailed", destroy = "destroyed", disenchant = "disenchanted",
+  prospect = "prospected", mill = "milled" }
+local passes = {} -- itemID -> { expires = GetTime(), window = "merchant"|"trade"|"mail"|nil }
+
+-- True when the item has a pass for this action. peek: just look (the disenchant blocker), don't use it.
+local function UsePass(id, action, peek)
+  local p = passes[id]
+  if not p or (not p.window and GetTime() > p.expires) then return false end
+  if peek then return true end
+  local window = WINDOW_OF[action]
+  if window then p.window = window else passes[id] = nil end
+  Log("pass used: %s of item %d", action, id)
+  return true
+end
+
+function KS.ClearPasses(window)
+  for id, p in pairs(passes) do
+    if p.window == window then passes[id] = nil end
+  end
+end
+
+local function AskToAllow(id, link, action)
+  if not (StaticPopupDialogs and StaticPopup_Show) then return end
+  StaticPopupDialogs.FAVES_CONFIRM = StaticPopupDialogs.FAVES_CONFIRM or {
+    text = "%s is on hold.\n\nAllow it to be %s once? Then do it again.",
+    button1 = "Allow once", button2 = "Keep it",
+    OnAccept = function(_, data)
+      passes[data.id] = { expires = GetTime() + PASS_TIME }
+      Print("%s: allowed once. Do it again within 2 minutes.", data.link)
+      Log("pass given: %s of item %d", data.action, data.id)
+    end,
+    timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
+  }
+  StaticPopup_Show("FAVES_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
+end
+
 function KS.Guard(id, link, action)
   local level = KS.GetLevel(id)
   if level < (GUARD_FROM[action] or CONFIRM) then return false end
-  local how = (action == "bank") and "Lower it to Locked to bank it" or ("Unfavorite it to %s it"):format(action)
-  Err(("%s is %s. %s (Alt+Right-click it in your bags, or /faves normal <item>).")
-    :format(link or ItemLink(id), NAMES[level], how))
+  link = link or ItemLink(id)
+  if level == CONFIRM and UsePass(id, action) then return false end
+  if level == CONFIRM then
+    Err(("%s is on hold (Confirm)."):format(link))
+    AskToAllow(id, link, action)
+  else
+    local how = (action == "bank") and "Lower it to Locked to bank it" or ("Unfavorite it to %s it"):format(action)
+    Err(("%s is %s. %s (Alt+Right-click it in your bags, or /faves normal <item>)."):format(link, NAMES[level], how))
+  end
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
   return true
 end
+KS.HasPass = function(id) return UsePass(id, nil, true) end
 
 -- One-time move of levels kept by SellAll 1.0 betas (SellAllDB.items). Existing Faves levels win.
 -- Returns how many items were brought over.
@@ -791,7 +839,7 @@ local function UpdateBlockers()
     if on and btn:IsVisible() then
       local bag, slot = ButtonSlot(btn)
       local info = bag and slot and C.GetContainerItemInfo(bag, slot)
-      want = (info and info.itemID and KS.IsLocked(info.itemID)) and true or false
+      want = (info and info.itemID and KS.IsLocked(info.itemID) and not KS.HasPass(info.itemID)) and true or false
     end
     if want then
       GetBlocker(btn):Show()
@@ -1410,9 +1458,9 @@ end
 -- One-time intro: what Confirm/Locked protect, and what they don't yet. Shown until "Got it" is
 -- clicked; bump INTRO_VERSION when the list changes so everyone sees the new one once.
 
-local INTRO_VERSION = 4
+local INTRO_VERSION = 5
 local INTRO_TEXT = table.concat({
-  "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. For now Confirm works the same as Locked.",
+  "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. Confirm is a temp hold: Faves stops the action, then asks whether to allow it once.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
@@ -1804,6 +1852,7 @@ end
 f:RegisterEvent("TRADE_CLOSED")
 f:RegisterEvent("TRADE_ACCEPT_UPDATE")
 f:RegisterEvent("MAIL_SEND_INFO_UPDATE")
+f:RegisterEvent("MAIL_CLOSED")
 f:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
 f:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 
@@ -1850,7 +1899,10 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     LearnVendorMats()
     merchantOpen = true
     QueueRescue()
+  elseif event == "MAIL_CLOSED" then
+    KS.ClearPasses("mail")
   elseif event == "MERCHANT_CLOSED" then
+    KS.ClearPasses("merchant")
     merchantOpen = false
   elseif event == "MERCHANT_UPDATE" then
     LearnVendorMats()
@@ -1882,6 +1934,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
   elseif event == "TRADE_ACCEPT_UPDATE" then
     if arg1 == 1 or arg2 == 1 then KeepTradeItems() end
   elseif event == "TRADE_CLOSED" then
+    KS.ClearPasses("trade")
     C_Timer.After(1, function()
       tradeOpen = false
       KS.QueueAutoMark()

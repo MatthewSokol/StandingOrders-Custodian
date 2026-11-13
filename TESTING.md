@@ -48,6 +48,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] Mail: a Locked attachment is removed, Normal attachments stay
 - [ ] Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
+- [ ] Confirm item sold: it's bought back and the hold window asks; Allow once, sell it again: it stays sold; close and reopen the vendor and it's held again
+- [ ] Confirm item disenchanted: the click is caught and the window asks; Allow once, Disenchant again: it works once, the next try is caught
+- [ ] Confirm item put in a trade or mail: taken back out; Allow once, put it in again: it stays until the window closes
+- [ ] "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
 - [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
 - [ ] Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
 - [ ] Opening a profession window takes the Mail mark off materials its recipes use; /faves status lists professions and which still need their window opened
