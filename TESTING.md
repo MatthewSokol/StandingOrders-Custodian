@@ -72,7 +72,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 ## 5. Edge cases
 - [ ] In combat: opening bags and Alt+Click give no "action blocked" errors
 - [ ] In combat: potions can still be used from the bags
-- [ ] With ArkInventory: `/faves status` shows the warning
+- [ ] With ArkInventory: `/faves status` says "ArkInventory: supported"
+- [ ] With ArkInventory: Alt+Click in its bag window raises the level; the icon shows on the Ark button
+- [ ] With ArkInventory: viewing another character's bags, Alt+Click does nothing in Faves
+- [ ] With ArkInventory: Disenchant targeting covers Locked items in the Ark window in red
 - [ ] With ArkInventory: vendor, destroy, trade and mail guards still work
 - [ ] After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
 

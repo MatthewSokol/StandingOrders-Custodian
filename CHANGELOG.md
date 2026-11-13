@@ -31,8 +31,9 @@ First release. Item protection used to be part of SellAll; it's now its own addo
 - **One-time intro** listing what protection covers and what it doesn't yet (`/faves intro` reopens it).
 - Levels set in earlier SellAll test builds are brought over automatically.
 - `/faves selftest` checks the install and saves the results. With the optional Mechanic dev tool, Faves shows its checks and log there.
+- **ArkInventory bags:** Alt+Click, level icons and the disenchant blocker work in ArkInventory's bag and bank windows too, through its public API. Offline views (another character's bags, the bank away from a banker) are left alone.
 - `Faves.IsLocked`, `Faves.GetLevel` and `Faves.Guard` for other addons.
 
 **Known limits:**
 - Auction house posting isn't guarded yet.
-- Alt+Click, bag icons and the disenchant guard only work in the default bags, not ArkInventory.
+- Alt+Click, bag icons and the disenchant guard work in the default bags and ArkInventory; other bag addons are planned (see README).

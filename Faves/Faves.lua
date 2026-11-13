@@ -549,7 +549,25 @@ end
 local hooked = setmetatable({}, { __mode = "k" })
 local hookedCount = 0
 
+-- An ArkInventory button's real bag and slot, or nil when it isn't safe to act on it: an offline view
+-- (another character, or the bank away from a banker), or Ark's item not matching what's in that slot.
+local function ArkSlot(btn)
+  local ark, d = _G.ArkInventory, btn.ARK_Data
+  local loc = ark and ark.Global and ark.Global.Location and d and ark.Global.Location[d.loc_id]
+  if not loc or loc.isOffline or not d.slot_id then return end
+  local bag = d.blizzard_id
+  if not bag and ark.API.getBlizzardBagIdFromWindowId then
+    bag = ark.API.getBlizzardBagIdFromWindowId(d.loc_id, d.bag_id)
+  end
+  if not bag then return end
+  local i = ark.API.ItemFrameItemTableGet and ark.API.ItemFrameItemTableGet(btn)
+  local info = C.GetContainerItemInfo(bag, d.slot_id)
+  if (i and i.h and LinkID(i.h)) ~= (info and info.itemID) then return end
+  return bag, d.slot_id
+end
+
 local function ButtonSlot(btn)
+  if btn.favesArk then return ArkSlot(btn) end
   if btn.GetBagID then return btn:GetBagID(), btn:GetID() end
   local parent = btn:GetParent()
   return parent and parent:GetID(), btn:GetID()
@@ -658,11 +676,40 @@ local function BagFrames()
   return frames
 end
 
+-- ArkInventory: its public API calls these for every item button it creates or updates. Faves takes the
+-- bag and bank buttons; ArkSlot decides per click whether a button is safe to act on.
+local function ArkButton(frame, loc_id)
+  local ark = _G.ArkInventory
+  local L = ark and ark.Const and ark.Const.Location
+  if not (frame and L and (loc_id == L.Bag or loc_id == L.Bank)) then return end
+  frame.favesArk = true
+  HookButton(frame)
+  UpdateButton(frame)
+end
+
+local arkHooked = false
+local function HookArkInventory()
+  local ark = _G.ArkInventory
+  local api = ark and ark.API
+  if arkHooked or not (api and api.ItemFrameLoaded and api.ItemFrameUpdated) then return end
+  arkHooked = true
+  hooksecurefunc(api, "ItemFrameLoaded", ArkButton)
+  hooksecurefunc(api, "ItemFrameUpdated", ArkButton)
+  if api.ItemFrameLoadedIterate then
+    for _, frame, loc_id in api.ItemFrameLoadedIterate() do ArkButton(frame, loc_id) end
+  end
+  Log("ArkInventory support on")
+end
+
 function RefreshBags()
   for _, frame in ipairs(BagFrames()) do UpdateFrame(frame) end
+  for btn in pairs(hooked) do
+    if btn.favesArk then UpdateButton(btn) end
+  end
 end
 
 local function HookBags()
+  pcall(HookArkInventory) -- optional: a changed Ark API must not stop the default bags being hooked
   for _, frame in ipairs(BagFrames()) do
     if frame.UpdateItems then hooksecurefunc(frame, "UpdateItems", UpdateFrame) end
     frame:HookScript("OnShow", function(self)
@@ -1387,7 +1434,7 @@ local INTRO_TEXT = table.concat({
   "- Auction house posting",
   "- Using or eating the item, or handing it to an NPC",
   "- Closing the vendor right after a sale, before it can be bought back",
-  "- ArkInventory bags: no Alt+Click, icons or Disenchant block",
+  "- Bag addons other than ArkInventory (Bagnon, Baganator, AdiBags...): no Alt+Click, icons or Disenchant block yet",
 }, "\n")
 
 local intro
@@ -1496,6 +1543,9 @@ local TESTS = {
   { id = "hooks", name = "Guards hooked", run = function()
     local d = {}
     d[#d + 1] = Detail("bag buttons hooked", hookedCount, hookedCount > 0 and "pass" or "warn")
+    if _G.ArkInventory then
+      d[#d + 1] = Detail("ArkInventory support", arkHooked and "on" or "API not found", arkHooked and "pass" or "warn")
+    end
     d[#d + 1] = Detail("destroy guard (StaticPopup_Show)", StaticPopup_Show and "on" or "missing", StaticPopup_Show and "pass" or "fail")
     d[#d + 1] = Detail("tooltip line", TooltipDataProcessor and "on" or "missing", TooltipDataProcessor and "pass" or "warn")
     d[#d + 1] = Detail("disenchant guard (IsCurrentSpell)", IsCurrentSpell and "available" or "missing", IsCurrentSpell and "pass" or "warn")
@@ -1681,8 +1731,9 @@ local function Status()
   print("  trade/mail/vendor buyback guards: on (vendor open: " .. tostring(merchantOpen) .. ")")
   print("  bank guard (Always on me): on (bank open: " .. tostring(bankOpen) ..
     (bankOpen and (", containers " .. table.concat(BankBags(), ",")) or "") .. ")")
-  if C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ArkInventory") then
-    print("  |cffffd100ArkInventory is loaded: Alt+Click, bag icons and the disenchant guard only work in the default bags.|r")
+  if _G.ArkInventory then
+    print("  ArkInventory: " .. (arkHooked and "supported (bags and bank, live views only)"
+      or "|cffffd100loaded, but its API wasn't found: Alt+Click, icons and the disenchant guard only work in the default bags|r"))
   end
 end
 

@@ -56,7 +56,7 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 | Mail | The attachment is removed |
 | Bank (Always on me only) | While the bank is open, the item is moved straight back to your bags (if they have room) |
 
-**Limits:** Alt+Click, bag icons and the disenchant guard only work in the default bags (not ArkInventory). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
+**Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and in ArkInventory (see Bag addons below). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
 ## Marking one specific copy of an item
 

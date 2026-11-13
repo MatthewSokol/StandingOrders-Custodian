@@ -34,6 +34,18 @@ rawset(ContainerFrame1, "EnumerateValidItems", function()
   return function() i = i + 1; if i <= 3 then return i, bagButtons[i] end end
 end)
 
+-- A stand-in ArkInventory with its public item-frame API (bags live, bank offline).
+ArkInventory = {
+  Const = { Location = { Bag = 1, Bank = 3 } },
+  Global = { Location = { [1] = { isOffline = false }, [3] = { isOffline = true } } },
+  API = {
+    ItemFrameLoaded = function() end,
+    ItemFrameUpdated = function() end,
+    ItemFrameItemTableGet = function(f) return f.__item end,
+    ItemFrameLoadedIterate = function() return function() end end,
+  },
+}
+
 FIRE("ADDON_LOADED", "Faves")
 FIRE("PLAYER_LOGIN")
 local KS = Faves
@@ -128,6 +140,34 @@ if registered then
 end
 CALL("/faves selftest", SlashCmdList.FAVES, "selftest")
 CHECK("self-test saved", FavesDB.selfTest and FavesDB.selfTest.passed == true)
+
+-- ArkInventory: Alt+Click on a live bag button marks the item in that slot; offline views and buttons
+-- whose item doesn't match the slot are left alone.
+local function arkButton(loc, bag, slot, itemID)
+  local b = button(bag, slot)
+  b.GetBagID = nil
+  b.ARK_Data = { loc_id = loc, bag_id = 1, blizzard_id = bag, slot_id = slot }
+  b.__item = { h = STUB_LINK(itemID) }
+  b.IsVisible = function() return true end
+  return b
+end
+STUB_BAGS[0][3] = 25
+KS.SetLevel(25, L.NORMAL, nil, { quiet = true, scope = "account" })
+local ark = arkButton(1, 0, 3, 25)
+CALL("Ark ItemFrameUpdated", ArkInventory.API.ItemFrameUpdated, ark, 1, 1, 3)
+CHECK("Ark bag button hooked", ark.__h_PreClick ~= nil)
+STUB_ALT = true
+CALL("Alt+Left-click in Ark bags", ark.__h_PreClick, ark, "LeftButton")
+CHECK("Alt+Click in Ark raised the level", KS.GetLevel(25) == L.CONFIRM, KS.GetLevel(25))
+local offline = arkButton(3, 0, 3, 25)
+CALL("Ark offline bank button", ArkInventory.API.ItemFrameUpdated, offline, 3, 1, 3)
+CALL("Alt+Left-click an offline view", offline.__h_PreClick, offline, "LeftButton")
+CHECK("offline view leaves the item alone", KS.GetLevel(25) == L.CONFIRM, KS.GetLevel(25))
+local stale = arkButton(1, 0, 3, 4865)
+CALL("Ark button showing another item", ArkInventory.API.ItemFrameUpdated, stale, 1, 1, 3)
+CALL("Alt+Left-click a mismatched button", stale.__h_PreClick, stale, "LeftButton")
+CHECK("mismatched button leaves both items alone", KS.GetLevel(25) == L.CONFIRM and KS.GetLevel(4865) == L.JUNK)
+STUB_ALT = false
 
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
