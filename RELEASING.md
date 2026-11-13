@@ -16,7 +16,8 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 | No character, player or account names in anything public: code, docs, examples, commit messages, screenshots, the CurseForge description. The repo is under your real name. | `green.js` privacy check (it reads the names from your WTF folder, so they're never written down). Screenshots and store text: check by hand. |
 | Commit and zip times are 00:00 UTC. Never merge with GitHub's button; fast-forward locally. | Post-commit hook; `green.js` checks unmerged commits; `release.ps1` dates zip entries. |
 | The zip needs forward-slash paths and one top-level `Faves/` folder (PowerShell 5.1's `Compress-Archive` writes backslashes). | `release.ps1` |
-| Bump the `.toc` `## Version` and `CHANGELOG.md` together. | `green.js` version check |
+| The version lives only in git tags (dev-routine: a `candidate/vX.Y.Z` per merged change, kept local; one pushed `vX.Y.Z` per release). The `.toc` says `@project-version@`; changes go under `## [Unreleased]` in `CHANGELOG.md`. | `green.js` version check; `install.ps1` and `release.ps1` fill the token |
+| Tags are lightweight (`git tag vX.Y.Z`): an annotated tag, including the one `mech release` makes, records the real time. Push only the release tag, by name. | `pipeline.js released` |
 | Add `## X-Curse-Project-ID` once the CurseForge project exists. | `green.js` warns until it's there |
 | Only register events that exist on Forever; an unknown one stops the file loading. Use `pcall` for events that may not exist. | `tools/wowstub.lua` `KNOWN_EVENTS` (the smoke test fails on unknown ones) |
 | WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Faves is at about 160 file-level locals. | `tools/limits.js` |
@@ -25,7 +26,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-1. Decide the version. Update `## Version` in `Faves/Faves.toc` and add a `## <version>` entry at the top of `CHANGELOG.md`.
+1. Pick the candidate: `pipeline.js candidates` (dev-routine; default the newest), then `pipeline.js prep <version>` runs the full suite in a clean checkout.
 2. Offline: `node tools/green.js`. Fix every `FAIL`.
 3. Install (`install.ps1`), then in game, with `!Mechanic` and `Mechanic` enabled (and BugSack/BugGrabber):
    1. `/reload`, then play through `TESTING.md` (open a GitHub issue with it as the body to tick it off).
@@ -33,8 +34,9 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
    3. `/reload` so the game writes the results.
 4. Mechanic output: `node tools/green.js --game`. Claude reads it and fixes what's red. Repeat from step 2 until it's `GREEN`.
 5. Merge the release PR (fast-forward), switch to `main`, `node tools/green.js` once more.
-6. Build: `powershell -ExecutionPolicy Bypass -File ./release.ps1` → `dist/Faves-<version>.zip`. Open it and check: one `Faves/` folder holding `Faves.toc`, `Faves.lua` and `LICENSE.txt`.
-7. Tag: `git tag v<version>` and `git push origin v<version>`.
+6. Tag the candidate's commit on `main`: `pipeline.js released <version>` (a lightweight `v<version>`, local).
+7. Build: `powershell -ExecutionPolicy Bypass -File ./release.ps1` → `dist/Faves-<version>.zip` and the release notes. Open the zip and check: one `Faves/` folder holding `Faves.toc` (with the version filled in), `Faves.lua` and `LICENSE.txt`.
+8. After your go-ahead: `git push origin v<version>` (only this tag, by name).
 
 ## What "Mechanic output" means here
 

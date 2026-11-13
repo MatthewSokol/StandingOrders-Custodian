@@ -77,9 +77,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
 
 ## 6. Release
-- [ ] `powershell -File ./package.ps1` builds `dist\Faves-<version>.zip`
-- [ ] The zip unpacks to a single `Faves\` folder, and that install loads in game
 - [ ] CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
-- [ ] Release tagged on `main` (for example `v1.0.0`) and pushed
-- [ ] Zip uploaded to CurseForge with the `CHANGELOG.md` entry as the release notes
+- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed
+- [ ] Release tag `v<version>` on the candidate's commit on `main` (`pipeline.js released <version>`, lightweight)
+- [ ] `powershell -File ./release.ps1` builds `dist\Faves-<version>.zip` and the release notes from the tag
+- [ ] The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
+- [ ] After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
 - [ ] Released before (or together with) SellAll, whose warning links to it

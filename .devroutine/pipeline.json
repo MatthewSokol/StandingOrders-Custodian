@@ -25,10 +25,15 @@
       "node \"{skills}/wow-mod-dev/scripts/install.js\" --verify"
     ],
     "changeTests": [],
-    "package": [],
+    "package": [
+      "powershell -ExecutionPolicy Bypass -File release.ps1"
+    ],
     "verifyPackage": []
   },
-  "artifacts": [],
+  "artifacts": [
+    "dist/Faves-*.zip",
+    "dist/Faves-*-changelog.md"
+  ],
   "deploy": [
     {
       "title": "Push the release tag",

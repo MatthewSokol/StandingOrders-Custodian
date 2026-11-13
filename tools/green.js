@@ -42,11 +42,12 @@ if (!fails) say("PASS", "toc", `${ADDON} ${version}, ${files.length} file(s), In
 
 // --- Version and changelog
 const changelog = fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
-const top = (changelog.match(/^##\s+v?([0-9][^\s]*)/m) || [])[1];
-if (top !== version) say("FAIL", "version", `.toc says ${version}, newest CHANGELOG entry is ${top}`);
-else say("PASS", "version", `${version} matches the newest CHANGELOG entry`);
-const tags = cp.spawnSync("git", ["tag", "--list"], { cwd: root, encoding: "utf8" }).stdout.split(/\s+/);
-if (tags.includes("v" + version) || tags.includes(version)) say("WARN", "version", `tag for ${version} already exists: bump the version for a new release`);
+// The version lives only in git tags (dev-routine candidates, vX.Y.Z releases); the .toc carries the
+// packager's token, and install.ps1 / release.ps1 fill it in.
+if (version !== "@project-version@") say("FAIL", "version", `.toc says ## Version: ${version}; it must be @project-version@ (the number comes from the tag)`);
+const top = (changelog.match(/^## \[([^\]]+)\]/m) || [])[1];
+if (!top) say("FAIL", "version", "CHANGELOG.md has no '## [Unreleased]' or '## [X.Y.Z] - date' heading");
+else say("PASS", "version", `.toc uses @project-version@; newest CHANGELOG section is [${top}]`);
 
 // --- Lua syntax and limits
 for (const f of files.filter(f => f.endsWith(".lua"))) {
@@ -133,8 +134,11 @@ if (game) {
     const st = read(path.join(svDir, ADDON + ".lua"), "FavesDB and FavesDB.selfTest");
     if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /faves selftest, then /reload");
     else {
-      const stale = st.version !== version;
-      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on version ${st.version}${stale ? " (not this version: reinstall, /reload, /faves selftest, /reload)" : ""}`);
+      // The build under test is the installed one: install.ps1 wrote its git describe into the installed .toc.
+      const installedToc = path.join(accounts, "..", "..", "Interface", "AddOns", ADDON, ADDON + ".toc");
+      const installed = fs.existsSync(installedToc) && (fs.readFileSync(installedToc, "utf8").match(/^## Version:\s*(.+)$/m) || [])[1];
+      const stale = installed && st.version !== installed.trim();
+      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on build ${st.version}${stale ? ` (installed is ${installed.trim()}: /reload, /faves selftest, /reload)` : ""}`);
       for (const [id, r] of Object.entries(st.tests || {})) {
         say(r.passed ? (r.warnings ? "WARN" : "PASS") : "FAIL", "self-test " + id, r.message);
         for (const d of r.details || []) if (d.status !== "pass") console.log(`       ${d.status} ${d.label}: ${d.value}`);

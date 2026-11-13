@@ -2,7 +2,7 @@
 ## Title: Faves
 ## Notes: Mark items Junk, Mail, Confirm, Locked or Always on me. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident; Always on me items also stay out of the bank.
 ## Author: MatthewSokol
-## Version: 1.0.0
+## Version: @project-version@
 ## SavedVariables: FavesDB
 ## SavedVariablesPerCharacter: FavesCharDB
 ## OptionalDeps: !Mechanic
