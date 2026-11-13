@@ -85,7 +85,7 @@ local function LinkID(link) return link and tonumber(link:match("item:(%d+)")) e
 local function ItemLink(id) return select(2, GetItemInfo(id)) or ("item:" .. id) end
 
 local function LevelText(level)
-  local text = "|c" .. COLORS[level] .. NAMES[level] .. "|r"
+  local text = "|c" .. COLORS[level] .. NAMES[level] .. "|r" -- pipes:ok (a color code)
   if level == CONFIRM then text = text .. " (no confirm window yet: acts as Locked)" end
   return text
 end
@@ -1633,9 +1633,9 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /faves junk|mail|normal|confirm|lock|onme <item link or ID> [char|account] - set an item's level")
+  print("  /faves junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
   print("  /faves list - show marked items")
-  print("  /faves scope account|char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /faves scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /faves settings - auto-marking (Junk and Mail) and where new marks go")
   print("  /faves status - check which guards are active")
   print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
@@ -1684,7 +1684,7 @@ SlashCmdList.FAVES = function(msg)
     end
     local id = LinkID(rest) or tonumber(rest)
     if not id then return Err("Shift-click an item into the command, or give its item ID.") end
-    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope })
+    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope }) -- pipes:ok (a pattern)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then
     KS.SetScope(rest)
     Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")

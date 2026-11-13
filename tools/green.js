@@ -55,6 +55,9 @@ for (const f of files.filter(f => f.endsWith(".lua"))) {
   say(r1.status === 0 && /balance/.test(r1.stdout) && !/error|unbalanced|unclosed/i.test(r1.stdout) ? "PASS" : "FAIL", "lua syntax", r1.stdout.trim().split("\n").pop());
   const r2 = node("limits.js", path.join(ADDON, f));
   say(r2.status === 0 ? "PASS" : "FAIL", "lua 5.1 limits", r2.stdout.trim().split("\n").pop());
+  const r3 = node("pipes.js", path.join(ADDON, f)); // a bare "|" in chat text is a WoW escape: write "||"
+  if (r3.status === 0) say("PASS", "chat pipes", `${f}: no bare pipes`);
+  else r3.stdout.trim().split("\n").forEach(l => say("FAIL", "chat pipes", l));
 }
 
 // --- Smoke test (addon loaded in a Lua VM with a stubbed WoW API)
