@@ -8,13 +8,16 @@ const { lua, lauxlib, lualib, to_luastring } = require("fengari");
 const fs = require("fs"), path = require("path");
 const [dir, sv, ...script] = process.argv.slice(2);
 const L = lauxlib.luaL_newstate(); lualib.luaL_openlibs(L);
-let bad = 0;
-const log = console.log;
-console.log = (...a) => {
-  const line = a.join(" ");
-  if (/^(ERROR|FAIL|LOAD ERROR|COMPILE ERROR|HARNESS)/.test(line)) bad++;
-  log(line);
+// Count problem lines from both sides: fengari's Lua print() writes straight to stdout, not console.log.
+let bad = 0, partial = "";
+const write = process.stdout.write.bind(process.stdout);
+process.stdout.write = (chunk, ...rest) => {
+  const lines = (partial + String(chunk)).split("\n");
+  partial = lines.pop();
+  for (const line of lines) if (/^(ERROR|FAIL|LOAD ERROR|COMPILE ERROR|HARNESS)/.test(line)) bad++;
+  return write(chunk, ...rest);
 };
+const log = (s) => write(s + "\n"); // the final verdict line, not counted
 function run(src, name) {
   if (lauxlib.luaL_loadbuffer(L, to_luastring(src), null, to_luastring(name)) !== 0 || lua.lua_pcall(L, 0, 0, 0) !== 0) {
     console.log("HARNESS ERROR " + name + ": " + lua.lua_tojsstring(L, -1)); lua.lua_pop(L, 1);
