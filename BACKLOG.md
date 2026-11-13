@@ -12,4 +12,12 @@ Work to pick from. One line per item: `- [ ] **Title:** what and why (source; le
 
 ## Later
 
+Bag addon support, in this order (docs/bag-addons.md has the approach; check each loads on Forever first):
+
+- [ ] **Bagnon support** (and Combuctor, same core): Alt+Click, icons, disenchant blocker (level: minor)
+- [ ] **Baganator support** (level: minor)
+- [ ] **AdiBags support** (level: minor)
+- [ ] **BetterBags support** (level: minor)
+- [ ] **ElvUI bags support** (level: minor)
+
 ## Done

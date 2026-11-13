@@ -58,6 +58,16 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 
 **Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and in ArkInventory (see Bag addons below). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
+## Bag addons
+
+| Bag addon | Alt+Click, level icons, disenchant blocker |
+|---|---|
+| Blizzard bags | Yes |
+| ArkInventory | Yes (bags and bank; not other characters' offline bags) |
+| Bagnon, Baganator, AdiBags, BetterBags, ElvUI bags | Planned |
+
+Everything else (the vendor, destroy, trade, mail and bank guards, auto-marks, tooltips, `/faves <level> <item>`) works with any bag addon. [docs/bag-addons.md](docs/bag-addons.md) has the details and the plan.
+
 ## Marking one specific copy of an item
 
 Not supported yet: marks are per item ID, so every copy of an item shares a level. See [docs/specific-item-instances.md](docs/specific-item-instances.md) for what it would take.
