@@ -6,6 +6,8 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-13
+
 ### Added
 
 First release. Item protection used to be part of SellAll; it's now its own addon so it works with any vendor addon.
@@ -37,3 +39,4 @@ First release. Item protection used to be part of SellAll; it's now its own addo
 **Known limits:**
 - Auction house posting isn't guarded yet.
 - Alt+Click, bag icons and the disenchant guard work in the default bags and ArkInventory; other bag addons are planned (see README).
+
