@@ -22,21 +22,40 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 | Only register events that exist on Forever; an unknown one stops the file loading. Use `pcall` for events that may not exist. | `tools/wowstub.lua` `KNOWN_EVENTS` (the smoke test fails on unknown ones) |
 | WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Faves is at about 160 file-level locals. | `tools/limits.js` |
 | Read BugGrabber after a real play session. That's how the nil bag-slot error (123 hits) was found. | `green.js --game` |
-| Mechanic is for development only: `OptionalDeps`, never `Dependencies`. Players won't have it. | `green.js` TOC check |
+| Mechanic is for development only: `OptionalDeps`, never `Dependencies`. Players won't have it. | `green.js` TOC check; the "Without dev addons" pass |
+| A bare `\|` in chat text is a WoW escape (`\|n` newline, `\|c` color): write `\|\|`. | `tools/pipes.js` in `green.js` |
+| Every addon page and the README show the main features in screenshots, with every character, player, guild and realm name blurred, blacked out or made up. | By hand: `docs/screenshots/README.md` has the shot list |
+| Nothing crosses the game's terms or the botting line. Faves' automatic actions (buying back a protected item, moving an Always on me item out of the bank, auto-marks) only run inside a window you opened, and never buy, post or cast. Re-check any new automatic action. | By hand, each release |
+| Test against known states: a clean install, an upgrade from the last release's saved data, the game without Mechanic, and the release zip itself. | `wow-env.js` passes in the checklist |
 
 ## Release checklist (step 3)
 
-1. Pick the candidate: `pipeline.js candidates` (dev-routine; default the newest), then `pipeline.js prep <version>` runs the full suite in a clean checkout.
-2. Offline: `node tools/green.js`. Fix every `FAIL`.
-3. Install (`install.ps1`), then in game, with `!Mechanic` and `Mechanic` enabled (and BugSack/BugGrabber):
-   1. `/reload`, then play through `TESTING.md` (open a GitHub issue with it as the body to tick it off).
-   2. `/faves selftest`, or Mechanic's Tests tab → Faves → Run all.
-   3. `/reload` so the game writes the results.
-4. Mechanic output: `node tools/green.js --game`. Claude reads it and fixes what's red. Repeat from step 2 until it's `GREEN`.
-5. Merge the release PR (fast-forward), switch to `main`, `node tools/green.js` once more.
-6. Tag the candidate's commit on `main`: `pipeline.js released <version>` (a lightweight `v<version>`, local).
-7. Build: `powershell -ExecutionPolicy Bypass -File ./release.ps1` → `dist/Faves-<version>.zip` and the release notes. Open the zip and check: one `Faves/` folder holding `Faves.toc` (with the version filled in), `Faves.lua` and `LICENSE.txt`.
-8. After your go-ahead: `git push origin v<version>` (only this tag, by name).
+Put the build under test at the top (`git describe --tags --always` and the commit). `<env>` is
+`node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_`; every `<env>` command needs the game
+fully closed. Tags say who ticks a row: [Claude] runs it, [gate] is proven by `green.js --game`, untagged rows are
+yours (they need eyes).
+
+**Stage 1: automated** [Claude]
+- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout
+- [ ] `node tools/green.js` is GREEN, and `install.ps1` installed it
+
+**Stage 2: smoke, then acceptance**
+- [ ] `<env> snapshot pre-<version>` [Claude]
+- [ ] Clean install: `<env> profile clean --addon Faves`; full game restart; the intro shows; `/faves selftest` passes [gate]
+- [ ] Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; no Faves errors [gate]
+- [ ] `<env> restore`, then upgrade: `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept [gate]
+- [ ] `<env> restore` [Claude]
+- [ ] Acceptance: `TESTING.md` (open a GitHub issue with it as the body to tick it off)
+- [ ] Gate: Claude starts `<env> watch -- node tools/green.js --game` in the background; you play the pass and exit the game; it reports GREEN [Claude]
+
+**Stage 3: deploy**
+- [ ] Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) [Claude]
+- [ ] `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes [Claude]
+- [ ] Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; self-test passes [gate]
+- [ ] `<env> restore` [Claude]
+- [ ] After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
+
+A fix sends the build back to stage 1: restamp it, and untick the smoke rows and every row the fix touches.
 
 ## What "Mechanic output" means here
 
@@ -45,6 +64,8 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 - **Mechanic's desktop CLI and MCP (`mech`)** aren't installed on this PC (they need Python 3.10+). If you add them, its `addon.validate`, `addon.lint` (uses `.luacheckrc`) and `addon.output` steps slot into checklist steps 2 and 4.
 
 ## Deploy (step 6)
+
+Check before uploading: the TOC's `## Interface:` matches the current Forever build (`/dump (select(4, GetBuildInfo()))`), and the screenshots are current and name-free.
 
 ### CurseForge
 First release only:
