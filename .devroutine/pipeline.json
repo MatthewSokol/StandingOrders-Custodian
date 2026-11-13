@@ -1,0 +1,68 @@
+{
+  "$doc": "dev-routine pipeline. Stages run in the repo root (prep: in a clean checkout of the candidate). Placeholders: {skill} {skills} {root} {version} {out}.",
+  "type": "wow-addon",
+  "mode": "github",
+  "tags": {
+    "candidate": "candidate/v{version}",
+    "pushCandidate": false,
+    "release": "v{version}"
+  },
+  "versionFiles": [],
+  "stages": {
+    "setup": [
+      "npm install --prefix tools --no-audit --no-fund"
+    ],
+    "check": [
+      "node \"{skills}/wow-mod-dev/scripts/check-brackets.js\" Faves tools/smoke.lua tools/wowstub.lua"
+    ],
+    "test": [
+      "node tools/green.js"
+    ],
+    "tryout": [
+      "powershell -ExecutionPolicy Bypass -File install.ps1"
+    ],
+    "verify": [
+      "node \"{skills}/wow-mod-dev/scripts/install.js\" --verify"
+    ],
+    "changeTests": [],
+    "package": [],
+    "verifyPackage": []
+  },
+  "artifacts": [],
+  "deploy": [
+    {
+      "title": "Push the release tag",
+      "run": "git push origin {tag}",
+      "mode": "github",
+      "note": "If the CurseForge/Wago packager builds from tags, this is the upload."
+    },
+    {
+      "title": "Upload to CurseForge",
+      "manual": "Project page > Files > Upload File: {artifacts}, release type Release, game versions from the TOC, changelog from {notes}. Skip if the packager builds from the pushed tag."
+    },
+    {
+      "title": "Upload to Wago",
+      "manual": "Same zip and notes on addons.wago.io (skip if the packager handles it)."
+    }
+  ],
+  "intake": [
+    {
+      "name": "GitHub issues and comments",
+      "kind": "github"
+    },
+    {
+      "name": "CurseForge comments",
+      "kind": "web",
+      "url": "https://www.curseforge.com/wow/addons/<slug>/comments"
+    },
+    {
+      "name": "Wago comments",
+      "kind": "web",
+      "url": "https://addons.wago.io/addons/<slug>"
+    },
+    {
+      "name": "Backlog",
+      "kind": "backlog"
+    }
+  ]
+}

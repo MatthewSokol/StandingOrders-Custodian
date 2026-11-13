@@ -4,6 +4,8 @@ WoW **Forever** addon (interface 16001, modern `C_Container` and bag frame APIs)
 
 ## Workflow after every edit (always, without being asked)
 
+Pipeline: .devroutine/pipeline.json, run with the dev-routine skill (`pipeline.js loop` runs the check, test, install and verify steps below). Mechanics come from the wow-mod-dev skill; bugs go through wow-mod-debug.
+
 1. **Check** (there's no Lua interpreter on this machine): `node tools/green.js` must end with `GREEN`. It runs the bracket check, the Lua 5.1 limits check (60 upvalues, 200 locals), the TOC and version checks, the smoke test (`tools/smoke.lua`: Faves loaded in a Lua VM with the stubbed API in `tools/wowstub.lua`), and a privacy scan. Extend `smoke.lua` and `wowstub.lua` when adding features. Only register events that exist on Forever (add them to `KNOWN_EVENTS` after checking), or register them with `pcall`.
 2. **Install:** `powershell -ExecutionPolicy Bypass -File ./install.ps1` installs into `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\Faves`. Then verify each installed file with `diff --strip-trailing-cr -q`.
 3. **Commit** on a feature/fix branch (not `main`), push, and open a PR or add to the open one. Update the PR title and description when its scope grows.
