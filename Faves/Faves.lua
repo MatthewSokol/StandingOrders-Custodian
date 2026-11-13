@@ -1606,11 +1606,27 @@ local function RegisterMechanic()
       getAll = function() return defs end,
       getCategories = function() return { "Faves" } end,
       run = RunTest,
-      runAll = function() KS.SelfTest(true) end,
-      getResult = function(id) return testResults[id] end,
+      -- MechanicLib expects runAll to return passed, total.
+      runAll = function()
+        local summary, passed = KS.SelfTest(true), 0
+        for _, res in pairs(summary.tests) do if res.passed then passed = passed + 1 end end
+        return passed, #TESTS
+      end,
+      -- Mechanic saves getResult for every test on /reload and logout: run it then, so the saved
+      -- results are always this session's.
+      getResult = RunTest,
+    },
+    settings = {
+      debug = {
+        type = "toggle", name = "Debug messages", order = 1,
+        get = function() return db and db.debug and true or false end,
+        set = function(_, v) if db then db.debug = v and true or false end end,
+      },
     },
   })
   Log("registered with Mechanic")
+  -- With Mechanic there, every session's self-test results are saved (FavesDB.selfTest) for the gate.
+  KS.SelfTest(true)
 end
 
 ---------------------------------------------------------------------------------------------------

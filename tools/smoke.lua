@@ -114,7 +114,11 @@ FIRE("PLAYER_LOGIN") -- registers again now that MechanicLib is here (hooks are 
 RUN_TIMERS()
 CHECK("registered with Mechanic", registered and registered.addon == "Faves" and registered.caps.tests ~= nil)
 if registered then
-  CALL("Mechanic runAll", registered.caps.tests.runAll)
+  CHECK("self-test ran when Mechanic registered", FavesDB.selfTest ~= nil)
+  local passed, total = registered.caps.tests.runAll()
+  CHECK("Mechanic runAll returns passed, total", type(passed) == "number" and total and passed == total, tostring(passed) .. "/" .. tostring(total))
+  CHECK("Mechanic getResult runs the test", registered.caps.tests.getResult("levels").passed == true)
+  CHECK("Mechanic debug setting", registered.caps.settings and registered.caps.settings.debug.get() ~= nil)
   local all = registered.caps.tests.getAll()
   CHECK("Mechanic sees the tests", #all >= 5, #all)
   for _, t in ipairs(all) do
