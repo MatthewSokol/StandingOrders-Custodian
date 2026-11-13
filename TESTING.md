@@ -2,92 +2,92 @@
 
 Run through this before each CurseForge release. To check items off, open a GitHub issue with this list as its body: GitHub makes the boxes clickable and remembers them.
 
-Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`.
+Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; on the release checklist these rows sit under row 2.8 (`2.8.3.2`).
 
 ## 1. Fresh install
-- [ ] The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
-- [ ] Esc closes the intro without acknowledging it, so it shows again next login
-- [ ] `/faves intro` reopens it
-- [ ] Delete `WTF\Account\<account>\SavedVariables\Faves.lua`, log in: no Lua errors
-- [ ] `/faves list` says nothing is marked
-- [ ] `/faves status` shows every guard on
-- [ ] Mark an item, log in a second character: the mark is there too (levels are account wide)
+- [ ] 1.1 The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
+- [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
+- [ ] 1.3 `/faves intro` reopens it
+- [ ] 1.4 Delete `WTF\Account\<account>\SavedVariables\Faves.lua`, log in: no Lua errors
+- [ ] 1.5 `/faves list` says nothing is marked
+- [ ] 1.6 `/faves status` shows every guard on
+- [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
 
-## 1b. Per-character marks
-- [ ] Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
-- [ ] Log in a second character: that item isn't marked there
-- [ ] Alt+Shift+Left-click it again on the first character: back to all characters
-- [ ] `/faves scope char`, then Alt+Click a new item: it's marked for this character only; `/faves scope account` switches back
-- [ ] `/faves lock <item> char` marks for this character only
-- [ ] Mark an item Locked account wide, then `/faves normal <item> char`: Normal on this character, still Locked on others
-- [ ] `/faves list` shows both kinds, character marks labelled
-- [ ] `/reload` a few times: no errors at login or when the bags first open
-- [ ] Works with SellAll disabled (Faves alone loads with no errors)
+## 2. Per-character marks
+- [ ] 2.1 Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
+- [ ] 2.2 Log in a second character: that item isn't marked there
+- [ ] 2.3 Alt+Shift+Left-click it again on the first character: back to all characters
+- [ ] 2.4 `/faves scope char`, then Alt+Click a new item: it's marked for this character only; `/faves scope account` switches back
+- [ ] 2.5 `/faves lock <item> char` marks for this character only
+- [ ] 2.6 Mark an item Locked account wide, then `/faves normal <item> char`: Normal on this character, still Locked on others
+- [ ] 2.7 `/faves list` shows both kinds, character marks labelled
+- [ ] 2.8 `/reload` a few times: no errors at login or when the bags first open
+- [ ] 2.9 Works with SellAll disabled (Faves alone loads with no errors)
 
-## 2. Moving from SellAll test builds
-- [ ] Items marked in an older SellAll build show the same levels after updating both addons
-- [ ] SellAll prints how many levels it moved, once; it doesn't repeat after `/reload`
+## 3. Moving from SellAll test builds
+- [ ] 3.1 Items marked in an older SellAll build show the same levels after updating both addons
+- [ ] 3.2 SellAll prints how many levels it moved, once; it doesn't repeat after `/reload`
 
-## 3. Disenchant guard
-- [ ] With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
-- [ ] `/faves log` shows "targeting started: destructive" and "blocker caught click" lines
-- [ ] Disenchant from an action bar button, then click a Locked item: targeting cancels, error shown, item kept
-- [ ] Same with a `/cast Disenchant` macro
-- [ ] Same with Disenchant cast from the spellbook
-- [ ] Disenchanting a Normal item still works
-- [ ] An enchant from the profession window can still go on a Locked item
-- [ ] An oil or scroll can still be applied to a Locked item
-- [ ] VendorFlip's Disenchant button refuses a Locked item
+## 4. Disenchant guard
+- [ ] 4.1 With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
+- [ ] 4.2 `/faves log` shows "targeting started: destructive" and "blocker caught click" lines
+- [ ] 4.3 Disenchant from an action bar button, then click a Locked item: targeting cancels, error shown, item kept
+- [ ] 4.4 Same with a `/cast Disenchant` macro
+- [ ] 4.5 Same with Disenchant cast from the spellbook
+- [ ] 4.6 Disenchanting a Normal item still works
+- [ ] 4.7 An enchant from the profession window can still go on a Locked item
+- [ ] 4.8 An oil or scroll can still be applied to a Locked item
+- [ ] 4.9 VendorFlip's Disenchant button refuses a Locked item
 
-## 4. Other guards
-- [ ] A Locked item sold by right-click is bought straight back
-- [ ] A Locked item dragged onto the vendor is bought straight back
-- [ ] Buyback only ever buys back the Locked item, never a neighbouring buyback slot
-- [ ] With ForeverPlus / Leatrix junk-selling on, a Locked gray item is bought back
-- [ ] Destroy: dragging a Locked item out of the bags closes the delete popup, item kept
-- [ ] Trade: a Locked item put into a trade pops back out, Normal items stay
-- [ ] Mail: a Locked attachment is removed, Normal attachments stay
-- [ ] Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
-- [ ] Confirm item sold: it's bought back and the hold window asks; Allow once, sell it again: it stays sold; close and reopen the vendor and it's held again
-- [ ] Confirm item disenchanted: the click is caught and the window asks; Allow once, Disenchant again: it works once, the next try is caught
-- [ ] Confirm item put in a trade or mail: taken back out; Allow once, put it in again: it stays until the window closes
-- [ ] "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
-- [ ] Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
-- [ ] Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
-- [ ] Opening a profession window takes the Mail mark off materials its recipes use; /faves status lists professions and which still need their window opened
-- [ ] Enchanting materials (Strange Dust, Lesser Magic Essence, shards) are never auto-marked
-- [ ] Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
-- [ ] Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
-- [ ] Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them are removed at login
-- [ ] Alt+Clicking one of those marks it "(this character)" even with new marks set to all characters
-- [ ] A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
-- [ ] Changing an auto-marked item's level sticks after /reload and more loot
-- [ ] /faves settings: each switch stops its rule; turning one back on marks matching items in your bags
-- [ ] With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /faves settings
-- [ ] Alt+Right-click steps it back down
-- [ ] At a vendor, Alt+Right-click changes the level without selling the item
-- [ ] Icons and tooltip lines show in the combined bag
-- [ ] Icons and tooltip lines show in separate bags
-- [ ] Icons and tooltip lines show in bank bags
-- [ ] Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag) is moved back to your bags; a Locked item stays banked
-- [ ] Bank with full bags: one "bags are full" error, the item stays in the bank
-- [ ] Opening the bank with an Always on me item already in it moves it out
+## 5. Other guards
+- [ ] 5.1 A Locked item sold by right-click is bought straight back
+- [ ] 5.2 A Locked item dragged onto the vendor is bought straight back
+- [ ] 5.3 Buyback only ever buys back the Locked item, never a neighbouring buyback slot
+- [ ] 5.4 With ForeverPlus / Leatrix junk-selling on, a Locked gray item is bought back
+- [ ] 5.5 Destroy: dragging a Locked item out of the bags closes the delete popup, item kept
+- [ ] 5.6 Trade: a Locked item put into a trade pops back out, Normal items stay
+- [ ] 5.7 Mail: a Locked attachment is removed, Normal attachments stay
+- [ ] 5.8 Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me
+- [ ] 5.9 Confirm item sold: it's bought back and the hold window asks; Allow once, sell it again: it stays sold; close and reopen the vendor and it's held again
+- [ ] 5.10 Confirm item disenchanted: the click is caught and the window asks; Allow once, Disenchant again: it works once, the next try is caught
+- [ ] 5.11 Confirm item put in a trade or mail: taken back out; Allow once, put it in again: it stays until the window closes
+- [ ] 5.12 "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
+- [ ] 5.13 Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
+- [ ] 5.14 Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
+- [ ] 5.15 Opening a profession window takes the Mail mark off materials its recipes use; /faves status lists professions and which still need their window opened
+- [ ] 5.16 Enchanting materials (Strange Dust, Lesser Magic Essence, shards) are never auto-marked
+- [ ] 5.17 Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
+- [ ] 5.18 Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
+- [ ] 5.19 Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them are removed at login
+- [ ] 5.20 Alt+Clicking one of those marks it "(this character)" even with new marks set to all characters
+- [ ] 5.21 A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
+- [ ] 5.22 Changing an auto-marked item's level sticks after /reload and more loot
+- [ ] 5.23 /faves settings: each switch stops its rule; turning one back on marks matching items in your bags
+- [ ] 5.24 With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /faves settings
+- [ ] 5.25 Alt+Right-click steps it back down
+- [ ] 5.26 At a vendor, Alt+Right-click changes the level without selling the item
+- [ ] 5.27 Icons and tooltip lines show in the combined bag
+- [ ] 5.28 Icons and tooltip lines show in separate bags
+- [ ] 5.29 Icons and tooltip lines show in bank bags
+- [ ] 5.30 Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag) is moved back to your bags; a Locked item stays banked
+- [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
+- [ ] 5.32 Opening the bank with an Always on me item already in it moves it out
 
-## 5. Edge cases
-- [ ] In combat: opening bags and Alt+Click give no "action blocked" errors
-- [ ] In combat: potions can still be used from the bags
-- [ ] With ArkInventory: `/faves status` says "ArkInventory: supported"
-- [ ] With ArkInventory: Alt+Click in its bag window raises the level; the icon shows on the Ark button
-- [ ] With ArkInventory: viewing another character's bags, Alt+Click does nothing in Faves
-- [ ] With ArkInventory: Disenchant targeting covers Locked items in the Ark window in red
-- [ ] With ArkInventory: vendor, destroy, trade and mail guards still work
-- [ ] After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
+## 6. Edge cases
+- [ ] 6.1 In combat: opening bags and Alt+Click give no "action blocked" errors
+- [ ] 6.2 In combat: potions can still be used from the bags
+- [ ] 6.3 With ArkInventory: `/faves status` says "ArkInventory: supported"
+- [ ] 6.4 With ArkInventory: Alt+Click in its bag window raises the level; the icon shows on the Ark button
+- [ ] 6.5 With ArkInventory: viewing another character's bags, Alt+Click does nothing in Faves
+- [ ] 6.6 With ArkInventory: Disenchant targeting covers Locked items in the Ark window in red
+- [ ] 6.7 With ArkInventory: vendor, destroy, trade and mail guards still work
+- [ ] 6.8 After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
 
-## 6. Release
-- [ ] CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
-- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed
-- [ ] Release tag `v<version>` on the candidate's commit on `main` (`pipeline.js released <version>`, lightweight)
-- [ ] `powershell -File ./release.ps1` builds `dist\Faves-<version>.zip` and the release notes from the tag
-- [ ] The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
-- [ ] After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
-- [ ] Released before (or together with) SellAll, whose warning links to it
+## 7. Release
+- [ ] 7.1 CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
+- [ ] 7.2 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed
+- [ ] 7.3 Release tag `v<version>` on the candidate's commit on `main` (`pipeline.js released <version>`, lightweight)
+- [ ] 7.4 `powershell -File ./release.ps1` builds `dist\Faves-<version>.zip` and the release notes from the tag
+- [ ] 7.5 The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
+- [ ] 7.6 After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
+- [ ] 7.7 Released before (or together with) SellAll, whose warning links to it

@@ -34,6 +34,10 @@ Put the build under test at the top (`git describe --tags --always` and the comm
 `node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_`; every `<env>` command needs the game
 fully closed.
 
+**Ids:** every row starts with an outline id (`2.4`), so you can say "2.4 is in trouble". `TESTING.md`'s rows sit under
+row 2.8 (`2.8.3.2` is its row 3.2). With more than one client pass, each pass gets a letter in front (`A.2.4`). Ids only
+need to hold for the pass under way.
+
 **Who does each row** (dev-routine's convention; on a checklist page they're badges):
 - **auto executed · \<trigger\>**: Claude runs the row unasked as soon as the trigger is met, and ticks it when it succeeds.
 - **auto validated**: a check proves it (`green.js --game`: the saved self-test and BugGrabber's errors). Your checkbox
@@ -43,34 +47,35 @@ fully closed.
 - **Untagged**: yours to do and tick, because they need eyes in game.
 
 **Stage 1: automated**
-- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
-- [ ] `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
+- [ ] 1.1 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
+- [ ] 1.2 `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
 
 **Stage 2: smoke, then acceptance**
-- [ ] `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
-- [ ] The intro shows on that first login, and "Got it" closes it
-- [ ] Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/faves selftest`; no Faves errors `auto validated`
-- [ ] With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/faves selftest`; it works alone `auto validated`
-- [ ] Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
-- [ ] `<env> restore` `auto executed · after you say the pass is done`
-- [ ] Acceptance: `TESTING.md` (open a GitHub issue with it as the body to tick it off)
-- [ ] No step is still flagged as a problem
-- [ ] Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
+- [ ] 2.1 `<env> snapshot pre-<version>` `auto executed · game closed`
+- [ ] 2.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
+- [ ] 2.3 The intro shows on that first login, and "Got it" closes it
+- [ ] 2.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/faves selftest`; no Faves errors `auto validated`
+- [ ] 2.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/faves selftest`; it works alone `auto validated`
+- [ ] 2.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
+- [ ] 2.7 `<env> restore` `auto executed · after you say the pass is done`
+- [ ] 2.8 Acceptance: `TESTING.md`, its rows as `2.8.<id>` (open a GitHub issue with it as the body to tick it off)
+- [ ] 2.9 No step is still flagged as a problem
+- [ ] 2.10 Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
 
 **Stage 3: deploy**
-- [ ] Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
-- [ ] `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
-- [ ] Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/faves selftest` passes `auto validated`
-- [ ] `<env> restore` `auto executed · after the zip test`
-- [ ] After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
+- [ ] 3.1 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
+- [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
+- [ ] 3.3 Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/faves selftest` passes `auto validated`
+- [ ] 3.4 `<env> restore` `auto executed · after the zip test`
+- [ ] 3.5 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
 A fix sends the build back to stage 1: restamp it, and untick the smoke rows and every row the fix touches.
 
 **Problems.** A problem you note on a row (a Problem button on a checklist page, or a comment on the issue) is a failed
 test. Claude triages every open one the next time it reads the checklist (when you finish a pass, or ask):
-- **Blocks the release** (the default): Claude adds a **Fix** row under it (find the cause with wow-mod-debug, fix on a
-  branch, restamp the build) and **Re-test** rows for you: that step, the smoke rows, and every row the fix touches.
+- **Blocks the release** (the default): Claude adds a **Fix** row under it (`<id>.fix`: find the cause with
+  wow-mod-debug, fix on a branch, restamp the build) and **Re-test** rows for you (`<id>.retest`): that step, the smoke
+  rows, and every row the fix touches.
   The flag clears only when the re-test passes.
 - **Deferred**, only on your word ("not this release"): filed in `BACKLOG.md` or an issue with your note, and listed
   as a known issue in the release notes.
