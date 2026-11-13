@@ -32,30 +32,51 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 Put the build under test at the top (`git describe --tags --always` and the commit). `<env>` is
 `node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_`; every `<env>` command needs the game
-fully closed. Tags say who ticks a row: [Claude] runs it, [gate] is proven by `green.js --game`, untagged rows are
-yours (they need eyes).
+fully closed.
 
-**Stage 1: automated** [Claude]
-- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout
-- [ ] `node tools/green.js` is GREEN, and `install.ps1` installed it
+**Who does each row** (dev-routine's convention; on a checklist page they're badges):
+- **auto executed · \<trigger\>**: Claude runs the row unasked as soon as the trigger is met, and ticks it when it succeeds.
+- **auto validated**: a check proves it (`green.js --game`: the saved self-test and BugGrabber's errors). Your checkbox
+  is disabled and Claude ticks it when the proof passes. If the proof fails or can't run, you can **Override** it with a
+  note: the row shows "overridden: known issue" and the note goes into the release notes' known issues. Only you override.
+- **Both** tags: rows Claude runs that prove themselves, like the gate.
+- **Untagged**: yours to do and tick, because they need eyes in game.
+
+**Stage 1: automated**
+- [ ] Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
+- [ ] `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
 
 **Stage 2: smoke, then acceptance**
-- [ ] `<env> snapshot pre-<version>` [Claude]
-- [ ] Clean install: `<env> profile clean --addon Faves`; full game restart; the intro shows; `/faves selftest` passes [gate]
-- [ ] Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; no Faves errors [gate]
-- [ ] `<env> restore`, then upgrade: `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept [gate]
-- [ ] `<env> restore` [Claude]
+- [ ] `<env> snapshot pre-<version>` `auto executed · game closed`
+- [ ] Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
+- [ ] The intro shows on that first login, and "Got it" closes it
+- [ ] Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/faves selftest`; no Faves errors `auto validated`
+- [ ] With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/faves selftest`; it works alone `auto validated`
+- [ ] Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
+- [ ] `<env> restore` `auto executed · after you say the pass is done`
 - [ ] Acceptance: `TESTING.md` (open a GitHub issue with it as the body to tick it off)
-- [ ] Gate: Claude starts `<env> watch -- node tools/green.js --game` in the background; you play the pass and exit the game; it reports GREEN [Claude]
+- [ ] No step is still flagged as a problem
+- [ ] Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
 
 **Stage 3: deploy**
-- [ ] Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) [Claude]
-- [ ] `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes [Claude]
-- [ ] Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; self-test passes [gate]
-- [ ] `<env> restore` [Claude]
+- [ ] Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
+- [ ] `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
+- [ ] Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/faves selftest` passes `auto validated`
+- [ ] `<env> restore` `auto executed · after the zip test`
 - [ ] After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
 A fix sends the build back to stage 1: restamp it, and untick the smoke rows and every row the fix touches.
+
+**Problems.** A problem you note on a row (a Problem button on a checklist page, or a comment on the issue) is a failed
+test. Claude triages every open one the next time it reads the checklist (when you finish a pass, or ask):
+- **Blocks the release** (the default): Claude adds a **Fix** row under it (find the cause with wow-mod-debug, fix on a
+  branch, restamp the build) and **Re-test** rows for you: that step, the smoke rows, and every row the fix touches.
+  The flag clears only when the re-test passes.
+- **Deferred**, only on your word ("not this release"): filed in `BACKLOG.md` or an issue with your note, and listed
+  as a known issue in the release notes.
+- **The step was wrong**, not the code: Claude fixes the row's text and you re-check that row.
+
+The gate needs zero open problems.
 
 ## What "Mechanic output" means here
 
