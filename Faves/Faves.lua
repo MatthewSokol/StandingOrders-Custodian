@@ -4,7 +4,7 @@
 -- Levels (stored per item ID, account wide):
 --   Junk     safe to get rid of (SellAll sells these automatically when a vendor opens)
 --   Mail     to be mailed to a bank character (for a mailing addon; SellAll never sells these).
---   Auto-marks (on by default, /faves settings): grays and useless whites become Junk, crafting
+--   Auto-marks (on by default, /soc settings): grays and useless whites become Junk, crafting
 --   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
 --   Normal   the default, stored as nil
 --   Confirm  "temp hold": stopped like Locked, then a window asks whether to allow the action once
@@ -56,7 +56,7 @@ function KS.IsBankOpen() return bankOpen end
 
 local function Print(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
-  DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99Faves|r: " .. msg)
+  DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99Standing Orders|r: " .. msg)
 end
 
 local function Debug(msg, ...)
@@ -64,7 +64,7 @@ local function Debug(msg, ...)
 end
 
 -- Always-on log of guard decisions, kept in SavedVariables (FavesDB.log) so a miss can be
--- diagnosed after /reload. Also echoed to chat with /faves debug.
+-- diagnosed after /reload. Also echoed to chat with /soc debug.
 local function Log(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
   if db then
@@ -112,7 +112,7 @@ function KS.GetItemScope(id)
   if id and db and db.items[id] then return "account" end
 end
 
--- Where new marks go (Alt+Click, /faves <level> <item>): "account" (default) or "char".
+-- Where new marks go (Alt+Click, /soc <level> <item>): "account" (default) or "char".
 function KS.GetScope() return (db and db.scope) or "account" end
 function KS.SetScope(scope)
   db.scope = (scope == "char") and "char" or "account"
@@ -130,7 +130,7 @@ local RefreshBags -- defined with the bag hooks below
 -- Per-character items: consumables, spell reagents (ankhs, feathers, powders...) and trade goods that
 -- vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of
 -- these, so they're never auto-marked, and a mark on one stays on that character unless you ask for
--- all characters (/faves <level> <item> account, or Alt+Shift+Left-click).
+-- all characters (/soc <level> <item> account, or Alt+Shift+Left-click).
 local ITEM_CLASS = (Enum and Enum.ItemClass) or {}
 local CLASS_CONSUMABLE = ITEM_CLASS.Consumable or 0
 local CLASS_REAGENT = ITEM_CLASS.Reagent or 5
@@ -179,7 +179,7 @@ function KS.SetLevel(id, level, link, opts)
   if not opts.quiet then
     Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
     if KS.GetLevel(id) > level and setNameOf[id] then
-      Print("It stays %s while it's in the equipment set %s (/faves sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
+      Print("It stays %s while it's in the equipment set %s (/soc sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
     end
   end
   RefreshBags()
@@ -259,7 +259,7 @@ function KS.Guard(id, link, action)
     AskToAllow(id, link, action)
   else
     local how = (action == "bank") and "Lower it to Locked to bank it" or ("Unfavorite it to %s it"):format(action)
-    Err(("%s is %s. %s (Alt+Right-click it in your bags, or /faves normal <item>)."):format(link, NAMES[level], how))
+    Err(("%s is %s. %s (Alt+Right-click it in your bags, or /soc normal <item>)."):format(link, NAMES[level], how))
   end
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
   return true
@@ -355,7 +355,7 @@ local function ListSets()
   for _, set in ipairs(sets) do print(("  %s: %s"):format(set.name, KS.SetChoiceText(KS.GetSetChoice(set.id)))) end
 end
 
--- /faves sets [default] <confirm||lock||onme||off> or /faves set <name> <default||confirm||lock||onme||off>
+-- /soc sets [default] <confirm||lock||onme||off> or /soc set <name> <default||confirm||lock||onme||off>
 local function SetsCommand(rest)
   local target, word = rest:match("^(.-)%s*(%a+)$")
   local w = word and word:lower()
@@ -372,7 +372,7 @@ local function SetsCommand(rest)
       return Print("Equipment set %s: %s.", set.name, KS.SetChoiceText(choice))
     end
   end
-  Err(("No equipment set called %s on this character (/faves sets lists them)."):format(target))
+  Err(("No equipment set called %s on this character (/soc sets lists them)."):format(target))
 end
 KS.SetsCommand = SetsCommand
 
@@ -897,7 +897,7 @@ local function GetBlocker(btn)
     local bag, slot = ButtonSlot(btn)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     if bag and slot then GameTooltip:SetBagItem(bag, slot) end
-    GameTooltip:AddLine("Protected by Faves: this click is blocked.", 1, 0.3, 0.3)
+    GameTooltip:AddLine("Protected by Standing Orders: this click is blocked.", 1, 0.3, 0.3)
     GameTooltip:Show()
   end)
   b:SetScript("OnLeave", GameTooltip_Hide)
@@ -965,7 +965,7 @@ local function OnSpellcastSent(target, spellID)
         Log("MISSED: %s is %s but the cast went through. targeting kind %s, blockers %s, record %s",
           info.hyperlink, NAMES[KS.GetLevel(info.itemID)], (TargetingKind()), tostring(anyBlocker),
           castRecord and (castRecord.kind .. " " .. tostring(castRecord.name or castRecord.id)) or "none")
-        Err(("Faves couldn't stop this cast on %s. Details are in /faves log.")
+        Err(("Standing Orders couldn't stop this cast on %s. Details are in /soc log.")
           :format(info.hyperlink))
         return
       end
@@ -975,7 +975,7 @@ end
 
 ---------------------------------------------------------------------------------------------------
 -- Auto-marks. Unmarked items in your bags get a level by these rules (each can be turned off in
--- /faves settings):
+-- /soc settings):
 --   gray                                        -> Junk
 --   white with no profession or quest use        -> Junk  (gear, weapons, gray-ish junk)
 --   crafting materials (white and up, unbound)   -> Mail on this character, when none of its
@@ -1376,10 +1376,10 @@ local function AutoMark()
       local shown = table.concat(list, ", ", 1, math.min(#list, 5))
       if #list > 5 then shown = shown .. (" and %d more"):format(#list - 5) end
       if key == "here" then
-        Print("Marked as %s on this character (none of your professions use them): %s. (/faves settings)",
+        Print("Marked as %s on this character (none of your professions use them): %s. (/soc settings)",
           LevelText(MAIL), shown)
       else
-        Print("Marked as %s: %s. (/faves settings to change this)", LevelText(key), shown)
+        Print("Marked as %s: %s. (/soc settings to change this)", LevelText(key), shown)
       end
       Log("auto-marked %d items as %s", #list, key == "here" and "Mail (this character)" or NAMES[key])
     end
@@ -1437,7 +1437,7 @@ local function HookReceipts()
 end
 
 ---------------------------------------------------------------------------------------------------
--- Settings panel (/faves settings, or Esc > Options > AddOns > Faves)
+-- Settings panel (/soc settings, or Esc > Options > AddOns > Faves)
 
 local category
 local refreshers = {}
@@ -1478,11 +1478,11 @@ local AUTO_TEXT = {
 
 local function CreatePanel()
   local panel = CreateFrame("Frame", "FavesSettings")
-  panel.name = "Faves"
+  panel.name = "Standing Orders: Command"
 
   local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   title:SetPoint("TOPLEFT", 16, -16)
-  title:SetText("Faves")
+  title:SetText("Standing Orders: Command")
 
   local prev = Header(panel, "Auto-mark items in your bags", title, -16)
   local first = true
@@ -1496,7 +1496,7 @@ local function CreatePanel()
   end
   prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Faves knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
-  prev = Header(panel, "New marks (Alt+Click, /faves <level>)", prev)
+  prev = Header(panel, "New marks (Alt+Click, /soc <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
     KS.SetScope("account")
     RefreshPanel()
@@ -1514,7 +1514,7 @@ local function CreatePanel()
   local intro = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
   intro:SetSize(170, 24)
   intro:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  intro:SetText("What Faves protects")
+  intro:SetText("What Standing Orders protects")
   intro:SetScript("OnClick", function() KS:ShowIntro() end)
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
@@ -1598,7 +1598,7 @@ local function HookTooltip()
     local level = KS.GetLevel(data and data.id)
     local setName, setLevel = KS.GetSetProtection(data and data.id)
     local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set " .. setName .. ")|r") or ScopeText(KS.GetItemScope(data.id))
-    if level ~= NORMAL then tip:AddLine("Faves: " .. LevelText(level) .. from) end
+    if level ~= NORMAL then tip:AddLine("Standing Orders: " .. LevelText(level) .. from) end
   end)
 end
 
@@ -1612,9 +1612,9 @@ local INTRO_TEXT = table.concat({
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
-  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /faves settings.",
+  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /soc settings.",
   "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
-  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /faves scope char makes that the default.",
+  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
   "- Selling it: it's bought straight back while the vendor is open (SellAll's Sell All skips it)",
@@ -1630,7 +1630,7 @@ local INTRO_TEXT = table.concat({
   "- Auction house posting",
   "- Using or eating the item, or handing it to an NPC",
   "- Closing the vendor right after a sale, before it can be bought back",
-  "- Bag addons Faves doesn't know (it supports Blizzard bags, ArkInventory, Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI): no Alt+Click, icons or Disenchant block",
+  "- Bag addons Standing Orders doesn't know (it supports Blizzard bags, ArkInventory, Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI): no Alt+Click, icons or Disenchant block",
 }, "\n")
 
 local intro
@@ -1649,7 +1649,7 @@ function KS:ShowIntro()
 
     local title = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
-    title:SetText("Faves: what Confirm and Locked protect")
+    title:SetText("Standing Orders: what Confirm and Locked protect")
 
     local body = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", 18, -38)
@@ -1665,7 +1665,7 @@ function KS:ShowIntro()
     ok:SetScript("OnClick", function()
       db.introSeen = INTRO_VERSION
       intro:Hide()
-      Print("You can reopen this with /faves intro.")
+      Print("You can reopen this with /soc intro.")
     end)
 
     intro:SetSize(480, body:GetStringHeight() + 38 + 54)
@@ -1675,7 +1675,7 @@ function KS:ShowIntro()
 end
 
 ---------------------------------------------------------------------------------------------------
--- Self-tests and Mechanic. /faves selftest runs read-only checks of this install and saves them in
+-- Self-tests and Mechanic. /soc selftest runs read-only checks of this install and saves them in
 -- FavesDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
 -- is installed (optional, never required: !Mechanic), Faves also registers with it, so the checks show
 -- in its Tests tab and the guard log in its Console. Nothing here changes marks or moves items.
@@ -1778,7 +1778,7 @@ local TESTS = {
     end
     return Result(d)
   end },
-  { id = "errors", name = "No Faves Lua errors", run = function()
+  { id = "errors", name = "No Standing Orders: Command Lua errors", run = function()
     local d = {}
     local bg = _G.BugGrabber
     if not (bg and bg.GetDB) then
@@ -1843,14 +1843,14 @@ local function RegisterMechanic()
   if not (ML and ML.Register) then return end
   mechanic = ML
   local defs = {}
-  for _, t in ipairs(TESTS) do defs[#defs + 1] = { id = t.id, name = t.name, category = "Faves" } end
+  for _, t in ipairs(TESTS) do defs[#defs + 1] = { id = t.id, name = t.name, category = "Standing Orders: Command" } end
   ML:Register(ADDON, {
     version = VERSION,
     getDebugBuffer = function() return db and db.log or {} end,
     clearDebugBuffer = function() if db then db.log = {} end end,
     tests = {
       getAll = function() return defs end,
-      getCategories = function() return { "Faves" } end,
+      getCategories = function() return { "Standing Orders: Command" } end,
       run = RunTest,
       -- MechanicLib expects runAll to return passed, total.
       runAll = function()
@@ -1895,16 +1895,16 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /faves junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
-  print("  /faves list - show marked items")
-  print("  /faves sets - equipment sets and how they protect their items; /faves set <name> default||confirm||lock||onme||off")
-  print("  /faves scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
-  print("  /faves settings - auto-marking (Junk and Mail) and where new marks go")
-  print("  /faves status - check which guards are active")
-  print("  /faves intro - what Confirm and Locked protect (and what they don't yet)")
-  print("  /faves log [n] - show the last n guard log lines (default 25)")
-  print("  /faves debug - toggle debug messages")
-  print("  /faves selftest - check this install (results are saved for bug reports)")
+  print("  /soc junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
+  print("  /soc list - show marked items")
+  print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||confirm||lock||onme||off")
+  print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /soc settings - auto-marking (Junk and Mail) and where new marks go")
+  print("  /soc status - check which guards are active")
+  print("  /soc intro - what Confirm and Locked protect (and what they don't yet)")
+  print("  /soc log [n] - show the last n guard log lines (default 25)")
+  print("  /soc debug - toggle debug messages")
+  print("  /soc selftest - check this install (results are saved for bug reports)")
   print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it,")
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
 end
@@ -1913,7 +1913,7 @@ local function Status()
   Print("Status:")
   local on = {}
   for _, key in ipairs(AUTO_KEYS) do if KS.GetAuto(key) then on[#on + 1] = key end end
-  print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/faves settings)")
+  print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/soc settings)")
   local profs, parts = MyProfessions() or {}, {}
   for name in pairs(cdb.scanned) do profs[name] = true end
   for name in pairs(profs) do parts[#parts + 1] = name .. (cdb.scanned[name] and "" or " (open its window once)") end
@@ -1931,13 +1931,14 @@ local function Status()
     (bankOpen and (", containers " .. table.concat(BankBags(), ",")) or "") .. ")")
   for _, a in ipairs(KS.BagAddonStatus()) do
     print("  " .. a[1] .. ": " .. (a[2] and "supported (Alt+Click, icons, disenchant blocker; live views only)"
-      or "|cffffd100loaded, but Faves couldn't hook it: Alt+Click, icons and the disenchant guard only work in the default bags|r"))
+      or "|cffffd100loaded, but Standing Orders couldn't hook it: Alt+Click, icons and the disenchant guard only work in the default bags|r"))
   end
 end
 
 local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
-SLASH_FAVES1 = "/faves"
+SLASH_FAVES1 = "/soc"
+SLASH_FAVES2 = "/faves" -- the old name, kept so it still works
 SlashCmdList.FAVES = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()

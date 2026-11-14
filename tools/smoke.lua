@@ -64,6 +64,7 @@ FIRE("PLAYER_LOGIN")
 local KS = Faves
 local L = KS.LEVELS
 CHECK("Faves global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
+CHECK("slash commands: /soc, and /faves as the old name", SLASH_FAVES1 == "/soc" and SLASH_FAVES2 == "/faves")
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
 
 -- Auto-marks on what's in the bags at login
