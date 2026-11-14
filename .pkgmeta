@@ -1,9 +1,9 @@
 # For CurseForge's automatic packager (BigWigs packager), if the GitHub repo is ever linked to the
-# CurseForge project. The manual path is release.ps1 (see RELEASING.md). The addon lives in Faves/.
-package-as: Faves
+# CurseForge project. The manual path is release.ps1 (see RELEASING.md). The addon lives in StandingOrders_Quartermaster/.
+package-as: StandingOrders_Quartermaster
 
 move-folders:
-  Faves/Faves: Faves
+  StandingOrders_Quartermaster/StandingOrders_Quartermaster: StandingOrders_Quartermaster
 
 ignore:
   - tools

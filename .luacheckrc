@@ -7,10 +7,10 @@ ignore = {
   "213", -- unused loop variable
 }
 
--- Globals Faves writes
-globals = { "Faves", "FavesDB", "FavesCharDB", "SLASH_FAVES1", "SlashCmdList" }
+-- Globals Quartermaster writes
+globals = { "StandingOrdersQuartermaster", "StandingOrdersQuartermasterDB", "StandingOrdersQuartermasterCharDB", "SLASH_SOQ1", "SlashCmdList" }
 
--- WoW API and UI globals Faves reads (all optional ones are checked before use)
+-- WoW API and UI globals Quartermaster reads (all optional ones are checked before use)
 read_globals = {
   "ATTACHMENTS_MAX_RECEIVE", "ATTACHMENTS_MAX_SEND", "AutoLootMailItem", "BANK_CONTAINER", "BugGrabber",
   "BuyMerchantItem", "BuybackItem", "C_AddOns", "C_AuctionHouse", "C_Bank", "C_Container", "C_Item", "C_Spell",

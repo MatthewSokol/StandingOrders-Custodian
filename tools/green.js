@@ -6,7 +6,7 @@
 // Exit code 0 = green. FAIL lines block a release; WARN lines need a look but don't block.
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const root = path.resolve(__dirname, "..");
-const ADDON = "Faves";
+const ADDON = "StandingOrders_Quartermaster";
 const args = process.argv.slice(2);
 const game = args.includes("--game");
 const wtfArg = args.includes("--wtf") ? args[args.indexOf("--wtf") + 1] : null;
@@ -115,7 +115,7 @@ if (game) {
   const acctDir = wtfArg || (fs.existsSync(accounts) && fs.readdirSync(accounts)
     .map(a => path.join(accounts, a)).find(a => fs.existsSync(path.join(a, "SavedVariables", ADDON + ".lua"))));
   const svDir = acctDir && path.join(acctDir, "SavedVariables");
-  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Faves SavedVariables found: log in, /soq selftest, /reload");
+  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Quartermaster SavedVariables found: log in, /soq selftest, /reload");
   else {
     const { lua, lauxlib, lualib, to_luastring } = require("fengari");
     const read = (file, expr) => {
@@ -134,7 +134,7 @@ if (game) {
       lua.lua_getglobal(L, to_luastring("RESULT"));
       try { return JSON.parse(lua.lua_tojsstring(L, -1)); } catch (e) { return { error: String(e) }; }
     };
-    const st = read(path.join(svDir, ADDON + ".lua"), "FavesDB and FavesDB.selfTest");
+    const st = read(path.join(svDir, ADDON + ".lua"), "StandingOrdersQuartermasterDB and StandingOrdersQuartermasterDB.selfTest");
     if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /soq selftest, then /reload");
     else {
       // The build under test is the installed one: install.ps1 wrote its git describe into the installed .toc.
@@ -151,16 +151,16 @@ if (game) {
     if (!fs.existsSync(bgFile)) say("WARN", "lua errors", "BugGrabber isn't installed: can't check for errors");
     else {
       const errs = read(bgFile, "BugGrabberDB and BugGrabberDB.errors");
-      const mine = (Array.isArray(errs) ? errs : []).filter(e => /Faves[\\/]/.test(String(e.message) + String(e.stack)));
+      const mine = (Array.isArray(errs) ? errs : []).filter(e => /StandingOrders_Quartermaster[\\/]/.test(String(e.message) + String(e.stack)));
       if (mine.length) {
-        say("FAIL", "lua errors", `${mine.length} error(s) from Faves`);
+        say("FAIL", "lua errors", `${mine.length} error(s) from Quartermaster`);
         mine.slice(0, 5).forEach(e => console.log("       " + String(e.message).split("\n")[0].slice(0, 200)));
-      } else say("PASS", "lua errors", "none from Faves in BugGrabber");
+      } else say("PASS", "lua errors", "none from Quartermaster in BugGrabber");
     }
     const mech = path.join(svDir, "!Mechanic.lua");
     if (fs.existsSync(mech)) {
       const text = fs.readFileSync(mech, "utf8");
-      say("PASS", "mechanic", `MechanicDB saved (${Math.round(text.length / 1024)} KB); Faves ${text.includes('"Faves"') ? "appears in it" : "isn't in it yet"}`);
+      say("PASS", "mechanic", `MechanicDB saved (${Math.round(text.length / 1024)} KB); Quartermaster ${text.includes('"StandingOrders_Quartermaster"') ? "appears in it" : "isn't in it yet"}`);
     } else say("WARN", "mechanic", "no MechanicDB saved yet (enable !Mechanic and Mechanic, then /reload); the self-test above covers the same checks");
   }
 }

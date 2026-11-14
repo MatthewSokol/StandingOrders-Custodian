@@ -1,6 +1,6 @@
 // Loads the addon in a Lua VM (fengari, Lua 5.3) with a stubbed WoW API, then runs a script that fires
 // events and slash commands and checks the results.
-// Usage: node tools/harness.js Faves [SavedVariables.lua] tools/smoke.lua
+// Usage: node tools/harness.js StandingOrders_Quartermaster [SavedVariables.lua] tools/smoke.lua
 // Setup once: (cd tools && npm install)
 // A green run has no line starting with ERROR, FAIL, LOAD ERROR, COMPILE ERROR or HARNESS; the exit
 // code is 1 otherwise, so a script can tell.

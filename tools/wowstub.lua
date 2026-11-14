@@ -1,5 +1,5 @@
--- Minimal WoW API stubs to load Faves and drive it from tools/smoke.lua. Only what Faves touches.
--- Events Faves registers without pcall must be listed here: an unknown event throws in the real game
+-- Minimal WoW API stubs to load Quartermaster and drive it from tools/smoke.lua. Only what Quartermaster touches.
+-- Events Quartermaster registers without pcall must be listed here: an unknown event throws in the real game
 -- and stops the file loading, so add one only after checking it exists on Forever.
 KNOWN_EVENTS = {
   ADDON_LOADED = true, PLAYER_LOGIN = true, MERCHANT_SHOW = true, MERCHANT_CLOSED = true, MERCHANT_UPDATE = true,
@@ -203,10 +203,10 @@ C_EquipmentSet = {
   GetIgnoredSlots = function(id) return STUB_SETS[id] and STUB_SETS[id].ignored or {} end,
 }
 
--- Baganator copies this mixin onto each live bag button; Faves hooks it while loading, so it must exist first.
+-- Baganator copies this mixin onto each live bag button; Quartermaster hooks it while loading, so it must exist first.
 BaganatorClassicLiveContainerItemButtonMixin = { SetItemDetails = function() end }
 
--- Everything else Faves calls
+-- Everything else Quartermaster calls
 hooksecurefunc = function(t, name, fn)
   if type(t) == "string" then t, name, fn = _G, t, name end
   local orig = t[name]
@@ -236,7 +236,7 @@ SlashCmdList = {}
 date = os.date
 C_AddOns = { GetAddOnMetadata = function(_, key) return key == "Version" and "test" or nil end, IsAddOnLoaded = function() return false end }
 
--- Reads of globals the game doesn't have are fine (Faves checks for them); remember them for the report.
+-- Reads of globals the game doesn't have are fine (Quartermaster checks for them); remember them for the report.
 UNDEFINED = {}
 setmetatable(_G, { __index = function(_, k) UNDEFINED[k] = true end })
 function LOADFILE(src, name, addon)

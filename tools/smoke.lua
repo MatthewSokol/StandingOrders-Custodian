@@ -1,5 +1,5 @@
--- Smoke test: loads Faves with the stubbed API, then walks through its main features and checks the
--- results. Run: node tools/harness.js Faves "" tools/smoke.lua   (green = no ERROR/FAIL lines)
+-- Smoke test: loads Quartermaster with the stubbed API, then walks through its main features and checks the
+-- results. Run: node tools/harness.js StandingOrders_Quartermaster "" tools/smoke.lua   (green = no ERROR/FAIL lines)
 -- Item names below are the game's; nothing here is a character or player name.
 
 STUB_ITEMDB = {
@@ -59,12 +59,12 @@ local AceAddon = { GetAddon = function(_, name) return (name == "AdiBags" and Ad
 Baganator = {}
 Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
-FIRE("ADDON_LOADED", "Faves")
+FIRE("ADDON_LOADED", "StandingOrders_Quartermaster")
 FIRE("PLAYER_LOGIN")
-local KS = Faves
+local KS = StandingOrdersQuartermaster
 local L = KS.LEVELS
-CHECK("Faves global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
-CHECK("slash command: /soq only (the old /faves is gone)", SLASH_FAVES1 == "/soq" and SLASH_FAVES2 == nil)
+CHECK("Quartermaster global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
+CHECK("slash command: /soq only (the old /faves is gone)", SLASH_SOQ1 == "/soq" and SLASH_SOQ2 == nil)
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
 
 -- Auto-marks on what's in the bags at login
@@ -123,11 +123,11 @@ FIRE("BANKFRAME_CLOSED")
 
 -- Slash commands
 for _, cmd in ipairs({ "help", "list", "status", "settings", "scope char", "scope account", "log 5", "debug", "debug", "intro" }) do
-  CALL("/soq " .. cmd, SlashCmdList.FAVES, cmd)
+  CALL("/soq " .. cmd, SlashCmdList.SOQ, cmd)
 end
-CALL("/soq lock <item>", SlashCmdList.FAVES, "lock " .. STUB_LINK(25))
+CALL("/soq lock <item>", SlashCmdList.SOQ, "lock " .. STUB_LINK(25))
 CHECK("/soq lock sets Locked", KS.GetLevel(25) == L.LOCK, KS.GetLevel(25))
-CALL("/soq mail <id> char", SlashCmdList.FAVES, "mail 25 char")
+CALL("/soq mail <id> char", SlashCmdList.SOQ, "mail 25 char")
 CHECK("/soq mail ... char marks this character", KS.GetLevel(25) == L.MAIL and KS.GetItemScope(25) == "char")
 
 -- Self-test and Mechanic (with a stand-in MechanicLib)
@@ -138,9 +138,9 @@ LibStub = function(name) if name == "MechanicLib-1.0" then return {
 } end end
 FIRE("PLAYER_LOGIN") -- registers again now that MechanicLib is here (hooks are idempotent enough for a stub)
 RUN_TIMERS()
-CHECK("registered with Mechanic", registered and registered.addon == "Faves" and registered.caps.tests ~= nil)
+CHECK("registered with Mechanic", registered and registered.addon == "StandingOrders_Quartermaster" and registered.caps.tests ~= nil)
 if registered then
-  CHECK("self-test ran when Mechanic registered", FavesDB.selfTest ~= nil)
+  CHECK("self-test ran when Mechanic registered", StandingOrdersQuartermasterDB.selfTest ~= nil)
   local passed, total = registered.caps.tests.runAll()
   CHECK("Mechanic runAll returns passed, total", type(passed) == "number" and total and passed == total, tostring(passed) .. "/" .. tostring(total))
   CHECK("Mechanic getResult runs the test", registered.caps.tests.getResult("levels").passed == true)
@@ -152,8 +152,8 @@ if registered then
     CHECK("self-test " .. t.id .. " passes (" .. tostring(r and r.message) .. ")", r and r.passed)
   end
 end
-CALL("/soq selftest", SlashCmdList.FAVES, "selftest")
-CHECK("self-test saved", FavesDB.selfTest and FavesDB.selfTest.passed == true)
+CALL("/soq selftest", SlashCmdList.SOQ, "selftest")
+CHECK("self-test saved", StandingOrdersQuartermasterDB.selfTest and StandingOrdersQuartermasterDB.selfTest.passed == true)
 
 -- ArkInventory: Alt+Click on a live bag button marks the item in that slot; offline views and buttons
 -- whose item doesn't match the slot are left alone.
@@ -217,12 +217,12 @@ CHECK("item in a set is Locked by default", KS.GetLevel(9999) == L.LOCK, KS.GetL
 CHECK("a Mail mark under a set is outranked", KS.GetLevel(15210) == L.LOCK, KS.GetLevel(15210))
 CHECK("ignored slot isn't protected", KS.GetLevel(4306) ~= L.LOCK, KS.GetLevel(4306))
 CHECK("the set is named as the reason", KS.GetSetProtection(9999) == "Tank Gear")
-CALL("/soq set Tank Gear confirm", SlashCmdList.FAVES, "set Tank Gear confirm")
+CALL("/soq set Tank Gear confirm", SlashCmdList.SOQ, "set Tank Gear confirm")
 CHECK("per-set choice applies", KS.GetLevel(9999) == L.CONFIRM, KS.GetLevel(9999))
-CALL("/soq set Tank Gear off", SlashCmdList.FAVES, "set Tank Gear off")
+CALL("/soq set Tank Gear off", SlashCmdList.SOQ, "set Tank Gear off")
 CHECK("set turned off: back to the item's own mark", KS.GetLevel(9999) == L.NORMAL and KS.GetLevel(15210) == L.MAIL)
-CALL("/soq set Tank Gear default", SlashCmdList.FAVES, "set Tank Gear default")
-CALL("/soq sets onme", SlashCmdList.FAVES, "sets onme")
+CALL("/soq set Tank Gear default", SlashCmdList.SOQ, "set Tank Gear default")
+CALL("/soq sets onme", SlashCmdList.SOQ, "sets onme")
 CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 CHAT = {}
 KS.SetLevel(9999, L.JUNK)
@@ -230,12 +230,12 @@ CHECK("lowering a set item explains it stays protected", CHAT_HAS("equipment set
 STUB_SETS[1].items[16] = nil
 FIRE("EQUIPMENT_SETS_CHANGED")
 CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))
-CALL("/soq sets", SlashCmdList.FAVES, "sets")
-CALL("/soq sets default lock", SlashCmdList.FAVES, "sets default lock")
+CALL("/soq sets", SlashCmdList.SOQ, "sets")
+CALL("/soq sets default lock", SlashCmdList.SOQ, "sets default lock")
 CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
-CALL("/soq set Nope lock", SlashCmdList.FAVES, "set Nope lock")
+CALL("/soq set Nope lock", SlashCmdList.SOQ, "set Nope lock")
 -- The settings panel's equipment set rows: the default first, then each set; clicks cycle the level.
-local panel = FavesSettings
+local panel = SOQuartermasterSettings
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
@@ -300,4 +300,4 @@ CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAd
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
 table.sort(undefined)
-print("info: globals Faves looked for that the stub doesn't have: " .. table.concat(undefined, ", "))
+print("info: globals Quartermaster looked for that the stub doesn't have: " .. table.concat(undefined, ", "))

@@ -13,7 +13,7 @@
       "npm install --prefix tools --no-audit --no-fund"
     ],
     "check": [
-      "node \"{skills}/wow-mod-dev/scripts/check-brackets.js\" Faves tools/smoke.lua tools/wowstub.lua"
+      "node \"{skills}/wow-mod-dev/scripts/check-brackets.js\" StandingOrders_Quartermaster tools/smoke.lua tools/wowstub.lua"
     ],
     "test": [
       "node tools/green.js"
@@ -31,8 +31,8 @@
     "verifyPackage": []
   },
   "artifacts": [
-    "dist/Faves-*.zip",
-    "dist/Faves-*-changelog.md"
+    "dist/StandingOrders_Quartermaster-*.zip",
+    "dist/StandingOrders_Quartermaster-*-changelog.md"
   ],
   "deploy": [
     {
