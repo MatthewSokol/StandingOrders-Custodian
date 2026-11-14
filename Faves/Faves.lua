@@ -1630,7 +1630,7 @@ local INTRO_TEXT = table.concat({
   "- Auction house posting",
   "- Using or eating the item, or handing it to an NPC",
   "- Closing the vendor right after a sale, before it can be bought back",
-  "- Bag addons other than ArkInventory (Bagnon, Baganator, AdiBags...): no Alt+Click, icons or Disenchant block yet",
+  "- Bag addons Faves doesn't know (it supports Blizzard bags, ArkInventory, Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI): no Alt+Click, icons or Disenchant block",
 }, "\n")
 
 local intro

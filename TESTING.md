@@ -123,3 +123,17 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 7.7 Released before (or together with) SellAll, whose warning links to it
 
 </details>
+
+<details open>
+<summary><b>8 Bag addons</b> · 0 / 8</summary>
+
+- [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed`
+- [ ] 8.2 ArkInventory: `<env> profile only Faves ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.3 Bagnon: `<env> profile only Faves Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.4 Baganator: `<env> profile only Faves Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.5 AdiBags: `<env> profile only Faves AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.6 BetterBags: `<env> profile only Faves BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.7 ElvUI bags: `<env> profile only Faves ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/faves status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.8 `<env> restore` puts your addons back as they were `auto executed · after the last pass`
+
+</details>

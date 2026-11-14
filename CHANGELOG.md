@@ -8,6 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
+- **More bag addons:** Alt+Click, level icons and the disenchant blocker now work in Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI's bags, as well as the default bags and ArkInventory.
 - **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/faves sets <level>`) or per set (`/faves set <name> <level>`), in `/faves settings` or with commands.
 - **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Faves still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
 
