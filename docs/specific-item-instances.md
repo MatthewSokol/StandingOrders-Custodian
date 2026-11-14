@@ -1,6 +1,6 @@
 # Marking one specific copy of an item
 
-**Question:** can Faves protect *this* Deviate Scale Cloak while other copies of the same cloak stay unmarked?
+**Question:** can Quartermaster protect *this* Deviate Scale Cloak while other copies of the same cloak stay unmarked?
 
 **Short answer:** probably yes, using the item's GUID. It works cleanly for everything that happens in your bags and bank, and needs workarounds for buyback, trade and mail. One in-game check has to pass first: the GUID must stay the same across logouts and moves on WoW Forever.
 
@@ -8,7 +8,7 @@
 
 | Approach | Tells copies apart? | Notes |
 |---|---|---|
-| Item ID (what Faves uses now) | No | Every Deviate Scale Cloak has the same ID |
+| Item ID (what Quartermaster uses now) | No | Every Deviate Scale Cloak has the same ID |
 | Item link (enchant, random suffix like "of the Bear", gems, crafter) | Only different *variants* | Two plain cloaks have identical links. An enchanted one could be told apart, but the mark would break if you change the enchant |
 | Bag position (bag and slot) | Only until something moves | Sorting, banking or looting can move it, so it can't be relied on |
 | **Item GUID**: `C_Item.GetItemGUID(ItemLocation)` | **Yes** | The server gives every copy its own ID. The API exists on this client: ForeverFishing already calls it on interface 16001 |
@@ -30,7 +30,7 @@ A copy mark only helps if each guard can tell *which* copy is involved.
 
 ## How it could work
 
-- **Storage:** `FavesDB.copies[guid] = { id = itemID, level = level }`. A copy mark wins over the item-ID mark, which already loses to a character mark.
+- **Storage:** `StandingOrdersQuartermasterDB.copies[guid] = { id = itemID, level = level }`. A copy mark wins over the item-ID mark, which already loses to a character mark.
 - **Marking:** Ctrl+Alt+Click marks just that copy. The tooltip and bag icon show "(this copy)".
 - **Cleanup:** remember when each marked copy was last seen in your bags or bank, and drop marks not seen for 30 days (sold, destroyed or traded away).
 - **Cost:** about a day of work, plus testing. Most of it is the buyback, trade and mail workarounds.

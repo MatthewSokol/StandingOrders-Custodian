@@ -10,7 +10,7 @@ Part of **Standing Orders**, three addons that deal with the items you've alread
 | [Standing Orders: Vendor](https://github.com/MatthewSokol/SellAll) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
 | [Standing Orders: Mail](https://github.com/MatthewSokol/MailAll) | `/som` | Mails items marked Mail to your bank alt in one click |
 
-Quartermaster was first released as Faves; its folder, saved data and `Faves` API keep that name, so your marks carry over and other addons keep working.
+Other addons use its API through the `StandingOrdersQuartermaster` global (see below); its folder is `StandingOrders_Quartermaster`.
 
 ## Item levels
 
@@ -53,7 +53,7 @@ Only unmarked items are marked, and each item only once: change an auto-marked i
 
 ## Guards
 
-Every action that would lose an item goes through one check, `Faves.Guard(itemID, link, action)`. When the item is Locked, the action is blocked and you see *"… is Locked. Unfavorite it to … it"*. When it's Confirm, it's blocked the same way and a window offers **Allow once**.
+Every action that would lose an item goes through one check, `StandingOrdersQuartermaster.Guard(itemID, link, action)`. When the item is Locked, the action is blocked and you see *"… is Locked. Unfavorite it to … it"*. When it's Confirm, it's blocked the same way and a window offers **Allow once**.
 
 | Action | How it's blocked |
 |---|---|
@@ -91,11 +91,11 @@ If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, S
 ## For addon authors
 
 ```lua
-if Faves and Faves.IsLocked(itemID) then --[[ skip it ]] end
-if Faves and Faves.Guard(itemID, link, "disenchant") then return end -- shows the error for you
-local level = Faves and Faves.GetLevel(itemID) -- Faves.LEVELS.JUNK / MAIL / NORMAL / CONFIRM / LOCK / ONME
--- MAIL is 1.5 (between JUNK 1 and NORMAL 2), so compare with Faves.LEVELS, not with level + 1.
-if Faves and Faves.GetLevel(itemID) == Faves.LEVELS.MAIL then --[[ send it to the bank character ]] end
+if StandingOrdersQuartermaster and StandingOrdersQuartermaster.IsLocked(itemID) then --[[ skip it ]] end
+if StandingOrdersQuartermaster and StandingOrdersQuartermaster.Guard(itemID, link, "disenchant") then return end -- shows the error for you
+local level = StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) -- StandingOrdersQuartermaster.LEVELS.JUNK / MAIL / NORMAL / CONFIRM / LOCK / ONME
+-- MAIL is 1.5 (between JUNK 1 and NORMAL 2), so compare with StandingOrdersQuartermaster.LEVELS, not with level + 1.
+if StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) == StandingOrdersQuartermaster.LEVELS.MAIL then --[[ send it to the bank character ]] end
 ```
 
 ## Commands

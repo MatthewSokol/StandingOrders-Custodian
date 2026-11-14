@@ -11,7 +11,7 @@ The README and every addon page show these. Take them on a test character, then 
 
 | File | Shows |
 |---|---|
-| `bags-levels.png` | Bags with the level icons (Junk coin, Mail letter, Confirm star, Locked key, Always on me diamond) and a tooltip's Faves line |
+| `bags-levels.png` | Bags with the level icons (Junk coin, Mail letter, Confirm star, Locked key, Always on me diamond) and a tooltip's Quartermaster line |
 | `settings.png` | `/soq settings`: the auto-mark switches |
 | `guard.png` | A blocked action: the red error after trying to sell or disenchant a Locked item |
 | `intro.png` | The intro window |

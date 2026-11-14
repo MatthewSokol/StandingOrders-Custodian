@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Faves. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
+All notable changes to Quartermaster. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
 follow [Semantic Versioning](https://semver.org/) and come from git tags: each merged change
 gets its own version, and a release publishes one of them.
 
@@ -8,13 +8,13 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
-- **New name: Standing Orders: Quartermaster.** Faves is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq` (`/faves` is gone); your marks and settings carry over.
+- **New name: Standing Orders: Quartermaster.** Faves (its test-build name) is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq` (`/faves` is gone), the folder is `StandingOrders_Quartermaster` and the API global is `StandingOrdersQuartermaster`.
 
 ### Added
 
 - **More bag addons:** Alt+Click, level icons and the disenchant blocker now work in Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI's bags, as well as the default bags and ArkInventory.
 - **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/soq sets <level>`) or per set (`/soq set <name> <level>`), in `/soq settings` or with commands.
-- **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Faves still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
+- **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Quartermaster still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
 
 ## [0.1.0] - 2026-11-13
 
@@ -42,9 +42,9 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - Bank (Always on me only): the item is moved straight back to your bags.
 - **One-time intro** listing what protection covers and what it doesn't yet (`/soq intro` reopens it).
 - Levels set in earlier SellAll test builds are brought over automatically.
-- `/soq selftest` checks the install and saves the results. With the optional Mechanic dev tool, Faves shows its checks and log there.
+- `/soq selftest` checks the install and saves the results. With the optional Mechanic dev tool, Quartermaster shows its checks and log there.
 - **ArkInventory bags:** Alt+Click, level icons and the disenchant blocker work in ArkInventory's bag and bank windows too, through its public API. Offline views (another character's bags, the bank away from a banker) are left alone.
-- `Faves.IsLocked`, `Faves.GetLevel` and `Faves.Guard` for other addons.
+- `StandingOrdersQuartermaster.IsLocked`, `StandingOrdersQuartermaster.GetLevel` and `StandingOrdersQuartermaster.Guard` for other addons.
 
 **Known limits:**
 - Auction house posting isn't guarded yet.

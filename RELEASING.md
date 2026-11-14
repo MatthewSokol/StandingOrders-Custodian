@@ -1,4 +1,4 @@
-# Releasing Faves
+# Releasing Quartermaster
 
 The release pipeline, start to finish. Claude runs it when you say you're ready to release.
 
@@ -15,17 +15,17 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 |---|---|
 | No character, player or account names in anything public: code, docs, examples, commit messages, screenshots, the CurseForge description. The repo is under your real name. | `green.js` privacy check (it reads the names from your WTF folder, so they're never written down). Screenshots and store text: check by hand. |
 | Commit and zip times are 00:00 UTC. Never merge with GitHub's button; fast-forward locally. | Post-commit hook; `green.js` checks unmerged commits; `release.ps1` dates zip entries. |
-| The zip needs forward-slash paths and one top-level `Faves/` folder (PowerShell 5.1's `Compress-Archive` writes backslashes). | `release.ps1` |
+| The zip needs forward-slash paths and one top-level `StandingOrders_Quartermaster/` folder (PowerShell 5.1's `Compress-Archive` writes backslashes). | `release.ps1` |
 | The version lives only in git tags (dev-routine: a `candidate/vX.Y.Z` per merged change, kept local; one pushed `vX.Y.Z` per release). The `.toc` says `@project-version@`; changes go under `## [Unreleased]` in `CHANGELOG.md`. | `green.js` version check; `install.ps1` and `release.ps1` fill the token |
 | Tags are lightweight (`git tag vX.Y.Z`): an annotated tag, including the one `mech release` makes, records the real time. Push only the release tag, by name. | `pipeline.js released` |
 | Add `## X-Curse-Project-ID` once the CurseForge project exists. | `green.js` warns until it's there |
 | Only register events that exist on Forever; an unknown one stops the file loading. Use `pcall` for events that may not exist. | `tools/wowstub.lua` `KNOWN_EVENTS` (the smoke test fails on unknown ones) |
-| WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Faves is at about 160 file-level locals. | `tools/limits.js` |
+| WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Quartermaster is at about 160 file-level locals. | `tools/limits.js` |
 | Read BugGrabber after a real play session. That's how the nil bag-slot error (123 hits) was found. | `green.js --game` |
 | Mechanic is for development only: `OptionalDeps`, never `Dependencies`. Players won't have it. | `green.js` TOC check; the "Without dev addons" pass |
 | A bare `\|` in chat text is a WoW escape (`\|n` newline, `\|c` color): write `\|\|`. | `tools/pipes.js` in `green.js` |
 | Every addon page and the README show the main features in screenshots, with every character, player, guild and realm name blurred, blacked out or made up. | By hand: `docs/screenshots/README.md` has the shot list |
-| Nothing crosses the game's terms or the botting line. Faves' automatic actions (buying back a protected item, moving an Always on me item out of the bank, auto-marks) only run inside a window you opened, and never buy, post or cast. Re-check any new automatic action. | By hand, each release |
+| Nothing crosses the game's terms or the botting line. Quartermaster' automatic actions (buying back a protected item, moving an Always on me item out of the bank, auto-marks) only run inside a window you opened, and never buy, post or cast. Re-check any new automatic action. | By hand, each release |
 | Test against known states: a clean install, an upgrade from the last release's saved data, the game without Mechanic, and the release zip itself. | `wow-env.js` passes in the checklist |
 
 ## Release checklist (step 3)
@@ -70,11 +70,11 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.1 Smoke</b> (standing) · 0 / 7</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.1.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/soq selftest` passes `auto validated`
+- [ ] 2.1.2 Clean install: `<env> profile clean --addon Quartermaster`; full game restart; `/soq selftest` passes `auto validated`
 - [ ] 2.1.3 The intro shows on that first login, and "Got it" closes it
-- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/soq selftest`; no Faves errors `auto validated`
-- [ ] 2.1.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
-- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
+- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/soq selftest`; no Quartermaster errors `auto validated`
+- [ ] 2.1.5 With no other addons: `<env> profile only Quartermaster !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
+- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Quartermaster --from <last release tag>`; your marks and settings are kept
 - [ ] 2.1.7 `<env> restore` `auto executed · after you say the pass is done`
 
 </details>
@@ -83,7 +83,7 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 84</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
-point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Faves row is journal-proven
+point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
 yet (no test journal; see `BACKLOG.md`).
 
 <details open>
@@ -129,7 +129,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19) · open · 0 / 3</summary>
 
-- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Faves"
+- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Quartermaster"
 - [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
 - [ ] 2.2.6.3 Marks and settings from before the rename are all still there
 
@@ -146,8 +146,8 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>3 Deploy</b> · 0 / 5</summary>
 
 - [ ] 3.1 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
-- [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
-- [ ] 3.3 Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated`
+- [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag`
+- [ ] 3.3 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated`
 - [ ] 3.4 `<env> restore` `auto executed · after the zip test`
 - [ ] 3.5 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
@@ -169,8 +169,8 @@ The gate needs zero open problems.
 
 ## What "Mechanic output" means here
 
-- **In-game (installed):** `!Mechanic`/`Mechanic` show Faves under Tests (the self-test checks), Console (the guard log) and Errors (BugGrabber). Faves registers only when Mechanic is loaded; without it nothing changes for players.
-- **Saved to disk:** `/soq selftest` saves its results in `FavesDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
+- **In-game (installed):** `!Mechanic`/`Mechanic` show Quartermaster under Tests (the self-test checks), Console (the guard log) and Errors (BugGrabber). Quartermaster registers only when Mechanic is loaded; without it nothing changes for players.
+- **Saved to disk:** `/soq selftest` saves its results in `StandingOrdersQuartermasterDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
 - **Mechanic's desktop CLI and MCP (`mech`)** aren't installed on this PC (they need Python 3.10+). If you add them, its `addon.validate`, `addon.lint` (uses `.luacheckrc`) and `addon.output` steps slot into checklist steps 2 and 4.
 
 ## Deploy (step 6)
@@ -187,11 +187,11 @@ First release only:
    - **Category:** Bags & Inventory.
    - **License:** MIT.
    - **Logo:** 400×400.
-   - **Source:** `https://github.com/MatthewSokol/Faves` (only if the repo is public).
-3. Copy the project ID into `Faves/Faves.toc` as `## X-Curse-Project-ID: <id>`. Commit that, then rebuild the zip.
+   - **Source:** `https://github.com/MatthewSokol/StandingOrders-Quartermaster` (only if the repo is public).
+3. Copy the project ID into `StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc` as `## X-Curse-Project-ID: <id>`. Commit that, then rebuild the zip.
 
 Every release:
-1. Project → Files → Upload File → `dist/Faves-<version>.zip`.
+1. Project → Files → Upload File → `dist/StandingOrders_Quartermaster-<version>.zip`.
 2. Set the details:
    - **Display name:** `Standing Orders: Quartermaster <version>`.
    - **Release type:** Release (or Beta).
@@ -200,6 +200,6 @@ Every release:
 3. Wait for approval (usually minutes to hours), then install it from the CurseForge app on a clean profile and `/reload` once.
 
 ### Other sites (if you choose them)
-- **GitHub release:** `gh release create v<version> dist/Faves-<version>.zip --notes-file <changelog entry>`. Only if the repo is public.
+- **GitHub release:** `gh release create v<version> dist/StandingOrders_Quartermaster-<version>.zip --notes-file <changelog entry>`. Only if the repo is public.
 - **Wago Addons** (addons.wago.io → Developer): create the project, then add `## X-Wago-ID: <id>` to the `.toc` and upload the same zip.
 - **WoWInterface:** Upload → new addon. Uses the same zip and changelog.

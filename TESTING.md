@@ -10,7 +10,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 1.1 The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
 - [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
 - [ ] 1.3 `/soq intro` reopens it
-- [ ] 1.4 Delete `WTF\Account\<account>\SavedVariables\Faves.lua`, log in: no Lua errors
+- [ ] 1.4 Delete `WTF\Account\<account>\SavedVariables\StandingOrders_Quartermaster.lua`, log in: no Lua errors
 - [ ] 1.5 `/soq list` says nothing is marked
 - [ ] 1.6 `/soq status` shows every guard on
 - [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
@@ -28,7 +28,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 2.6 Mark an item Locked account wide, then `/soq normal <item> char`: Normal on this character, still Locked on others
 - [ ] 2.7 `/soq list` shows both kinds, character marks labelled
 - [ ] 2.8 `/reload` a few times: no errors at login or when the bags first open
-- [ ] 2.9 Works with SellAll disabled (Faves alone loads with no errors)
+- [ ] 2.9 Works with SellAll disabled (Quartermaster alone loads with no errors)
 
 </details>
 
@@ -81,7 +81,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.21 A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
 - [ ] 5.22 Changing an auto-marked item's level sticks after /reload and more loot
 - [ ] 5.23 /soq settings: each switch stops its rule; turning one back on marks matching items in your bags
-- [ ] 5.24 With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /soq settings
+- [ ] 5.24 With Quartermaster auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /soq settings
 - [ ] 5.25 Alt+Right-click steps it back down
 - [ ] 5.26 At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] 5.27 Icons and tooltip lines show in the combined bag
@@ -90,7 +90,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.30 Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag) is moved back to your bags; a Locked item stays banked
 - [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
 - [ ] 5.32 Opening the bank with an Always on me item already in it moves it out
-- [ ] 5.33 Save an equipment set with an item in it: its tooltip says "Faves: Locked (equipment set <name>)"; selling it is bought back
+- [ ] 5.33 Save an equipment set with an item in it: its tooltip says "Quartermaster: Locked (equipment set <name>)"; selling it is bought back
 - [ ] 5.34 `/soq set <name> confirm`, `onme` or `off` changes that set's items; `/soq sets onme` changes the default for sets
 - [ ] 5.35 Save the set again without the item: it goes back to its own mark
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
@@ -105,7 +105,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 6.2 In combat: potions can still be used from the bags
 - [ ] 6.3 With ArkInventory: `/soq status` says "ArkInventory: supported"
 - [ ] 6.4 With ArkInventory: Alt+Click in its bag window raises the level; the icon shows on the Ark button
-- [ ] 6.5 With ArkInventory: viewing another character's bags, Alt+Click does nothing in Faves
+- [ ] 6.5 With ArkInventory: viewing another character's bags, Alt+Click does nothing in Quartermaster
 - [ ] 6.6 With ArkInventory: Disenchant targeting covers Locked items in the Ark window in red
 - [ ] 6.7 With ArkInventory: vendor, destroy, trade and mail guards still work
 - [ ] 6.8 After a selling session, opening the bank, the auction house and talents shows no "AddOn has been blocked" messages
@@ -118,8 +118,8 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 7.1 CurseForge project created; its ID added to the `.toc` as `## X-Curse-Project-ID:`
 - [ ] 7.2 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed
 - [ ] 7.3 Release tag `v<version>` on the candidate's commit on `main` (`pipeline.js released <version>`, lightweight)
-- [ ] 7.4 `powershell -File ./release.ps1` builds `dist\Faves-<version>.zip` and the release notes from the tag
-- [ ] 7.5 The zip unpacks to a single `Faves\` folder, its .toc shows the version, and that install loads in game
+- [ ] 7.4 `powershell -File ./release.ps1` builds `dist\StandingOrders_Quartermaster-<version>.zip` and the release notes from the tag
+- [ ] 7.5 The zip unpacks to a single `StandingOrders_Quartermaster\` folder, its .toc shows the version, and that install loads in game
 - [ ] 7.6 After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
 - [ ] 7.7 Released before (or together with) SellAll, whose warning links to it
 
@@ -129,12 +129,12 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 <summary><b>8 Bag addons</b> · 0 / 8</summary>
 
 - [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed`
-- [ ] 8.2 ArkInventory: `<env> profile only Faves ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.3 Bagnon: `<env> profile only Faves Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.4 Baganator: `<env> profile only Faves Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.5 AdiBags: `<env> profile only Faves AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.6 BetterBags: `<env> profile only Faves BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.7 ElvUI bags: `<env> profile only Faves ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.2 ArkInventory: `<env> profile only Quartermaster ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
+- [ ] 8.3 Bagnon: `<env> profile only Quartermaster Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
+- [ ] 8.4 Baganator: `<env> profile only Quartermaster Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
+- [ ] 8.5 AdiBags: `<env> profile only Quartermaster AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
+- [ ] 8.6 BetterBags: `<env> profile only Quartermaster BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
+- [ ] 8.7 ElvUI bags: `<env> profile only Quartermaster ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.8 `<env> restore` puts your addons back as they were `auto executed · after the last pass`
 
 </details>
