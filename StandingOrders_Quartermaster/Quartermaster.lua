@@ -1,4 +1,4 @@
--- Faves: per-item protection levels that every item-losing action (selling, disenchanting,
+-- Quartermaster: per-item protection levels that every item-losing action (selling, disenchanting,
 -- destroying, trading, mailing) honors.
 --
 -- Levels (stored per item ID, account wide):
@@ -11,12 +11,12 @@
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
 --   On me    "Always on me": Locked, and also kept out of the bank (moved straight back to your bags)
 --
--- Other addons: Faves.GetLevel(itemID), Faves.IsLocked(itemID), Faves.LEVELS, and
--- Faves.Guard(itemID, link, action), which shows the error and returns true when the action must stop.
+-- Other addons: StandingOrdersQuartermaster.GetLevel(itemID), StandingOrdersQuartermaster.IsLocked(itemID), StandingOrdersQuartermaster.LEVELS, and
+-- StandingOrdersQuartermaster.Guard(itemID, link, action), which shows the error and returns true when the action must stop.
 
 local ADDON = ...
 local KS = {}
-_G.Faves = KS
+_G.StandingOrdersQuartermaster = KS
 
 -- Mail sits between Junk and Normal. It's 1.5 rather than renumbering, so saved marks and addons that
 -- compare against the old numbers (SellAll: Normal 2, Confirm 3) keep working.
@@ -63,7 +63,7 @@ local function Debug(msg, ...)
   if db and db.debug then Print("|cff888888[debug]|r " .. msg, ...) end
 end
 
--- Always-on log of guard decisions, kept in SavedVariables (FavesDB.log) so a miss can be
+-- Always-on log of guard decisions, kept in SavedVariables (StandingOrdersQuartermasterDB.log) so a miss can be
 -- diagnosed after /reload. Also echoed to chat with /soq debug.
 local function Log(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
@@ -94,9 +94,9 @@ KS.LevelText = LevelText
 ---------------------------------------------------------------------------------------------------
 -- Levels and the guard every action goes through
 
--- Marks are account wide (FavesDB.items) or for one character (FavesCharDB.items). A character mark
+-- Marks are account wide (StandingOrdersQuartermasterDB.items) or for one character (StandingOrdersQuartermasterCharDB.items). A character mark
 -- wins, so a character can also override an account-wide mark (stored as Normal to clear it there).
-local cdb -- FavesCharDB
+local cdb -- StandingOrdersQuartermasterCharDB
 local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set name (see Equipment sets)
 
 function KS.GetLevel(id)
@@ -135,7 +135,7 @@ local ITEM_CLASS = (Enum and Enum.ItemClass) or {}
 local CLASS_CONSUMABLE = ITEM_CLASS.Consumable or 0
 local CLASS_REAGENT = ITEM_CLASS.Reagent or 5
 local CLASS_TRADEGOODS = ITEM_CLASS.Tradegoods or 7
--- Vendor trade goods known up front; the rest are learned from every vendor you open (FavesDB.vendorMats).
+-- Vendor trade goods known up front; the rest are learned from every vendor you open (StandingOrdersQuartermasterDB.vendorMats).
 local VENDOR_MATS = {}
 for _, id in ipairs({
   2320, 2321, 4291, 8343, 14341,             -- Coarse, Fine, Silken, Heavy Silken, Rune Thread
@@ -205,7 +205,7 @@ function KS.ToggleItemScope(id, link)
 end
 
 -- The one check for any action that would lose an item. Returns true (and shows the error) when the
--- item is locked, so callers just do: if Faves.Guard(id, link, "sell") then <undo or block> end
+-- item is locked, so callers just do: if StandingOrdersQuartermaster.Guard(id, link, "sell") then <undo or block> end
 -- Some actions are only blocked at higher levels (banking: Always on me only).
 -- Confirm ("temp hold") items: the action is still stopped first, then a window asks whether to allow
 -- it once. "Allow once" gives the item a pass and you do the action again. A pass is used up by one
@@ -266,7 +266,7 @@ function KS.Guard(id, link, action)
 end
 KS.HasPass = function(id) return UsePass(id, nil, true) end
 
--- One-time move of levels kept by SellAll 1.0 betas (SellAllDB.items). Existing Faves levels win.
+-- One-time move of levels kept by SellAll 1.0 betas (SellAllDB.items). Existing Quartermaster levels win.
 -- Returns how many items were brought over.
 function KS.ImportLevels(items)
   if type(items) ~= "table" or not db then return 0 end
@@ -287,7 +287,7 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Equipment sets: every item in one of this character's equipment sets (the game's equipment manager)
 -- is protected at that set's level: Confirm, Locked or Always on me. Each set uses its own choice
--- (FavesCharDB.sets[setID]) or the default for sets (FavesDB.setDefault, Locked unless changed); "off"
+-- (StandingOrdersQuartermasterCharDB.sets[setID]) or the default for sets (StandingOrdersQuartermasterDB.setDefault, Locked unless changed); "off"
 -- turns it off. It's a layer on top of marks: an item's level is the higher of its mark and its sets',
 -- and an item taken out of a set loses that protection by itself. Marks are never written.
 
@@ -697,7 +697,7 @@ end
 local hooked = setmetatable({}, { __mode = "k" })
 local hookedCount = 0
 
--- Bag addons (Adapters.lua): each adapter hands Faves another bag addon's item buttons and answers, per
+-- Bag addons (Adapters.lua): each adapter hands Quartermaster another bag addon's item buttons and answers, per
 -- button, which real bag and slot it shows, or nil when that view isn't live or can't be trusted.
 -- An adapter is { name, loaded = fn() -> bool, hook = fn(add), slot = fn(btn) -> bag, slot }.
 local bagAddons = {}
@@ -984,9 +984,9 @@ end
 -- Quest items, consumables, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
 -- anything VendorFlip is holding to flip. Items you got on purpose (traded to you, bought on the AH or
 -- from a vendor, or mailed to you by a player) are left alone on the character that got them.
--- Each item ID is only decided once (FavesDB.autoSeen), so a level you change by hand stays.
+-- Each item ID is only decided once (StandingOrdersQuartermasterDB.autoSeen), so a level you change by hand stays.
 
-KS.AUTO_MARKS = true -- SellAll checks this and leaves auto-marking to Faves
+KS.AUTO_MARKS = true -- SellAll checks this and leaves auto-marking to Quartermaster
 
 local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, boeMail = true, matsMail = true, keepReceived = true }
 local AUTO_KEYS = { "grayJunk", "whiteJunk", "boeMail", "matsMail", "keepReceived" }
@@ -1019,7 +1019,7 @@ end
 
 ---------------------------------------------------------------------------------------------------
 -- Professions: which crafting materials this character uses. The reliable answer is the reagents of
--- the recipes it knows, read whenever one of its profession windows opens (FavesCharDB.recipeMats).
+-- the recipes it knows, read whenever one of its profession windows opens (StandingOrdersQuartermasterCharDB.recipeMats).
 -- For a profession whose window hasn't been opened yet, the item's kind is used as a guess; when the
 -- kind can't tell, the item waits. Enchanting materials are never auto-marked.
 
@@ -1437,7 +1437,7 @@ local function HookReceipts()
 end
 
 ---------------------------------------------------------------------------------------------------
--- Settings panel (/soq settings, or Esc > Options > AddOns > Faves)
+-- Settings panel (/soq settings, or Esc > Options > AddOns > Quartermaster)
 
 local category
 local refreshers = {}
@@ -1477,7 +1477,7 @@ local AUTO_TEXT = {
 }
 
 local function CreatePanel()
-  local panel = CreateFrame("Frame", "FavesSettings")
+  local panel = CreateFrame("Frame", "SOQuartermasterSettings")
   panel.name = "Standing Orders: Quartermaster"
 
   local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -1494,7 +1494,7 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Faves knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Quartermaster knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
   prev = Header(panel, "New marks (Alt+Click, /soq <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
@@ -1608,7 +1608,7 @@ end
 
 local INTRO_VERSION = 5
 local INTRO_TEXT = table.concat({
-  "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. Confirm is a temp hold: Faves stops the action, then asks whether to allow it once.",
+  "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. Confirm is a temp hold: Quartermaster stops the action, then asks whether to allow it once.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
@@ -1637,7 +1637,7 @@ local intro
 
 function KS:ShowIntro()
   if not intro then
-    intro = CreateFrame("Frame", "FavesIntro", UIParent, "BasicFrameTemplateWithInset")
+    intro = CreateFrame("Frame", "SOQuartermasterIntro", UIParent, "BasicFrameTemplateWithInset")
     intro:SetPoint("CENTER")
     intro:SetFrameStrata("DIALOG")
     intro:SetClampedToScreen(true)
@@ -1669,15 +1669,15 @@ function KS:ShowIntro()
     end)
 
     intro:SetSize(480, body:GetStringHeight() + 38 + 54)
-    tinsert(UISpecialFrames, "FavesIntro") -- Esc closes it (it shows again next login until "Got it")
+    tinsert(UISpecialFrames, "SOQuartermasterIntro") -- Esc closes it (it shows again next login until "Got it")
   end
   intro:Show()
 end
 
 ---------------------------------------------------------------------------------------------------
 -- Self-tests and Mechanic. /soq selftest runs read-only checks of this install and saves them in
--- FavesDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
--- is installed (optional, never required: !Mechanic), Faves also registers with it, so the checks show
+-- StandingOrdersQuartermasterDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
+-- is installed (optional, never required: !Mechanic), Quartermaster also registers with it, so the checks show
 -- in its Tests tab and the guard log in its Console. Nothing here changes marks or moves items.
 
 local VERSION = (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version"))
@@ -1788,12 +1788,12 @@ local TESTS = {
     local n, first = 0, nil
     for _, err in ipairs(bg:GetDB() or {}) do
       local text = tostring(err.message) .. tostring(err.stack)
-      if text:find("Faves[/\\]") then
+      if text:find("StandingOrders_Quartermaster[/\\]") then
         n = n + 1
         first = first or tostring(err.message)
       end
     end
-    d[#d + 1] = Detail("errors from Faves files", n, n == 0 and "pass" or "fail")
+    d[#d + 1] = Detail("errors from Quartermaster files", n, n == 0 and "pass" or "fail")
     if first then d[#d + 1] = Detail("first", first:sub(1, 200), "fail") end
     return Result(d)
   end },
@@ -1871,7 +1871,7 @@ local function RegisterMechanic()
     },
   })
   Log("registered with Mechanic")
-  -- With Mechanic there, every session's self-test results are saved (FavesDB.selfTest) for the gate.
+  -- With Mechanic there, every session's self-test results are saved (StandingOrdersQuartermasterDB.selfTest) for the gate.
   KS.SelfTest(true)
 end
 
@@ -1937,8 +1937,8 @@ end
 
 local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
-SLASH_FAVES1 = "/soq"
-SlashCmdList.FAVES = function(msg)
+SLASH_SOQ1 = "/soq"
+SlashCmdList.SOQ = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
   if LEVEL_CMDS[cmd] and rest ~= "" then
@@ -2011,11 +2011,11 @@ f:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 
 f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
   if event == "ADDON_LOADED" and arg1 == ADDON then
-    FavesDB = FavesDB or {}
-    db = FavesDB
+    StandingOrdersQuartermasterDB = StandingOrdersQuartermasterDB or {}
+    db = StandingOrdersQuartermasterDB
     db.items = db.items or {}
-    FavesCharDB = FavesCharDB or {}
-    cdb = FavesCharDB
+    StandingOrdersQuartermasterCharDB = StandingOrdersQuartermasterCharDB or {}
+    cdb = StandingOrdersQuartermasterCharDB
     cdb.items = cdb.items or {}
     db.vendorMats = db.vendorMats or {}  -- trade goods seen on a vendor: per-character items
     cdb.autoSeen = cdb.autoSeen or {}     -- item IDs decided for this character only

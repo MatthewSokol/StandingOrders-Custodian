@@ -1,10 +1,10 @@
--- Faves: bag addon adapters. Each one hands another bag addon's item buttons to Faves (Alt+Click, the
+-- Quartermaster: bag addon adapters. Each one hands another bag addon's item buttons to Quartermaster (Alt+Click, the
 -- level icon, the disenchant blocker) and answers, per button, which real bag and slot it shows, or
 -- nothing when that view isn't live or can't be trusted. All optional: an adapter only runs when its
--- addon is loaded, Faves hooks instead of replacing anything, and an adapter that fails switches off.
+-- addon is loaded, Quartermaster hooks instead of replacing anything, and an adapter that fails switches off.
 -- docs/bag-addons.md has the rules; tools/smoke.lua has a stub of each addon's API.
 
-local KS = Faves
+local KS = StandingOrdersQuartermaster
 local C = C_Container
 
 local function LinkID(link) return link and tonumber(link:match("item:(%d+)")) end
@@ -149,8 +149,8 @@ KS.AddBagAddon({
 ---------------------------------------------------------------------------------------------------
 -- Baganator: live bag and bank buttons get BaganatorClassic/RetailLiveContainerItemButtonMixin, copied
 -- onto each button when it's created, and every draw calls :SetItemDetails. So the mixins are hooked
--- now, while Faves loads (before Baganator builds its buttons), and buttons wait until login. Cached
--- views (other characters, the closed bank) use other templates and never reach Faves. The parent's ID
+-- now, while Quartermaster loads (before Baganator builds its buttons), and buttons wait until login. Cached
+-- views (other characters, the closed bank) use other templates and never reach Quartermaster. The parent's ID
 -- is the bag, the button's the slot, and the shown item (BGR.itemID) must match that slot.
 
 local baganatorAdd, baganatorWaiting, baganatorHooked = nil, {}, false
