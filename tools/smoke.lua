@@ -46,6 +46,17 @@ ArkInventory = {
   },
 }
 
+-- Stand-ins for ElvUI's bags module, AdiBags (with its ABEvent-1.0 messages) and BetterBags (its Events
+-- module), with just the hooks the adapters use.
+local ElvB = { UpdateSlot = function() end }
+ElvUI = { { private = { bags = { enable = true } }, GetModule = function(_, name) return name == "Bags" and ElvB end } }
+ADI_MSG, BB_MSG = {}, {}
+local Adi = {}
+local BBEvents = { RegisterMessage = function(_, msg, fn) BB_MSG[msg] = fn end }
+local BB = { GetModule = function(_, name) return name == "Events" and BBEvents end }
+local ABEvent = { Embed = function(_, obj) obj.RegisterMessage = function(_, msg, fn) ADI_MSG[msg] = fn end end }
+local AceAddon = { GetAddon = function(_, name) return (name == "AdiBags" and Adi) or (name == "BetterBags" and BB) or nil end }
+LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
 FIRE("ADDON_LOADED", "Faves")
 FIRE("PLAYER_LOGIN")
 local KS = Faves
@@ -234,6 +245,44 @@ if rows[2] then
   CHECK("default moved from Locked to Always on me", KS.GetSetDefault() == L.ONME, KS.GetSetDefault())
   KS.SetSetChoice(nil, L.LOCK)
 end
+
+-- ElvUI bags, AdiBags and BetterBags: Alt+Click on a live bag button marks the item in that slot; a
+-- closed bank's buttons (and a BetterBags button showing another item) are left alone.
+for id = 7001, 7003 do STUB_ITEMDB[id] = { name = "Test Ring " .. id, quality = 1, sellPrice = 0, classID = 4, subclassID = 0 } end
+STUB_BAGS[2] = { 7001, 7002, 7003 }
+STUB_BAGS[-1] = { 7001 }
+local function plain(fields)
+  local b = button(0, 0)
+  b.GetBagID, b.GetID = nil, nil
+  for k, v in pairs(fields) do b[k] = v end
+  return b
+end
+local function altClick(label, btn, id, want)
+  STUB_ALT = true
+  CALL("Alt+Left-click: " .. label, btn.__h_PreClick, btn, "LeftButton")
+  STUB_ALT = false
+  CHECK(label .. ": level is " .. tostring(want), KS.GetLevel(id) == want, KS.GetLevel(id))
+end
+local elv = plain({ BagID = 2, SlotID = 1 })
+CALL("ElvUI UpdateSlot", ElvB.UpdateSlot, ElvB, { Bags = { [2] = { [1] = elv } } }, 2, 1)
+altClick("ElvUI bags", elv, 7001, L.CONFIRM)
+local elvBank = plain({ BagID = -1, SlotID = 1 })
+CALL("ElvUI bank UpdateSlot", ElvB.UpdateSlot, ElvB, { isBank = true, Bags = { [-1] = { [1] = elvBank } } }, -1, 1)
+altClick("ElvUI closed bank", elvBank, 7001, L.CONFIRM)
+local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end })
+CALL("AdiBags_UpdateButton", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adi)
+altClick("AdiBags", adi, 7002, L.CONFIRM)
+local adiBank = plain({ bag = -1, slot = 1, IsBank = function() return true end })
+CALL("AdiBags_UpdateButton (bank)", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adiBank)
+altClick("AdiBags closed bank", adiBank, 7001, L.CONFIRM)
+local function bbItem(bag, slot, id) return { button = plain({}), currentData = { bagid = bag, slotid = slot, itemInfo = { itemLink = STUB_LINK(id) } } } end
+local bb = bbItem(2, 3, 7003)
+CALL("BetterBags item/Updated", BB_MSG["item/Updated"], {}, bb, {})
+altClick("BetterBags", bb.button, 7003, L.CONFIRM)
+local bbStale = bbItem(2, 3, 7001)
+CALL("BetterBags item/Updated (stale)", BB_MSG["item/Updated"], {}, bbStale, {})
+altClick("BetterBags showing another item", bbStale.button, 7003, L.CONFIRM)
+CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 4, #KS.BagAddonStatus())
 
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end

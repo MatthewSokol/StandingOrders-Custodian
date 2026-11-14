@@ -53,3 +53,96 @@ KS.AddBagAddon({
   end,
 })
 
+---------------------------------------------------------------------------------------------------
+-- ElvUI bags (only when ElvUI's bags module is on): B:UpdateSlot(frame, bagID, slotID) runs for every
+-- slot; the button is frame.Bags[bagID][slotID] and carries BagID / SlotID. No offline views; the bank
+-- frame only counts while the bank is open.
+
+local function ElvBags()
+  local E = _G.ElvUI and ElvUI[1]
+  if not (E and E.private and E.private.bags and E.private.bags.enable and E.GetModule) then return end
+  return E:GetModule("Bags", true)
+end
+
+KS.AddBagAddon({
+  name = "ElvUI bags",
+  loaded = function()
+    local B = ElvBags()
+    return B and B.UpdateSlot and true
+  end,
+  hook = function(add)
+    hooksecurefunc(ElvBags(), "UpdateSlot", function(_, frame, bagID, slotID)
+      local slot = frame and frame.Bags and frame.Bags[bagID] and frame.Bags[bagID][slotID]
+      if slot then
+        slot.favesBankFrame = frame.isBank and true or nil
+        add(slot)
+      end
+    end)
+  end,
+  slot = function(btn)
+    if not (btn.BagID and btn.SlotID and BankLive(btn.favesBankFrame)) then return end
+    return btn.BagID, btn.SlotID
+  end,
+})
+
+---------------------------------------------------------------------------------------------------
+-- AdiBags: its own message library (ABEvent-1.0) sends AdiBags_UpdateButton(button) for every item
+-- button update. Buttons are pooled and reused, so the slot is read each time: button.bag / .slot.
+-- No offline views; bank buttons only count while the bank is open.
+
+local function AdiBags()
+  local ace = LibStub and LibStub("AceAddon-3.0", true)
+  return ace and ace:GetAddon("AdiBags", true)
+end
+
+KS.AddBagAddon({
+  name = "AdiBags",
+  loaded = function() return AdiBags() and LibStub("ABEvent-1.0", true) and true end,
+  hook = function(add)
+    local listener = {}
+    LibStub("ABEvent-1.0"):Embed(listener)
+    listener:RegisterMessage("AdiBags_UpdateButton", function(_, button) add(button) end)
+  end,
+  slot = function(btn)
+    local isBank = btn.IsBank and btn:IsBank()
+    if not (btn.bag and btn.slot and BankLive(isBank)) then return end
+    return btn.bag, btn.slot
+  end,
+})
+
+---------------------------------------------------------------------------------------------------
+-- BetterBags: its Events module sends "item/Updated"(ctx, item, decoration) whenever an item is drawn.
+-- item.button takes the clicks; item.currentData has the real bagid / slotid and the item link. No
+-- offline flag, so bank slots only count while the bank is open, and the drawn item must match the slot.
+
+local function BetterBags()
+  local ace = LibStub and LibStub("AceAddon-3.0", true)
+  return ace and ace:GetAddon("BetterBags", true)
+end
+local function IsBankBag(bag) return bag < 0 or bag > (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4) end
+
+KS.AddBagAddon({
+  name = "BetterBags",
+  loaded = function()
+    local bb = BetterBags()
+    local ok, events = pcall(function() return bb and bb:GetModule("Events", true) end)
+    return ok and events and events.RegisterMessage and true
+  end,
+  hook = function(add)
+    BetterBags():GetModule("Events"):RegisterMessage("item/Updated", function(_, item)
+      if item and item.button then
+        item.button.favesItem = item
+        add(item.button)
+      end
+    end)
+  end,
+  slot = function(btn)
+    local d = btn.favesItem and btn.favesItem.currentData
+    local bag, slot = d and d.bagid, d and d.slotid
+    if not (bag and slot) or not BankLive(IsBankBag(bag)) then return end
+    local link = d.itemInfo and d.itemInfo.itemLink
+    if LinkID(link) ~= ItemAt(bag, slot) then return end
+    return bag, slot
+  end,
+})
+
