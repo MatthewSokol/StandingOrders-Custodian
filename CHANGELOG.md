@@ -8,7 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
-- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/faves sets <level>`) or per set (`/faves set <name> <level>`).
+- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/faves sets <level>`) or per set (`/faves set <name> <level>`), in `/faves settings` or with commands.
 - **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Faves still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
 
 ## [0.1.0] - 2026-11-13

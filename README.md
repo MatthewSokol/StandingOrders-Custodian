@@ -60,7 +60,7 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 
 ## Equipment sets
 
-Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set (`/faves sets onme`) or one set (`/faves set <name> confirm`). `/faves sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
+Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set or one set: in `/faves settings` (click a set's button to change its level), or `/faves sets onme` and `/faves set <name> confirm`. `/faves sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
 
 ## Bag addons
 

@@ -1482,7 +1482,7 @@ local AUTO_TEXT = {
 }
 
 local function CreatePanel()
-  local panel = CreateFrame("Frame")
+  local panel = CreateFrame("Frame", "FavesSettings")
   panel.name = "Faves"
 
   local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -1521,6 +1521,58 @@ local function CreatePanel()
   intro:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
   intro:SetText("What Faves protects")
   intro:SetScript("OnClick", function() KS:ShowIntro() end)
+
+  -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
+  -- panel opens. Last on the panel, since the number of rows changes. Click cycles; right-click goes back.
+  local DEFAULT_CHOICES = { CONFIRM, LOCK, ONME, "off" }
+  local SET_CHOICES = { "default", CONFIRM, LOCK, ONME, "off" }
+  prev = Header(panel, "Equipment sets protect their items", intro, -22)
+  local setsNote = Note(panel, "", prev, 0, -6)
+  local rows = {}
+  panel.setRows = rows
+  local function Row(i)
+    if rows[i] then return rows[i] end
+    local r = {}
+    r.label = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    r.label:SetPoint("TOPLEFT", setsNote, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
+    r.label:SetWidth(180)
+    r.label:SetJustifyH("LEFT")
+    r.button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    r.button:SetSize(240, 22)
+    r.button:SetPoint("LEFT", r.label, "RIGHT", 10, 0)
+    r.button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    r.button:SetScript("OnClick", function(_, mouse)
+      local choices = r.setID and SET_CHOICES or DEFAULT_CHOICES
+      local cur = r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault()
+      local n = 1
+      for k, c in ipairs(choices) do if c == cur then n = k end end
+      n = (n + (mouse == "RightButton" and -2 or 0)) % #choices + 1
+      KS.SetSetChoice(r.setID, choices[n])
+      RefreshPanel()
+    end)
+    rows[i] = r
+    return r
+  end
+  refreshers[#refreshers + 1] = function()
+    local sets = KS.EquipmentSets()
+    setsNote:SetText(#sets == 0 and "This character has no equipment sets yet. Make one in the character window's equipment manager; its items are then protected at the default below."
+      or "Items in a set are protected at its level, on top of their own marks. Click a button to change it; right-click goes back.")
+    local r = Row(1)
+    r.setID = nil
+    r.label:SetText("Default for all sets")
+    r.button:SetText(KS.SetChoiceText(KS.GetSetDefault()))
+    for i, set in ipairs(sets) do
+      r = Row(i + 1)
+      r.setID = set.id
+      r.label:SetText(set.name)
+      r.button:SetText(KS.SetChoiceText(KS.GetSetChoice(set.id)))
+    end
+    for i, row in ipairs(rows) do
+      local shown = i <= #sets + 1
+      row.label[shown and "Show" or "Hide"](row.label)
+      row.button[shown and "Show" or "Hide"](row.button)
+    end
+  end
 
   panel:SetScript("OnShow", RefreshPanel)
   if Settings and Settings.RegisterCanvasLayoutCategory then

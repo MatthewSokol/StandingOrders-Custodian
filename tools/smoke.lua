@@ -220,6 +220,20 @@ CALL("/faves sets", SlashCmdList.FAVES, "sets")
 CALL("/faves sets default lock", SlashCmdList.FAVES, "sets default lock")
 CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
 CALL("/faves set Nope lock", SlashCmdList.FAVES, "set Nope lock")
+-- The settings panel's equipment set rows: the default first, then each set; clicks cycle the level.
+local panel = FavesSettings
+CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
+local rows = panel and panel.setRows or {}
+CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
+if rows[2] then
+  CALL("click the set's button", rawget(rows[2].button, "__s_OnClick"), rows[2].button, "LeftButton")
+  CHECK("a click moves the set to the next level", KS.GetSetChoice(1) == L.CONFIRM, KS.GetSetChoice(1))
+  CALL("right-click goes back", rawget(rows[2].button, "__s_OnClick"), rows[2].button, "RightButton")
+  CHECK("right-click went back to default", KS.GetSetChoice(1) == "default", KS.GetSetChoice(1))
+  CALL("click the default's button", rawget(rows[1].button, "__s_OnClick"), rows[1].button, "LeftButton")
+  CHECK("default moved from Locked to Always on me", KS.GetSetDefault() == L.ONME, KS.GetSetDefault())
+  KS.SetSetChoice(nil, L.LOCK)
+end
 
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
