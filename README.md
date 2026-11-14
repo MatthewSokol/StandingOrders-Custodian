@@ -7,7 +7,7 @@ Part of **Standing Orders**, three addons that deal with the items you've alread
 | Addon | Command | Does |
 |---|---|---|
 | **Standing Orders: Quartermaster** (this one) | `/soq` | Marks items Junk, Mail, Confirm, Locked or Always on me, and guards the protected ones |
-| [Standing Orders: Vendor](https://github.com/MatthewSokol/SellAll) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
+| [Standing Orders: Vendor](https://github.com/MatthewSokol/StandingOrders-Vendor) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
 | [Standing Orders: Mail](https://github.com/MatthewSokol/MailAll) | `/som` | Mails items marked Mail to your bank alt in one click |
 
 Other addons use its API through the `StandingOrdersQuartermaster` global (see below); its folder is `StandingOrders_Quartermaster`.
