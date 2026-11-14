@@ -30,12 +30,20 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
+**Waiting since the last release (none yet): 5 changes, 81 rows.**
+
+This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
+work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
+change, removes the group if the work is dropped, writes the candidate version into its header once it merges, and
+updates the count above (How to test mentions the new count). Smoke (2.1), the gate and deploy are standing rows. After
+a release ships, the released groups are removed and the standing rows unticked.
+
 Put the build under test at the top (`git describe --tags --always` and the commit). `<env>` is
 `node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_`; every `<env>` command needs the game
 fully closed.
 
-**Ids:** every row starts with an outline id (`2.4`), so you can say "2.4 is in trouble". `TESTING.md`'s rows sit under
-row 2.8 (`2.8.3.2` is its row 3.2). With more than one client pass, each pass gets a letter in front (`A.2.4`). Ids only
+**Ids:** every row starts with an outline id (`2.4`), so you can say "2.4 is in trouble". Unit groups under 2.2 point at `TESTING.md`'s
+rows by their own ids (`TESTING.md` 5.9). With more than one client pass, each pass gets a letter in front (`A.2.4`). Ids only
 need to hold for the pass under way. Each section folds open and closed: its summary shows the id, title and done count (`7 / 12`, plus open
 problems); finished sections start closed, and a section with an open problem or the row Claude is waiting on stays open.
 
@@ -56,18 +64,72 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2 Smoke, then acceptance</b> · 0 / 10</summary>
+<summary><b>2 Smoke, then acceptance</b> · 0 / 2 sections</summary>
 
-- [ ] 2.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
-- [ ] 2.3 The intro shows on that first login, and "Got it" closes it
-- [ ] 2.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/faves selftest`; no Faves errors `auto validated`
-- [ ] 2.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/faves selftest`; it works alone `auto validated`
-- [ ] 2.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
-- [ ] 2.7 `<env> restore` `auto executed · after you say the pass is done`
-- [ ] 2.8 Acceptance: `TESTING.md`, its rows as `2.8.<id>` (open a GitHub issue with it as the body to tick it off)
-- [ ] 2.9 No step is still flagged as a problem
-- [ ] 2.10 Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
+<details open>
+<summary><b>2.1 Smoke</b> (standing) · 0 / 7</summary>
+
+- [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
+- [ ] 2.1.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/faves selftest` passes `auto validated`
+- [ ] 2.1.3 The intro shows on that first login, and "Got it" closes it
+- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/faves selftest`; no Faves errors `auto validated`
+- [ ] 2.1.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/faves selftest`; it works alone `auto validated`
+- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
+- [ ] 2.1.7 `<env> restore` `auto executed · after you say the pass is done`
+
+</details>
+
+<details open>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 81</summary>
+
+One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
+point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Faves row is journal-proven
+yet (no test journal; see `BACKLOG.md`).
+
+<details open>
+<summary><b>2.2.1 First build: levels, guards, auto-marks, ArkInventory</b> (#1, #3, #4, #11) · 0.1.0 · 0 / 63</summary>
+
+- [ ] 2.2.1.1 `TESTING.md` 1.1–1.7: fresh install
+- [ ] 2.2.1.2 `TESTING.md` 2.1–2.9: per-character marks
+- [ ] 2.2.1.3 `TESTING.md` 3.1–3.2: moving from SellAll test builds
+- [ ] 2.2.1.4 `TESTING.md` 4.1–4.9: disenchant guard
+- [ ] 2.2.1.5 `TESTING.md` 5.1–5.8, 5.13–5.32: vendor, destroy, trade, mail and bank guards, Alt+Click, auto-marks, icons
+- [ ] 2.2.1.6 `TESTING.md` 6.1–6.8: combat, ArkInventory, blocked actions
+
+</details>
+
+<details open>
+<summary><b>2.2.2 Confirm is a temp hold: allow once from a window</b> (#13) · open · 0 / 4</summary>
+
+- [ ] 2.2.2.1 `TESTING.md` 5.9–5.12: sell, disenchant, trade and mail a Confirm item; Allow once; Keep it
+
+</details>
+
+<details open>
+<summary><b>2.2.3 Checklists: outline ids, folding sections</b> (#14) · open · 0 / 1</summary>
+
+- [ ] 2.2.3.1 On GitHub, `RELEASING.md` and `TESTING.md` sections fold open and closed, and every row starts with its id
+
+</details>
+
+<details open>
+<summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16) · open · 0 / 5</summary>
+
+- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/faves settings`, back to own mark
+
+</details>
+
+<details open>
+<summary><b>2.2.5 More bag addons</b> (#17) · open · 0 / 8</summary>
+
+- [ ] 2.2.5.1 `TESTING.md` 8.1–8.8: one pass each for ArkInventory, Bagnon, Baganator, AdiBags, BetterBags and ElvUI bags
+
+</details>
+
+</details>
+
+- [ ] 2.3 No step is still flagged as a problem
+- [ ] 2.4 Gate: `<env> watch -- node tools/green.js --game` is GREEN `auto executed · when the game exits` `auto validated`
 
 </details>
 

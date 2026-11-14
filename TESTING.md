@@ -2,7 +2,7 @@
 
 Run through this before each CurseForge release. To check items off, open a GitHub issue with this list as its body: GitHub makes the boxes clickable and remembers them.
 
-Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; on the release checklist these rows sit under row 2.8 (`2.8.3.2`).
+Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/faves debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/faves selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; this is the full regression suite. The release checklist in `RELEASING.md` (stage 2.2) lists which of these rows each change since the last release needs.
 
 <details open>
 <summary><b>1 Fresh install</b> · 0 / 7</summary>
@@ -56,7 +56,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>5 Other guards</b> · 0 / 36</summary>
+<summary><b>5 Other guards</b> · 0 / 37</summary>
 
 - [ ] 5.1 A Locked item sold by right-click is bought straight back
 - [ ] 5.2 A Locked item dragged onto the vendor is bought straight back
@@ -94,6 +94,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.34 `/faves set <name> confirm`, `onme` or `off` changes that set's items; `/faves sets onme` changes the default for sets
 - [ ] 5.35 Save the set again without the item: it goes back to its own mark
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
+- [ ] 5.37 `/faves settings`, Equipment sets: left-click a row steps its level forward, right-click back; the default row changes every set left on "default"
 
 </details>
 
