@@ -56,6 +56,8 @@ local BBEvents = { RegisterMessage = function(_, msg, fn) BB_MSG[msg] = fn end }
 local BB = { GetModule = function(_, name) return name == "Events" and BBEvents end }
 local ABEvent = { Embed = function(_, obj) obj.RegisterMessage = function(_, msg, fn) ADI_MSG[msg] = fn end end }
 local AceAddon = { GetAddon = function(_, name) return (name == "AdiBags" and Adi) or (name == "BetterBags" and BB) or nil end }
+Baganator = {}
+Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
 FIRE("ADDON_LOADED", "Faves")
 FIRE("PLAYER_LOGIN")
@@ -282,7 +284,17 @@ altClick("BetterBags", bb.button, 7003, L.CONFIRM)
 local bbStale = bbItem(2, 3, 7001)
 CALL("BetterBags item/Updated (stale)", BB_MSG["item/Updated"], {}, bbStale, {})
 altClick("BetterBags showing another item", bbStale.button, 7003, L.CONFIRM)
-CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 4, #KS.BagAddonStatus())
+local function parentWithID(id) return { GetID = function() return id end } end
+local bag8r = plain({ BGR = { itemLocation = {}, itemID = 7001 }, GetParent = function() return parentWithID(2) end, GetID = function() return 1 end })
+CALL("Baganator SetItemDetails", BaganatorClassicLiveContainerItemButtonMixin.SetItemDetails, bag8r, {})
+altClick("Baganator", bag8r, 7001, L.LOCK)
+local bagnon = plain({ GetBag = function() return 2 end, GetID = function() return 2 end, IsCached = function() return false end })
+CALL("Bagnon Item:Update", Bagnon.Item.Update, bagnon)
+altClick("Bagnon", bagnon, 7002, L.LOCK)
+local cached = plain({ GetBag = function() return 2 end, GetID = function() return 3 end, IsCached = function() return true end })
+CALL("Bagnon Item:Update (cached)", Bagnon.Item.Update, cached)
+altClick("Bagnon cached view", cached, 7003, L.CONFIRM)
+CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
 
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end

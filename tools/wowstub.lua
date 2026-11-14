@@ -203,6 +203,9 @@ C_EquipmentSet = {
   GetIgnoredSlots = function(id) return STUB_SETS[id] and STUB_SETS[id].ignored or {} end,
 }
 
+-- Baganator copies this mixin onto each live bag button; Faves hooks it while loading, so it must exist first.
+BaganatorClassicLiveContainerItemButtonMixin = { SetItemDetails = function() end }
+
 -- Everything else Faves calls
 hooksecurefunc = function(t, name, fn)
   if type(t) == "string" then t, name, fn = _G, t, name end

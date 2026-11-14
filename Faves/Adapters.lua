@@ -146,3 +146,61 @@ KS.AddBagAddon({
   end,
 })
 
+---------------------------------------------------------------------------------------------------
+-- Baganator: live bag and bank buttons get BaganatorClassic/RetailLiveContainerItemButtonMixin, copied
+-- onto each button when it's created, and every draw calls :SetItemDetails. So the mixins are hooked
+-- now, while Faves loads (before Baganator builds its buttons), and buttons wait until login. Cached
+-- views (other characters, the closed bank) use other templates and never reach Faves. The parent's ID
+-- is the bag, the button's the slot, and the shown item (BGR.itemID) must match that slot.
+
+local baganatorAdd, baganatorWaiting, baganatorHooked = nil, {}, false
+for _, name in ipairs({ "BaganatorClassicLiveContainerItemButtonMixin", "BaganatorRetailLiveContainerItemButtonMixin" }) do
+  local mixin = _G[name]
+  if type(mixin) == "table" and mixin.SetItemDetails then
+    hooksecurefunc(mixin, "SetItemDetails", function(btn)
+      if baganatorAdd then baganatorAdd(btn) else baganatorWaiting[btn] = true end
+    end)
+    baganatorHooked = true
+  end
+end
+
+KS.AddBagAddon({
+  name = "Baganator",
+  loaded = function() return _G.Baganator and baganatorHooked end,
+  hook = function(add)
+    baganatorAdd = add
+    for btn in pairs(baganatorWaiting) do add(btn) end
+    wipe(baganatorWaiting)
+  end,
+  slot = function(btn)
+    local parent = btn.GetParent and btn:GetParent()
+    local bag, slot = parent and parent:GetID(), btn:GetID()
+    if not (bag and slot and slot > 0 and btn.BGR and btn.BGR.itemLocation) then return end
+    if not BankLive(IsBankBag(bag)) or btn.BGR.itemID ~= ItemAt(bag, slot) then return end
+    return bag, slot
+  end,
+})
+
+---------------------------------------------------------------------------------------------------
+-- Bagnon (and Combuctor, same BagBrother core): Item:Update runs for every item button (ContainerItem
+-- calls it through Super). btn:GetBag() and btn:GetID() are the bag and slot; btn:IsCached() is true for
+-- other characters and for the bank away from a banker.
+
+for _, addonName in ipairs({ "Bagnon", "Combuctor" }) do
+  KS.AddBagAddon({
+    name = addonName,
+    loaded = function()
+      local a = _G[addonName]
+      return type(a) == "table" and a.Item and a.Item.Update and true
+    end,
+    hook = function(add)
+      hooksecurefunc(_G[addonName].Item, "Update", function(btn) add(btn) end)
+    end,
+    slot = function(btn)
+      if not (btn.GetBag and btn.GetID) or (btn.IsCached and btn:IsCached()) then return end
+      local bag, slot = btn:GetBag(), btn:GetID()
+      if type(bag) ~= "number" or not slot or slot < 1 then return end
+      return bag, slot
+    end,
+  })
+end
