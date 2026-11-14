@@ -70,10 +70,10 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.1 Smoke</b> (standing) · 0 / 7</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.1.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/sot selftest` passes `auto validated`
+- [ ] 2.1.2 Clean install: `<env> profile clean --addon Faves`; full game restart; `/soq selftest` passes `auto validated`
 - [ ] 2.1.3 The intro shows on that first login, and "Got it" closes it
-- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/sot selftest`; no Faves errors `auto validated`
-- [ ] 2.1.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/sot selftest`; it works alone `auto validated`
+- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/soq selftest`; no Faves errors `auto validated`
+- [ ] 2.1.5 With no other addons: `<env> profile only Faves !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
 - [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Faves --from <last release tag>`; your marks and settings are kept
 - [ ] 2.1.7 `<env> restore` `auto executed · after you say the pass is done`
 
@@ -115,7 +115,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16) · open · 0 / 5</summary>
 
-- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/sot settings`, back to own mark
+- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/soq settings`, back to own mark
 
 </details>
 
@@ -127,10 +127,10 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.6 Renamed to Standing Orders: Tags</b> (#19) · open · 0 / 3</summary>
+<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19) · open · 0 / 3</summary>
 
-- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Tags"); none say "Faves"
-- [ ] 2.2.6.2 `/sot` and `/sot help` work, and `/faves` does the same
+- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Faves"
+- [ ] 2.2.6.2 `/soq` and `/soq help` work, and `/faves` does the same
 - [ ] 2.2.6.3 Marks and settings from before the rename are all still there
 
 </details>
@@ -147,7 +147,7 @@ yet (no test journal; see `BACKLOG.md`).
 
 - [ ] 3.1 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
 - [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/Faves-<version>.zip` and its notes `auto executed · after the tag`
-- [ ] 3.3 Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/sot selftest` passes `auto validated`
+- [ ] 3.3 Zip under test: `<env> profile zip dist\Faves-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated`
 - [ ] 3.4 `<env> restore` `auto executed · after the zip test`
 - [ ] 3.5 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
@@ -170,7 +170,7 @@ The gate needs zero open problems.
 ## What "Mechanic output" means here
 
 - **In-game (installed):** `!Mechanic`/`Mechanic` show Faves under Tests (the self-test checks), Console (the guard log) and Errors (BugGrabber). Faves registers only when Mechanic is loaded; without it nothing changes for players.
-- **Saved to disk:** `/sot selftest` saves its results in `FavesDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
+- **Saved to disk:** `/soq selftest` saves its results in `FavesDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
 - **Mechanic's desktop CLI and MCP (`mech`)** aren't installed on this PC (they need Python 3.10+). If you add them, its `addon.validate`, `addon.lint` (uses `.luacheckrc`) and `addon.output` steps slot into checklist steps 2 and 4.
 
 ## Deploy (step 6)
@@ -181,7 +181,7 @@ Check before uploading: the TOC's `## Interface:` matches the current Forever bu
 First release only:
 1. Go to authors.curseforge.com → Create Project → World of Warcraft → Addon.
 2. Fill it in:
-   - **Name:** Standing Orders: Tags (slug `standing-orders-tags`: Standing Orders: Vendor and Mail link to it).
+   - **Name:** Standing Orders: Quartermaster (slug `standing-orders-quartermaster`: Standing Orders: Vendor and Mail link to it).
    - **Summary:** the `.toc` Notes line.
    - **Description:** adapted from `README.md`, with no character names.
    - **Category:** Bags & Inventory.
@@ -193,7 +193,7 @@ First release only:
 Every release:
 1. Project → Files → Upload File → `dist/Faves-<version>.zip`.
 2. Set the details:
-   - **Display name:** `Standing Orders: Tags <version>`.
+   - **Display name:** `Standing Orders: Quartermaster <version>`.
    - **Release type:** Release (or Beta).
    - **Game version:** the WoW Forever / Interface 16001 entry.
    - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown.
