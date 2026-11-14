@@ -49,6 +49,7 @@ local db
 local mechanic -- MechanicLib, when the optional Mechanic dev tool is installed
 local merchantOpen = false
 local bankOpen = false
+function KS.IsBankOpen() return bankOpen end
 
 ---------------------------------------------------------------------------------------------------
 -- Output
@@ -696,25 +697,14 @@ end
 local hooked = setmetatable({}, { __mode = "k" })
 local hookedCount = 0
 
--- An ArkInventory button's real bag and slot, or nil when it isn't safe to act on it: an offline view
--- (another character, or the bank away from a banker), or Ark's item not matching what's in that slot.
-local function ArkSlot(btn)
-  local ark, d = _G.ArkInventory, btn.ARK_Data
-  local loc = ark and ark.Global and ark.Global.Location and d and ark.Global.Location[d.loc_id]
-  if not loc or loc.isOffline or not d.slot_id then return end
-  local bag = d.blizzard_id
-  if not bag and ark.API.getBlizzardBagIdFromWindowId then
-    bag = ark.API.getBlizzardBagIdFromWindowId(d.loc_id, d.bag_id)
-  end
-  if not bag then return end
-  local i = ark.API.ItemFrameItemTableGet and ark.API.ItemFrameItemTableGet(btn)
-  local info = C.GetContainerItemInfo(bag, d.slot_id)
-  if (i and i.h and LinkID(i.h)) ~= (info and info.itemID) then return end
-  return bag, d.slot_id
-end
+-- Bag addons (Adapters.lua): each adapter hands Faves another bag addon's item buttons and answers, per
+-- button, which real bag and slot it shows, or nil when that view isn't live or can't be trusted.
+-- An adapter is { name, loaded = fn() -> bool, hook = fn(add), slot = fn(btn) -> bag, slot }.
+local bagAddons = {}
+function KS.AddBagAddon(adapter) bagAddons[#bagAddons + 1] = adapter end
 
 local function ButtonSlot(btn)
-  if btn.favesArk then return ArkSlot(btn) end
+  if btn.favesAdapter then return btn.favesAdapter.slot(btn) end
   if btn.GetBagID then return btn:GetBagID(), btn:GetID() end
   local parent = btn:GetParent()
   return parent and parent:GetID(), btn:GetID()
@@ -823,40 +813,45 @@ local function BagFrames()
   return frames
 end
 
--- ArkInventory: its public API calls these for every item button it creates or updates. Faves takes the
--- bag and bank buttons; ArkSlot decides per click whether a button is safe to act on.
-local function ArkButton(frame, loc_id)
-  local ark = _G.ArkInventory
-  local L = ark and ark.Const and ark.Const.Location
-  if not (frame and L and (loc_id == L.Bag or loc_id == L.Bank)) then return end
-  frame.favesArk = true
-  HookButton(frame)
-  UpdateButton(frame)
+-- Hooks each loaded bag addon once; its adapter hands buttons over with add(button). A failing adapter
+-- only switches itself off.
+local function AdoptButton(adapter, btn)
+  if type(btn) ~= "table" or not btn.HookScript then return end
+  btn.favesAdapter = adapter
+  HookButton(btn)
+  UpdateButton(btn)
 end
 
-local arkHooked = false
-local function HookArkInventory()
-  local ark = _G.ArkInventory
-  local api = ark and ark.API
-  if arkHooked or not (api and api.ItemFrameLoaded and api.ItemFrameUpdated) then return end
-  arkHooked = true
-  hooksecurefunc(api, "ItemFrameLoaded", ArkButton)
-  hooksecurefunc(api, "ItemFrameUpdated", ArkButton)
-  if api.ItemFrameLoadedIterate then
-    for _, frame, loc_id in api.ItemFrameLoadedIterate() do ArkButton(frame, loc_id) end
+local function HookBagAddons()
+  for _, adapter in ipairs(bagAddons) do
+    local ok, loaded = pcall(adapter.loaded)
+    if not adapter.active and ok and loaded then
+      local hooked, err = pcall(adapter.hook, function(btn) AdoptButton(adapter, btn) end)
+      adapter.active, adapter.failed = hooked, not hooked
+      Log(hooked and "%s support on" or "%s support failed: %s", adapter.name, tostring(err))
+    end
   end
-  Log("ArkInventory support on")
+end
+
+-- "name: on" / "name: loaded, but ..." lines for status and the self-test.
+function KS.BagAddonStatus()
+  local out = {}
+  for _, adapter in ipairs(bagAddons) do
+    if adapter.active then out[#out + 1] = { adapter.name, true }
+    elseif adapter.failed then out[#out + 1] = { adapter.name, false } end
+  end
+  return out
 end
 
 function RefreshBags()
   for _, frame in ipairs(BagFrames()) do UpdateFrame(frame) end
   for btn in pairs(hooked) do
-    if btn.favesArk then UpdateButton(btn) end
+    if btn.favesAdapter then UpdateButton(btn) end
   end
 end
 
 local function HookBags()
-  pcall(HookArkInventory) -- optional: a changed Ark API must not stop the default bags being hooked
+  HookBagAddons()
   for _, frame in ipairs(BagFrames()) do
     if frame.UpdateItems then hooksecurefunc(frame, "UpdateItems", UpdateFrame) end
     frame:HookScript("OnShow", function(self)
@@ -1744,8 +1739,8 @@ local TESTS = {
   { id = "hooks", name = "Guards hooked", run = function()
     local d = {}
     d[#d + 1] = Detail("bag buttons hooked", hookedCount, hookedCount > 0 and "pass" or "warn")
-    if _G.ArkInventory then
-      d[#d + 1] = Detail("ArkInventory support", arkHooked and "on" or "API not found", arkHooked and "pass" or "warn")
+    for _, a in ipairs(KS.BagAddonStatus()) do
+      d[#d + 1] = Detail(a[1] .. " support", a[2] and "on" or "failed to hook", a[2] and "pass" or "warn")
     end
     d[#d + 1] = Detail("destroy guard (StaticPopup_Show)", StaticPopup_Show and "on" or "missing", StaticPopup_Show and "pass" or "fail")
     d[#d + 1] = Detail("tooltip line", TooltipDataProcessor and "on" or "missing", TooltipDataProcessor and "pass" or "warn")
@@ -1934,9 +1929,9 @@ local function Status()
   print("  trade/mail/vendor buyback guards: on (vendor open: " .. tostring(merchantOpen) .. ")")
   print("  bank guard (Always on me): on (bank open: " .. tostring(bankOpen) ..
     (bankOpen and (", containers " .. table.concat(BankBags(), ",")) or "") .. ")")
-  if _G.ArkInventory then
-    print("  ArkInventory: " .. (arkHooked and "supported (bags and bank, live views only)"
-      or "|cffffd100loaded, but its API wasn't found: Alt+Click, icons and the disenchant guard only work in the default bags|r"))
+  for _, a in ipairs(KS.BagAddonStatus()) do
+    print("  " .. a[1] .. ": " .. (a[2] and "supported (Alt+Click, icons, disenchant blocker; live views only)"
+      or "|cffffd100loaded, but Faves couldn't hook it: Alt+Click, icons and the disenchant guard only work in the default bags|r"))
   end
 end
 
