@@ -2,17 +2,17 @@
 
 Run through this before each CurseForge release. To check items off, open a GitHub issue with this list as its body: GitHub makes the boxes clickable and remembers them.
 
-Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/soc debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/soc selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; this is the full regression suite. The release checklist in `RELEASING.md` (stage 2.2) lists which of these rows each change since the last release needs.
+Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/sot debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/sot selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; this is the full regression suite. The release checklist in `RELEASING.md` (stage 2.2) lists which of these rows each change since the last release needs.
 
 <details open>
 <summary><b>1 Fresh install</b> · 0 / 7</summary>
 
 - [ ] 1.1 The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
 - [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
-- [ ] 1.3 `/soc intro` reopens it
+- [ ] 1.3 `/sot intro` reopens it
 - [ ] 1.4 Delete `WTF\Account\<account>\SavedVariables\Faves.lua`, log in: no Lua errors
-- [ ] 1.5 `/soc list` says nothing is marked
-- [ ] 1.6 `/soc status` shows every guard on
+- [ ] 1.5 `/sot list` says nothing is marked
+- [ ] 1.6 `/sot status` shows every guard on
 - [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
 
 </details>
@@ -23,10 +23,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 2.1 Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
 - [ ] 2.2 Log in a second character: that item isn't marked there
 - [ ] 2.3 Alt+Shift+Left-click it again on the first character: back to all characters
-- [ ] 2.4 `/soc scope char`, then Alt+Click a new item: it's marked for this character only; `/soc scope account` switches back
-- [ ] 2.5 `/soc lock <item> char` marks for this character only
-- [ ] 2.6 Mark an item Locked account wide, then `/soc normal <item> char`: Normal on this character, still Locked on others
-- [ ] 2.7 `/soc list` shows both kinds, character marks labelled
+- [ ] 2.4 `/sot scope char`, then Alt+Click a new item: it's marked for this character only; `/sot scope account` switches back
+- [ ] 2.5 `/sot lock <item> char` marks for this character only
+- [ ] 2.6 Mark an item Locked account wide, then `/sot normal <item> char`: Normal on this character, still Locked on others
+- [ ] 2.7 `/sot list` shows both kinds, character marks labelled
 - [ ] 2.8 `/reload` a few times: no errors at login or when the bags first open
 - [ ] 2.9 Works with SellAll disabled (Faves alone loads with no errors)
 
@@ -44,7 +44,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 <summary><b>4 Disenchant guard</b> · 0 / 9</summary>
 
 - [ ] 4.1 With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
-- [ ] 4.2 `/soc log` shows "targeting started: destructive" and "blocker caught click" lines
+- [ ] 4.2 `/sot log` shows "targeting started: destructive" and "blocker caught click" lines
 - [ ] 4.3 Disenchant from an action bar button, then click a Locked item: targeting cancels, error shown, item kept
 - [ ] 4.4 Same with a `/cast Disenchant` macro
 - [ ] 4.5 Same with Disenchant cast from the spellbook
@@ -72,7 +72,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.12 "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
 - [ ] 5.13 Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
 - [ ] 5.14 Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
-- [ ] 5.15 Opening a profession window takes the Mail mark off materials its recipes use; /soc status lists professions and which still need their window opened
+- [ ] 5.15 Opening a profession window takes the Mail mark off materials its recipes use; /sot status lists professions and which still need their window opened
 - [ ] 5.16 Enchanting materials (Strange Dust, Lesser Magic Essence, shards) are never auto-marked
 - [ ] 5.17 Auto-marks leave alone: quest items, food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
 - [ ] 5.18 Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
@@ -80,8 +80,8 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.20 Alt+Clicking one of those marks it "(this character)" even with new marks set to all characters
 - [ ] 5.21 A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
 - [ ] 5.22 Changing an auto-marked item's level sticks after /reload and more loot
-- [ ] 5.23 /soc settings: each switch stops its rule; turning one back on marks matching items in your bags
-- [ ] 5.24 With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /soc settings
+- [ ] 5.23 /sot settings: each switch stops its rule; turning one back on marks matching items in your bags
+- [ ] 5.24 With Faves auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /sot settings
 - [ ] 5.25 Alt+Right-click steps it back down
 - [ ] 5.26 At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] 5.27 Icons and tooltip lines show in the combined bag
@@ -91,10 +91,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
 - [ ] 5.32 Opening the bank with an Always on me item already in it moves it out
 - [ ] 5.33 Save an equipment set with an item in it: its tooltip says "Faves: Locked (equipment set <name>)"; selling it is bought back
-- [ ] 5.34 `/soc set <name> confirm`, `onme` or `off` changes that set's items; `/soc sets onme` changes the default for sets
+- [ ] 5.34 `/sot set <name> confirm`, `onme` or `off` changes that set's items; `/sot sets onme` changes the default for sets
 - [ ] 5.35 Save the set again without the item: it goes back to its own mark
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
-- [ ] 5.37 `/soc settings`, Equipment sets: left-click a row steps its level forward, right-click back; the default row changes every set left on "default"
+- [ ] 5.37 `/sot settings`, Equipment sets: left-click a row steps its level forward, right-click back; the default row changes every set left on "default"
 
 </details>
 
@@ -103,7 +103,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 
 - [ ] 6.1 In combat: opening bags and Alt+Click give no "action blocked" errors
 - [ ] 6.2 In combat: potions can still be used from the bags
-- [ ] 6.3 With ArkInventory: `/soc status` says "ArkInventory: supported"
+- [ ] 6.3 With ArkInventory: `/sot status` says "ArkInventory: supported"
 - [ ] 6.4 With ArkInventory: Alt+Click in its bag window raises the level; the icon shows on the Ark button
 - [ ] 6.5 With ArkInventory: viewing another character's bags, Alt+Click does nothing in Faves
 - [ ] 6.6 With ArkInventory: Disenchant targeting covers Locked items in the Ark window in red
@@ -129,12 +129,12 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 <summary><b>8 Bag addons</b> · 0 / 8</summary>
 
 - [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed`
-- [ ] 8.2 ArkInventory: `<env> profile only Faves ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.3 Bagnon: `<env> profile only Faves Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.4 Baganator: `<env> profile only Faves Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.5 AdiBags: `<env> profile only Faves AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.6 BetterBags: `<env> profile only Faves BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
-- [ ] 8.7 ElvUI bags: `<env> profile only Faves ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soc status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.2 ArkInventory: `<env> profile only Faves ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.3 Bagnon: `<env> profile only Faves Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.4 Baganator: `<env> profile only Faves Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.5 AdiBags: `<env> profile only Faves AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.6 BetterBags: `<env> profile only Faves BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
+- [ ] 8.7 ElvUI bags: `<env> profile only Faves ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/sot status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Faves; no Faves errors
 - [ ] 8.8 `<env> restore` puts your addons back as they were `auto executed · after the last pass`
 
 </details>

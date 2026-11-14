@@ -8,7 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
-- **New name: Standing Orders: Command.** Faves is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soc`; `/faves` still works, and your marks and settings carry over.
+- **New name: Standing Orders: Tags.** Faves is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/sot`; `/faves` still works, and your marks and settings carry over.
 
 ### Added
 

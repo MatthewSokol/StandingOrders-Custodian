@@ -1,4 +1,4 @@
-# Standing Orders: Command
+# Standing Orders: Tags
 
 A World of Warcraft **Forever** addon (interface 16001). Mark the items you care about, and Standing Orders stops you losing them by accident: selling, disenchanting, destroying, trading or mailing them.
 
@@ -6,20 +6,20 @@ Part of **Standing Orders**, three addons that deal with the items you've alread
 
 | Addon | Command | Does |
 |---|---|---|
-| **Standing Orders: Command** (this one) | `/soc` | Marks items Junk, Mail, Confirm, Locked or Always on me, and guards the protected ones |
-| [Standing Orders: Vendor](https://github.com/MatthewSokol/SellAll) | `/sov` | Sells your junk at any vendor in one click, skipping what Command protects |
+| **Standing Orders: Tags** (this one) | `/sot` | Marks items Junk, Mail, Confirm, Locked or Always on me, and guards the protected ones |
+| [Standing Orders: Vendor](https://github.com/MatthewSokol/SellAll) | `/sov` | Sells your junk at any vendor in one click, skipping what Tags protects |
 | [Standing Orders: Mail](https://github.com/MatthewSokol/MailAll) | `/som` | Mails items marked Mail to your bank alt in one click |
 
-`/soc`, the old name, still works. The addon's folder and its `Faves` API keep their names, so your marks carry over.
+`/sot`, the old name, still works. The addon's folder and its `Faves` API keep their names, so your marks carry over.
 
 ## Item levels
 
 Levels are per item ID. A mark applies to all your characters, or to one character only:
 
 - **Alt+Shift+Left-click** an item to move its mark between all characters and this character only.
-- `/soc scope char` makes new marks this-character-only by default (`/soc scope account` switches back). SellAll's settings panel has the same switch.
+- `/sot scope char` makes new marks this-character-only by default (`/sot scope account` switches back). SellAll's settings panel has the same switch.
 - A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal).
-- Tooltips and `/soc list` show *(this character)* for character marks.
+- Tooltips and `/sot list` show *(this character)* for character marks.
 
 | Level | Icon | What happens |
 |---|---|---|
@@ -30,11 +30,11 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soc junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/soc list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/sot junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/sot list` shows every marked item. Item tooltips show the level.
 
 ## Auto-marks
 
-New items in your bags are marked for you (all on by default; turn each off in `/soc settings`):
+New items in your bags are marked for you (all on by default; turn each off in `/sot settings`):
 
 | Item | Becomes |
 |---|---|
@@ -45,7 +45,7 @@ New items in your bags are marked for you (all on by default; turn each off in `
 
 **Per-character items** are never auto-marked: consumables (food, drink, potions, scrolls...), reagents (ankhs, light feathers, powders...) and trade goods that vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of these, so when you mark one, the mark is for that character only (add `account` to the command, or Alt+Shift+Left-click it, to share it). Standing Orders knows the common vendor trade goods and learns the rest from every vendor you open.
 
-**Crafting materials follow your professions.** Each character reads the reagents of its known recipes whenever you open one of its profession windows. A material that none of its recipes use is marked Mail for that character only; one that a recipe uses is left alone (and loses an earlier Mail mark). Until a profession's window has been opened once, Standing Orders guesses from the item's kind (cloth for Tailoring and First Aid, herbs for Alchemy...) and leaves items it can't place unmarked until it knows. `/soc status` lists your professions and which ones still need their window opened. Enchanting materials (dusts, essences, shards) are never auto-marked.
+**Crafting materials follow your professions.** Each character reads the reagents of its known recipes whenever you open one of its profession windows. A material that none of its recipes use is marked Mail for that character only; one that a recipe uses is left alone (and loses an earlier Mail mark). Until a profession's window has been opened once, Standing Orders guesses from the item's kind (cloth for Tailoring and First Aid, herbs for Alchemy...) and leaves items it can't place unmarked until it knows. `/sot status` lists your professions and which ones still need their window opened. Enchanting materials (dusts, essences, shards) are never auto-marked.
 
 Quest items, bags, ammo, recipes, keys, shirts and tabards are left alone too, and so is anything VendorFlip is holding to flip. **Items you got on purpose are left alone** on the character that got them: traded to you, bought on the AH or from a vendor, or mailed to you by a player (your other characters included). If another character had already auto-marked one, it's Normal on this character.
 
@@ -68,7 +68,7 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 
 ## Equipment sets
 
-Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set or one set: in `/soc settings` (click a set's button to change its level), or `/soc sets onme` and `/soc set <name> confirm`. `/soc sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
+Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set or one set: in `/sot settings` (click a set's button to change its level), or `/sot sets onme` and `/sot set <name> confirm`. `/sot sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
 
 ## Bag addons
 
@@ -78,7 +78,7 @@ Items in your equipment sets (the game's equipment manager) are protected automa
 | ArkInventory | Yes (bags and bank; not other characters' offline bags) |
 | Bagnon, Combuctor, Baganator, AdiBags, BetterBags, ElvUI bags | Yes (live views; not other characters' bags or a closed bank) |
 
-Everything else (the vendor, destroy, trade, mail and bank guards, auto-marks, tooltips, `/soc <level> <item>`) works with any bag addon. [docs/bag-addons.md](docs/bag-addons.md) has the details and the plan.
+Everything else (the vendor, destroy, trade, mail and bank guards, auto-marks, tooltips, `/sot <level> <item>`) works with any bag addon. [docs/bag-addons.md](docs/bag-addons.md) has the details and the plan.
 
 ## Marking one specific copy of an item
 
@@ -86,7 +86,7 @@ Not supported yet: marks are per item ID, so every copy of an item shares a leve
 
 ## For addon developers using Mechanic
 
-If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, Standing Orders shows up in its Tests tab (the same checks as `/soc selftest`) and Console (the guard log). Players don't need Mechanic, and Standing Orders doesn't change without it.
+If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, Standing Orders shows up in its Tests tab (the same checks as `/sot selftest`) and Console (the guard log). Players don't need Mechanic, and Standing Orders doesn't change without it.
 
 ## For addon authors
 
@@ -100,4 +100,4 @@ if Faves and Faves.GetLevel(itemID) == Faves.LEVELS.MAIL then --[[ send it to th
 
 ## Commands
 
-`/soc selftest` (checks this install and saves the results; handy for bug reports), `/soc settings` (auto-marks and where new marks go), `/soc help`, `/soc intro` (what protection covers, also shown once on first login), `/soc status` (which guards are active), `/soc log` (recent guard decisions), `/soc debug`.
+`/sot selftest` (checks this install and saves the results; handy for bug reports), `/sot settings` (auto-marks and where new marks go), `/sot help`, `/sot intro` (what protection covers, also shown once on first login), `/sot status` (which guards are active), `/sot log` (recent guard decisions), `/sot debug`.

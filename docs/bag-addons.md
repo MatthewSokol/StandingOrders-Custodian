@@ -1,9 +1,9 @@
 # Bag addons
 
 Most of Faves works with any bag addon: the vendor, destroy, trade, mail and bank guards, auto-marks, equipment sets,
-tooltips and the `/soc <level> <item>` commands don't touch bag buttons. Three features need the bag addon's own item
+tooltips and the `/sot <level> <item>` commands don't touch bag buttons. Three features need the bag addon's own item
 buttons: **Alt+Click** to change a level, the **level icons**, and the **disenchant blocker** (the red cover over
-protected slots). `/soc status` lists the bag addons Faves has hooked.
+protected slots). `/sot status` lists the bag addons Faves has hooked.
 
 ## Support
 
