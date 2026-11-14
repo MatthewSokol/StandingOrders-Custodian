@@ -115,7 +115,7 @@ if (game) {
   const acctDir = wtfArg || (fs.existsSync(accounts) && fs.readdirSync(accounts)
     .map(a => path.join(accounts, a)).find(a => fs.existsSync(path.join(a, "SavedVariables", ADDON + ".lua"))));
   const svDir = acctDir && path.join(acctDir, "SavedVariables");
-  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Faves SavedVariables found: log in, /faves selftest, /reload");
+  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Faves SavedVariables found: log in, /soq selftest, /reload");
   else {
     const { lua, lauxlib, lualib, to_luastring } = require("fengari");
     const read = (file, expr) => {
@@ -135,13 +135,13 @@ if (game) {
       try { return JSON.parse(lua.lua_tojsstring(L, -1)); } catch (e) { return { error: String(e) }; }
     };
     const st = read(path.join(svDir, ADDON + ".lua"), "FavesDB and FavesDB.selfTest");
-    if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /faves selftest, then /reload");
+    if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /soq selftest, then /reload");
     else {
       // The build under test is the installed one: install.ps1 wrote its git describe into the installed .toc.
       const installedToc = path.join(accounts, "..", "..", "Interface", "AddOns", ADDON, ADDON + ".toc");
       const installed = fs.existsSync(installedToc) && (fs.readFileSync(installedToc, "utf8").match(/^## Version:\s*(.+)$/m) || [])[1];
       const stale = installed && st.version !== installed.trim();
-      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on build ${st.version}${stale ? ` (installed is ${installed.trim()}: /reload, /faves selftest, /reload)` : ""}`);
+      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on build ${st.version}${stale ? ` (installed is ${installed.trim()}: /reload, /soq selftest, /reload)` : ""}`);
       for (const [id, r] of Object.entries(st.tests || {})) {
         say(r.passed ? (r.warnings ? "WARN" : "PASS") : "FAIL", "self-test " + id, r.message);
         for (const d of r.details || []) if (d.status !== "pass") console.log(`       ${d.status} ${d.label}: ${d.value}`);

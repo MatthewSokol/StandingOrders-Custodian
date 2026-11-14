@@ -10,7 +10,7 @@ Part of **Standing Orders**, three addons that deal with the items you've alread
 | [Standing Orders: Vendor](https://github.com/MatthewSokol/SellAll) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
 | [Standing Orders: Mail](https://github.com/MatthewSokol/MailAll) | `/som` | Mails items marked Mail to your bank alt in one click |
 
-`/soq`, the old name, still works. The addon's folder and its `Faves` API keep their names, so your marks carry over.
+Quartermaster was first released as Faves; its folder, saved data and `Faves` API keep that name, so your marks carry over and other addons keep working.
 
 ## Item levels
 

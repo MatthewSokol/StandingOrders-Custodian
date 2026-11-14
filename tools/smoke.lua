@@ -64,7 +64,7 @@ FIRE("PLAYER_LOGIN")
 local KS = Faves
 local L = KS.LEVELS
 CHECK("Faves global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
-CHECK("slash commands: /soq, and /faves as the old name", SLASH_FAVES1 == "/soq" and SLASH_FAVES2 == "/faves")
+CHECK("slash command: /soq only (the old /faves is gone)", SLASH_FAVES1 == "/soq" and SLASH_FAVES2 == nil)
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
 
 -- Auto-marks on what's in the bags at login
@@ -123,12 +123,12 @@ FIRE("BANKFRAME_CLOSED")
 
 -- Slash commands
 for _, cmd in ipairs({ "help", "list", "status", "settings", "scope char", "scope account", "log 5", "debug", "debug", "intro" }) do
-  CALL("/faves " .. cmd, SlashCmdList.FAVES, cmd)
+  CALL("/soq " .. cmd, SlashCmdList.FAVES, cmd)
 end
-CALL("/faves lock <item>", SlashCmdList.FAVES, "lock " .. STUB_LINK(25))
-CHECK("/faves lock sets Locked", KS.GetLevel(25) == L.LOCK, KS.GetLevel(25))
-CALL("/faves mail <id> char", SlashCmdList.FAVES, "mail 25 char")
-CHECK("/faves mail ... char marks this character", KS.GetLevel(25) == L.MAIL and KS.GetItemScope(25) == "char")
+CALL("/soq lock <item>", SlashCmdList.FAVES, "lock " .. STUB_LINK(25))
+CHECK("/soq lock sets Locked", KS.GetLevel(25) == L.LOCK, KS.GetLevel(25))
+CALL("/soq mail <id> char", SlashCmdList.FAVES, "mail 25 char")
+CHECK("/soq mail ... char marks this character", KS.GetLevel(25) == L.MAIL and KS.GetItemScope(25) == "char")
 
 -- Self-test and Mechanic (with a stand-in MechanicLib)
 local registered
@@ -152,7 +152,7 @@ if registered then
     CHECK("self-test " .. t.id .. " passes (" .. tostring(r and r.message) .. ")", r and r.passed)
   end
 end
-CALL("/faves selftest", SlashCmdList.FAVES, "selftest")
+CALL("/soq selftest", SlashCmdList.FAVES, "selftest")
 CHECK("self-test saved", FavesDB.selfTest and FavesDB.selfTest.passed == true)
 
 -- ArkInventory: Alt+Click on a live bag button marks the item in that slot; offline views and buttons
@@ -217,12 +217,12 @@ CHECK("item in a set is Locked by default", KS.GetLevel(9999) == L.LOCK, KS.GetL
 CHECK("a Mail mark under a set is outranked", KS.GetLevel(15210) == L.LOCK, KS.GetLevel(15210))
 CHECK("ignored slot isn't protected", KS.GetLevel(4306) ~= L.LOCK, KS.GetLevel(4306))
 CHECK("the set is named as the reason", KS.GetSetProtection(9999) == "Tank Gear")
-CALL("/faves set Tank Gear confirm", SlashCmdList.FAVES, "set Tank Gear confirm")
+CALL("/soq set Tank Gear confirm", SlashCmdList.FAVES, "set Tank Gear confirm")
 CHECK("per-set choice applies", KS.GetLevel(9999) == L.CONFIRM, KS.GetLevel(9999))
-CALL("/faves set Tank Gear off", SlashCmdList.FAVES, "set Tank Gear off")
+CALL("/soq set Tank Gear off", SlashCmdList.FAVES, "set Tank Gear off")
 CHECK("set turned off: back to the item's own mark", KS.GetLevel(9999) == L.NORMAL and KS.GetLevel(15210) == L.MAIL)
-CALL("/faves set Tank Gear default", SlashCmdList.FAVES, "set Tank Gear default")
-CALL("/faves sets onme", SlashCmdList.FAVES, "sets onme")
+CALL("/soq set Tank Gear default", SlashCmdList.FAVES, "set Tank Gear default")
+CALL("/soq sets onme", SlashCmdList.FAVES, "sets onme")
 CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 CHAT = {}
 KS.SetLevel(9999, L.JUNK)
@@ -230,10 +230,10 @@ CHECK("lowering a set item explains it stays protected", CHAT_HAS("equipment set
 STUB_SETS[1].items[16] = nil
 FIRE("EQUIPMENT_SETS_CHANGED")
 CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))
-CALL("/faves sets", SlashCmdList.FAVES, "sets")
-CALL("/faves sets default lock", SlashCmdList.FAVES, "sets default lock")
+CALL("/soq sets", SlashCmdList.FAVES, "sets")
+CALL("/soq sets default lock", SlashCmdList.FAVES, "sets default lock")
 CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
-CALL("/faves set Nope lock", SlashCmdList.FAVES, "set Nope lock")
+CALL("/soq set Nope lock", SlashCmdList.FAVES, "set Nope lock")
 -- The settings panel's equipment set rows: the default first, then each set; clicks cycle the level.
 local panel = FavesSettings
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)

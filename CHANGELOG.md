@@ -8,12 +8,12 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
-- **New name: Standing Orders: Quartermaster.** Faves is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq`; `/faves` still works, and your marks and settings carry over.
+- **New name: Standing Orders: Quartermaster.** Faves is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq` (`/faves` is gone); your marks and settings carry over.
 
 ### Added
 
 - **More bag addons:** Alt+Click, level icons and the disenchant blocker now work in Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI's bags, as well as the default bags and ArkInventory.
-- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/faves sets <level>`) or per set (`/faves set <name> <level>`), in `/faves settings` or with commands.
+- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/soq sets <level>`) or per set (`/soq set <name> <level>`), in `/soq settings` or with commands.
 - **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Faves still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
 
 ## [0.1.0] - 2026-11-13
@@ -22,10 +22,10 @@ gets its own version, and a release publishes one of them.
 
 First release. Item protection used to be part of SellAll; it's now its own addon so it works with any vendor addon.
 
-- **Item levels**, for all your characters or just one (Alt+Shift+Left-click an item to switch, `/faves scope` for the default):
+- **Item levels**, for all your characters or just one (Alt+Shift+Left-click an item to switch, `/soq scope` for the default):
   - **Junk** marks items you're happy to lose (SellAll sells them when a vendor opens).
   - **Mail** marks items to send to your bank character.
-- **Auto-marks**, each one switchable in `/faves settings`: grays and white gear with no profession or quest use become Junk; crafting materials and unbound BoE items become Mail. Items traded to you, bought (AH or vendor) or mailed to you by a player are left alone.
+- **Auto-marks**, each one switchable in `/soq settings`: grays and white gear with no profession or quest use become Junk; crafting materials and unbound BoE items become Mail. Items traded to you, bought (AH or vendor) or mailed to you by a player are left alone.
 - **Crafting materials follow your professions:** they're marked Mail only on characters whose known recipes don't use them (read from each profession window), and never for enchanting materials.
 - **Per-character items:** consumables, reagents and vendor trade goods (thread, vials, flux, dyes...) are never auto-marked, and marking one marks it for that character only.
   - **Normal** is the default.
@@ -40,9 +40,9 @@ First release. Item protection used to be part of SellAll; it's now its own addo
   - Destroy: the delete popup closes.
   - Trade and mail: the item is removed from the window.
   - Bank (Always on me only): the item is moved straight back to your bags.
-- **One-time intro** listing what protection covers and what it doesn't yet (`/faves intro` reopens it).
+- **One-time intro** listing what protection covers and what it doesn't yet (`/soq intro` reopens it).
 - Levels set in earlier SellAll test builds are brought over automatically.
-- `/faves selftest` checks the install and saves the results. With the optional Mechanic dev tool, Faves shows its checks and log there.
+- `/soq selftest` checks the install and saves the results. With the optional Mechanic dev tool, Faves shows its checks and log there.
 - **ArkInventory bags:** Alt+Click, level icons and the disenchant blocker work in ArkInventory's bag and bank windows too, through its public API. Offline views (another character's bags, the bank away from a banker) are left alone.
 - `Faves.IsLocked`, `Faves.GetLevel` and `Faves.Guard` for other addons.
 

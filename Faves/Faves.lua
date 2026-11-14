@@ -1938,7 +1938,6 @@ end
 local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
 SLASH_FAVES1 = "/soq"
-SLASH_FAVES2 = "/faves" -- the old name, kept so it still works
 SlashCmdList.FAVES = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
