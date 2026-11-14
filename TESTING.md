@@ -56,7 +56,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>5 Other guards</b> · 0 / 32</summary>
+<summary><b>5 Other guards</b> · 0 / 36</summary>
 
 - [ ] 5.1 A Locked item sold by right-click is bought straight back
 - [ ] 5.2 A Locked item dragged onto the vendor is bought straight back
@@ -90,6 +90,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.30 Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag) is moved back to your bags; a Locked item stays banked
 - [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
 - [ ] 5.32 Opening the bank with an Always on me item already in it moves it out
+- [ ] 5.33 Save an equipment set with an item in it: its tooltip says "Faves: Locked (equipment set <name>)"; selling it is bought back
+- [ ] 5.34 `/faves set <name> confirm`, `onme` or `off` changes that set's items; `/faves sets onme` changes the default for sets
+- [ ] 5.35 Save the set again without the item: it goes back to its own mark
+- [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
 
 </details>
 

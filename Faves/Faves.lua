@@ -96,10 +96,13 @@ KS.LevelText = LevelText
 -- Marks are account wide (FavesDB.items) or for one character (FavesCharDB.items). A character mark
 -- wins, so a character can also override an account-wide mark (stored as Normal to clear it there).
 local cdb -- FavesCharDB
+local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set name (see Equipment sets)
 
 function KS.GetLevel(id)
   if not id then return NORMAL end
-  return (cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL
+  local level = (cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL
+  local fromSet = setLevelOf[id]
+  return (fromSet and fromSet > level) and fromSet or level
 end
 
 -- "char" when this character has its own mark for the item, "account" for an account-wide one, else nil.
@@ -174,6 +177,9 @@ function KS.SetLevel(id, level, link, opts)
   end
   if not opts.quiet then
     Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
+    if KS.GetLevel(id) > level and setNameOf[id] then
+      Print("It stays %s while it's in the equipment set %s (/faves sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
+    end
   end
   RefreshBags()
 end
@@ -276,6 +282,99 @@ function KS.ImportLevels(items)
   end
   return n
 end
+
+---------------------------------------------------------------------------------------------------
+-- Equipment sets: every item in one of this character's equipment sets (the game's equipment manager)
+-- is protected at that set's level: Confirm, Locked or Always on me. Each set uses its own choice
+-- (FavesCharDB.sets[setID]) or the default for sets (FavesDB.setDefault, Locked unless changed); "off"
+-- turns it off. It's a layer on top of marks: an item's level is the higher of its mark and its sets',
+-- and an item taken out of a set loses that protection by itself. Marks are never written.
+
+local SET_LEVELS = { confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+
+function KS.GetSetDefault() return (db and db.setDefault) or LOCK end
+function KS.GetSetChoice(setID) return (cdb and cdb.sets[setID]) or "default" end
+
+local function LevelForSet(setID)
+  local choice = KS.GetSetChoice(setID)
+  if choice == "default" then choice = KS.GetSetDefault() end
+  return choice ~= "off" and choice or nil
+end
+
+-- This character's equipment sets: { { id, name }, ... }, empty when the client has none.
+function KS.EquipmentSets()
+  local list, E = {}, C_EquipmentSet
+  if not (E and E.GetEquipmentSetIDs and E.GetEquipmentSetInfo) then return list end
+  local ok, ids = pcall(E.GetEquipmentSetIDs)
+  for _, setID in ipairs(ok and ids or {}) do
+    local name = E.GetEquipmentSetInfo(setID)
+    if name then list[#list + 1] = { id = setID, name = (name:gsub("|", "||")) } end -- pipes:ok (escapes | in set names)
+  end
+  return list
+end
+
+function KS.RefreshSets()
+  wipe(setLevelOf)
+  wipe(setNameOf)
+  local E = C_EquipmentSet
+  for _, set in ipairs(KS.EquipmentSets()) do
+    local level = LevelForSet(set.id)
+    local ok, items = pcall(E.GetItemIDs, set.id)
+    local ignored = E.GetIgnoredSlots and select(2, pcall(E.GetIgnoredSlots, set.id))
+    for slot, itemID in pairs(level and ok and type(items) == "table" and items or {}) do
+      if type(itemID) == "number" and itemID > 1 and not (type(ignored) == "table" and ignored[slot])
+          and level > (setLevelOf[itemID] or 0) then
+        setLevelOf[itemID], setNameOf[itemID] = level, set.name
+      end
+    end
+  end
+  RefreshBags()
+end
+
+-- The set name and level that protect an item, if any.
+function KS.GetSetProtection(id) return setNameOf[id], setLevelOf[id] end
+
+-- choice: "default", "off", or a level. setID nil sets the default for sets ("default" not allowed).
+function KS.SetSetChoice(setID, choice)
+  if setID then cdb.sets[setID] = (choice ~= "default") and choice or nil
+  elseif choice ~= "default" then db.setDefault = choice end
+  KS.RefreshSets()
+end
+
+function KS.SetChoiceText(choice)
+  if choice == "off" then return "|cff9d9d9dnot protected|r" end
+  if choice == "default" then return "default (" .. KS.SetChoiceText(KS.GetSetDefault()) .. ")" end
+  return LevelText(choice)
+end
+
+local function ListSets()
+  local sets = KS.EquipmentSets()
+  Print("Equipment sets protect their items. Default for sets: %s.", KS.SetChoiceText(KS.GetSetDefault()))
+  if #sets == 0 then print("  This character has no equipment sets.") end
+  for _, set in ipairs(sets) do print(("  %s: %s"):format(set.name, KS.SetChoiceText(KS.GetSetChoice(set.id)))) end
+end
+
+-- /faves sets [default] <confirm||lock||onme||off> or /faves set <name> <default||confirm||lock||onme||off>
+local function SetsCommand(rest)
+  local target, word = rest:match("^(.-)%s*(%a+)$")
+  local w = word and word:lower()
+  local choice = (w == "off" or w == "default") and w or SET_LEVELS[w or ""]
+  if rest == "" or not choice then return ListSets() end
+  if target == "" or target:lower() == "default" then
+    if choice == "default" then return Err("The default for sets can be confirm, lock, onme or off.") end
+    KS.SetSetChoice(nil, choice)
+    return Print("Default for equipment sets: %s.", KS.SetChoiceText(choice))
+  end
+  for _, set in ipairs(KS.EquipmentSets()) do
+    if set.name:lower() == target:lower() then
+      KS.SetSetChoice(set.id, choice)
+      return Print("Equipment set %s: %s.", set.name, KS.SetChoiceText(choice))
+    end
+  end
+  Err(("No equipment set called %s on this character (/faves sets lists them)."):format(target))
+end
+KS.SetsCommand = SetsCommand
+
 
 ---------------------------------------------------------------------------------------------------
 -- Guard: vendor. Selling can't be blocked before it happens (right-click, drag to vendor, other
@@ -1264,7 +1363,7 @@ local function AutoMark()
       if id and cdb.kept[id] and db.auto.keepReceived then
         OverrideHere(id, info.hyperlink, cdb.kept[id]) -- catches marks made on another character since
       elseif id and not db.autoSeen[id] and not cdb.autoSeen[id] and not KS.GetItemScope(id)
-          and not HeldByVendorFlip(id) then
+          and not HeldByVendorFlip(id) and not setLevelOf[id] then
         local level, scope = AutoLevel(info, bag, slot)
         local here = scope == "char"
         if level ~= nil then (here and cdb.autoSeen or db.autoSeen)[id] = true end
@@ -1450,7 +1549,9 @@ local function HookTooltip()
   if not (TooltipDataProcessor and Enum and Enum.TooltipDataType) then return end
   TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tip, data)
     local level = KS.GetLevel(data and data.id)
-    if level ~= NORMAL then tip:AddLine("Faves: " .. LevelText(level) .. ScopeText(KS.GetItemScope(data.id))) end
+    local setName, setLevel = KS.GetSetProtection(data and data.id)
+    local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set " .. setName .. ")|r") or ScopeText(KS.GetItemScope(data.id))
+    if level ~= NORMAL then tip:AddLine("Faves: " .. LevelText(level) .. from) end
   end)
 end
 
@@ -1749,6 +1850,7 @@ local function Help()
   Print("Commands:")
   print("  /faves junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
   print("  /faves list - show marked items")
+  print("  /faves sets - equipment sets and how they protect their items; /faves set <name> default||confirm||lock||onme||off")
   print("  /faves scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /faves settings - auto-marking (Junk and Mail) and where new marks go")
   print("  /faves status - check which guards are active")
@@ -1770,6 +1872,7 @@ local function Status()
   for name in pairs(profs) do parts[#parts + 1] = name .. (cdb.scanned[name] and "" or " (open its window once)") end
   table.sort(parts)
   print("  professions: " .. (#parts > 0 and table.concat(parts, ", ") or "none found"))
+  print("  equipment sets: " .. #KS.EquipmentSets() .. " on this character, default " .. KS.SetChoiceText(KS.GetSetDefault()))
   print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
@@ -1800,6 +1903,8 @@ SlashCmdList.FAVES = function(msg)
     local id = LinkID(rest) or tonumber(rest)
     if not id then return Err("Shift-click an item into the command, or give its item ID.") end
     KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope }) -- pipes:ok (a pattern)
+  elseif cmd == "sets" or cmd == "set" then
+    SetsCommand(rest)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then
     KS.SetScope(rest)
     Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
@@ -1843,6 +1948,7 @@ f:RegisterEvent("BANKFRAME_OPENED")
 f:RegisterEvent("BANKFRAME_CLOSED")
 f:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 pcall(f.RegisterEvent, f, "BANK_TABS_CHANGED") -- tabbed bank only
+pcall(f.RegisterEvent, f, "EQUIPMENT_SETS_CHANGED")
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("TRADE_PLAYER_ITEM_CHANGED")
 f:RegisterEvent("TRADE_SHOW")
@@ -1869,6 +1975,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     cdb.autoMarked = cdb.autoMarked or {} -- item ID -> level auto-marks gave it on this character
     cdb.recipeMats = cdb.recipeMats or {} -- item ID -> a profession of this character that uses it
     cdb.scanned = cdb.scanned or {}       -- professions whose recipes have been read
+    cdb.sets = cdb.sets or {}             -- equipment set ID -> level, "off" (missing: the default)
     cdb.kept = cdb.kept or {}            -- item IDs this character got on purpose: no auto-marks here
     db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
@@ -1886,6 +1993,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     HookDestroy()
     HookReceipts()
     CreatePanel()
+    KS.RefreshSets()
     RegisterMechanic()
     -- Ask for the self-test sample items now so they're loaded when a test runs.
     if C_Item and C_Item.RequestLoadItemDataByID then
@@ -1899,6 +2007,8 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     LearnVendorMats()
     merchantOpen = true
     QueueRescue()
+  elseif event == "EQUIPMENT_SETS_CHANGED" then
+    KS.RefreshSets()
   elseif event == "MAIL_CLOSED" then
     KS.ClearPasses("mail")
   elseif event == "MERCHANT_CLOSED" then

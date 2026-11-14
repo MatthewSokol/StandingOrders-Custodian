@@ -194,6 +194,33 @@ CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
 STUB_POPUP = nil
 CHECK("Locked and above still just stop, no window", KS.Guard(6948, nil, "sell") == true and STUB_POPUP == nil)
 
+-- Equipment sets: items in a set are protected at the set's level (default Locked); marks underneath
+-- stay as they are, and taking an item out of the set takes the protection away.
+KS.SetLevel(9999, L.NORMAL, nil, { quiet = true, scope = "char" })
+STUB_SETS[1] = { name = "Tank Gear", items = { [16] = 9999, [17] = 15210, [18] = 4306 }, ignored = { [18] = true } }
+FIRE("EQUIPMENT_SETS_CHANGED")
+CHECK("item in a set is Locked by default", KS.GetLevel(9999) == L.LOCK, KS.GetLevel(9999))
+CHECK("a Mail mark under a set is outranked", KS.GetLevel(15210) == L.LOCK, KS.GetLevel(15210))
+CHECK("ignored slot isn't protected", KS.GetLevel(4306) ~= L.LOCK, KS.GetLevel(4306))
+CHECK("the set is named as the reason", KS.GetSetProtection(9999) == "Tank Gear")
+CALL("/faves set Tank Gear confirm", SlashCmdList.FAVES, "set Tank Gear confirm")
+CHECK("per-set choice applies", KS.GetLevel(9999) == L.CONFIRM, KS.GetLevel(9999))
+CALL("/faves set Tank Gear off", SlashCmdList.FAVES, "set Tank Gear off")
+CHECK("set turned off: back to the item's own mark", KS.GetLevel(9999) == L.NORMAL and KS.GetLevel(15210) == L.MAIL)
+CALL("/faves set Tank Gear default", SlashCmdList.FAVES, "set Tank Gear default")
+CALL("/faves sets onme", SlashCmdList.FAVES, "sets onme")
+CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
+CHAT = {}
+KS.SetLevel(9999, L.JUNK)
+CHECK("lowering a set item explains it stays protected", CHAT_HAS("equipment set") and KS.GetLevel(9999) == L.ONME)
+STUB_SETS[1].items[16] = nil
+FIRE("EQUIPMENT_SETS_CHANGED")
+CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))
+CALL("/faves sets", SlashCmdList.FAVES, "sets")
+CALL("/faves sets default lock", SlashCmdList.FAVES, "sets default lock")
+CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
+CALL("/faves set Nope lock", SlashCmdList.FAVES, "set Nope lock")
+
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
 table.sort(undefined)

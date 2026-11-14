@@ -5,7 +5,7 @@ KNOWN_EVENTS = {
   ADDON_LOADED = true, PLAYER_LOGIN = true, MERCHANT_SHOW = true, MERCHANT_CLOSED = true, MERCHANT_UPDATE = true,
   BANKFRAME_OPENED = true, BANKFRAME_CLOSED = true, PLAYERBANKSLOTS_CHANGED = true, BAG_UPDATE_DELAYED = true,
   TRADE_PLAYER_ITEM_CHANGED = true, TRADE_SHOW = true, TRADE_CLOSED = true, TRADE_ACCEPT_UPDATE = true,
-  MAIL_SEND_INFO_UPDATE = true, MAIL_CLOSED = true, CURRENT_SPELL_CAST_CHANGED = true, UNIT_SPELLCAST_SENT = true,
+  MAIL_SEND_INFO_UPDATE = true, MAIL_CLOSED = true, EQUIPMENT_SETS_CHANGED = true, CURRENT_SPELL_CAST_CHANGED = true, UNIT_SPELLCAST_SENT = true,
   TRADE_SKILL_SHOW = true, TRADE_SKILL_UPDATE = true,
 }
 
@@ -193,6 +193,15 @@ GetTradeSkillLine = function() return STUB_RECIPES.name end
 GetTradeSkillInfo = function() return "Recipe", "optimal" end
 GetTradeSkillNumReagents = function(i) return #STUB_RECIPES.recipes[i].reagents end
 GetTradeSkillReagentItemLink = function(i, r) return link(STUB_RECIPES.recipes[i].reagents[r]) end
+
+-- Equipment manager: STUB_SETS[setID] = { name, items = { [slot] = itemID }, ignored = { [slot] = true } }
+STUB_SETS = {}
+C_EquipmentSet = {
+  GetEquipmentSetIDs = function() local ids = {} for id in pairs(STUB_SETS) do ids[#ids + 1] = id end table.sort(ids) return ids end,
+  GetEquipmentSetInfo = function(id) local s = STUB_SETS[id]; if s then return s.name, 0, id end end,
+  GetItemIDs = function(id) return STUB_SETS[id] and STUB_SETS[id].items end,
+  GetIgnoredSlots = function(id) return STUB_SETS[id] and STUB_SETS[id].ignored or {} end,
+}
 
 -- Everything else Faves calls
 hooksecurefunc = function(t, name, fn)

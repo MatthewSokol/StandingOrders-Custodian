@@ -58,6 +58,10 @@ Every action that would lose an item goes through one check, `Faves.Guard(itemID
 
 **Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and in ArkInventory (see Bag addons below). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
+## Equipment sets
+
+Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set (`/faves sets onme`) or one set (`/faves set <name> confirm`). `/faves sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
+
 ## Bag addons
 
 | Bag addon | Alt+Click, level icons, disenchant blocker |
