@@ -25,7 +25,7 @@ similar items" also react to Alt+Click, and so does AuctionDB's price graph in a
 
 ## Adding another bag addon
 
-Each one is an **adapter** in `Quartermaster/Adapters.lua`: `KS.AddBagAddon({ name, loaded, hook, slot })`. `loaded()` says
+Each one is an **adapter** in `StandingOrders_Quartermaster/Adapters.lua`: `KS.AddBagAddon({ name, loaded, hook, slot })`. `loaded()` says
 whether the addon is there, `hook(add)` hooks its buttons and hands each one to `add`, and `slot(btn)` answers which
 real bag and slot the button shows, or nothing. Rules:
 

@@ -30,7 +30,9 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 8 changes, 88 rows.**
+**Waiting since the last release (none yet): 8 changes, 89 rows.**
+
+To tick rows off, use the standing GitHub issue [#2](https://github.com/MatthewSokol/StandingOrders-Quartermaster/issues/2) ("Next release testing (standing)"). `node tools/checklist-issue.js` builds its body from this checklist and `TESTING.md`, with the `TESTING.md` rows each group needs written out; Claude refreshes it whenever the checklist changes, keeping the ticks.
 
 This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
 work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
@@ -56,10 +58,11 @@ problems); finished sections start closed, and a section with an open problem or
 - **Untagged**: yours to do and tick, because they need eyes in game.
 
 <details open>
-<summary><b>1 Automated</b> · 0 / 2</summary>
+<summary><b>1 Automated</b> · 0 / 3</summary>
 
 - [ ] 1.1 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
 - [ ] 1.2 `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
+- [ ] 1.3 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated`
 
 </details>
 
@@ -70,17 +73,17 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.1 Smoke</b> (standing) · 0 / 7</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.1.2 Clean install: `<env> profile clean --addon Quartermaster`; full game restart; `/soq selftest` passes `auto validated`
+- [ ] 2.1.2 Clean install: `<env> profile clean --addon StandingOrders_Quartermaster`; full game restart; `/soq selftest` passes `auto validated`
 - [ ] 2.1.3 The intro shows on that first login, and "Got it" closes it
 - [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/soq selftest`; no Quartermaster errors `auto validated`
-- [ ] 2.1.5 With no other addons: `<env> profile only Quartermaster !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
-- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon Quartermaster --from <last release tag>`; your marks and settings are kept
+- [ ] 2.1.5 With no other addons: `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
+- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon StandingOrders_Quartermaster --from <last release tag>`; your marks and settings are kept
 - [ ] 2.1.7 `<env> restore` `auto executed · after you say the pass is done`
 
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 88</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 89</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -127,11 +130,12 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19) · open · 0 / 3</summary>
+<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19, #20) · open · 0 / 4</summary>
 
 - [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Quartermaster"
 - [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
 - [ ] 2.2.6.3 Marks and settings from before the rename are all still there
+- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Quartermaster once and no Faves (the old folder is in `_forever_\AddOns-backup`)
 
 </details>
 
