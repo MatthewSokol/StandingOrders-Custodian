@@ -58,11 +58,9 @@ problems); finished sections start closed, and a section with an open problem or
 - **Untagged**: yours to do and tick, because they need eyes in game.
 
 <details open>
-<summary><b>1 Automated</b> · 0 / 3</summary>
+<summary><b>1 Automated</b> · 0 / 1</summary>
 
-- [ ] 1.1 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
-- [ ] 1.2 `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
-- [ ] 1.3 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated`
+- [ ] 1.1 `node tools/green.js` is GREEN, and `install.ps1` installed it `auto executed · after each change` `auto validated`
 
 </details>
 
@@ -164,13 +162,15 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>3 Deploy</b> · 0 / 5</summary>
+<summary><b>3 Deploy</b> · 0 / 7</summary>
 
-- [ ] 3.1 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after the gate`
-- [ ] 3.2 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag`
-- [ ] 3.3 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated`
-- [ ] 3.4 `<env> restore` `auto executed · after the zip test`
-- [ ] 3.5 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
+- [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated`
+- [ ] 3.2 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated`
+- [ ] 3.3 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after prep passes`
+- [ ] 3.4 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag`
+- [ ] 3.5 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated`
+- [ ] 3.6 `<env> restore` `auto executed · after the zip test`
+- [ ] 3.7 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
 </details>
 
