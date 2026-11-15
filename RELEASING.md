@@ -70,15 +70,16 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2 Smoke, then acceptance</b> · 0 / 2 sections</summary>
 
 <details open>
-<summary><b>2.1 Smoke</b> (standing) · 0 / 7</summary>
+<summary><b>2.1 Smoke</b> (standing) · 0 / 8</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.1.2 Clean install: `<env> profile clean --addon StandingOrders_Quartermaster`; full game restart; `/soq selftest` passes `auto validated`
-- [ ] 2.1.3 The intro shows on that first login, and "Got it" closes it
-- [ ] 2.1.4 Without dev addons: `<env> profile disable !Mechanic Mechanic`; log in, open bags, a vendor and the bank; `/soq selftest`; no Quartermaster errors `auto validated`
-- [ ] 2.1.5 With no other addons: `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack`; `/reload`; `/soq selftest`; it works alone `auto validated`
-- [ ] 2.1.6 Upgrade (skip for the first release): `<env> restore`, then `<env> profile upgrade --addon StandingOrders_Quartermaster --from <last release tag>`; your marks and settings are kept
-- [ ] 2.1.7 `<env> restore` `auto executed · after you say the pass is done`
+- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster` (no saved data), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed`
+- [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
+- [ ] 2.1.4 Log in: no Lua errors; the intro window shows after a few seconds, and "Got it" closes it
+- [ ] 2.1.5 `/soq selftest` passes, then `/reload` so the result is saved `auto validated`
+- [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
+- [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done`
+- [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soq selftest` passes, no Quartermaster errors `auto validated`
 
 </details>
 
