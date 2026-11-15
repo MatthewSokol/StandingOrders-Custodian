@@ -132,7 +132,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19, #20) · open · 0 / 4</summary>
 
-- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Quartermaster"
+- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Faves"
 - [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
 - [ ] 2.2.6.3 Marks and settings from before the rename are all still there
 - [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Quartermaster once and no Faves (the old folder is in `_forever_\AddOns-backup`)

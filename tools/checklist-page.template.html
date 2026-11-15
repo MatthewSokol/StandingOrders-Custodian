@@ -1,398 +1,433 @@
-<title>Quartermaster Release Checklist</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<style id="app-style">
-/* Layout: one centred column; a build-and-progress header, then one card per stage with rows that say who does and who ticks them. Same system as the other Standing Orders and addon checklists. */
+<title>Quartermaster Release Checklist</title><meta name="claude:viewport-fit-sides" content="cover"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap"><style id="css">
+/* Layout: one narrow column; each test row has its action on the left and its tick and buttons on the right. Same system as the Idle Cup checklist. */
 :root {
-  --bg: #f3f6f9; --surface: #ffffff; --ink: #14213a; --muted: #5b6880; --line: #d9e1ea;
-  --accent: #1f6fb8; --accent-soft: #e2eefa; --done: #17806d; --done-soft: #def3ee;
-  --exec: #6a4fb3; --exec-soft: #ece7f8; --bad: #b3392f; --bad-soft: #f8e4e1; --warn: #a35a0c; --warn-soft: #f8ebd8;
-  --font-display: "Alegreya Sans SC", "Trebuchet MS", sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --bg: #eef2f0; --surface: #ffffff; --ink: #17211f; --muted: #5a6865; --line: #d5ddda;
+  --accent: #a86a12; --accent-soft: #f6e7cc; --ok: #2c7a57; --bad: #b3392f; --code-bg: #e6ecea;
+  --forever: #5557c9; --forever-soft: #e4e4fb;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0d1524; --surface: #142036; --ink: #e4ebf5; --muted: #9aa8bf; --line: #253552;
-  --accent: #6cb2f2; --accent-soft: #1b3150; --done: #4fd1b5; --done-soft: #143a38;
-  --exec: #b9a5f5; --exec-soft: #2a2350; --bad: #f08a7e; --bad-soft: #3d1f1d; --warn: #f0b062; --warn-soft: #3a2a14; color-scheme: dark } }
+  --bg: #111715; --surface: #18201e; --ink: #e4ebe8; --muted: #98a6a2; --line: #2a3532;
+  --accent: #e3a33b; --accent-soft: #3a2c14; --ok: #5cc493; --bad: #ef7a6d; --code-bg: #222c29;
+  --forever: #a5a6ff; --forever-soft: #262748; color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #0d1524; --surface: #142036; --ink: #e4ebf5; --muted: #9aa8bf; --line: #253552;
-  --accent: #6cb2f2; --accent-soft: #1b3150; --done: #4fd1b5; --done-soft: #143a38;
-  --exec: #b9a5f5; --exec-soft: #2a2350; --bad: #f08a7e; --bad-soft: #3d1f1d; --warn: #f0b062; --warn-soft: #3a2a14; color-scheme: dark }
+  --bg: #111715; --surface: #18201e; --ink: #e4ebe8; --muted: #98a6a2; --line: #2a3532;
+  --accent: #e3a33b; --accent-soft: #3a2c14; --ok: #5cc493; --bad: #ef7a6d; --code-bg: #222c29;
+  --forever: #a5a6ff; --forever-soft: #262748; color-scheme: dark }
 * { box-sizing: border-box }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px }
-main { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px }
-h1, h2 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: .01em }
-h1 { font-size: 2rem; line-height: 1.1 }
-h2 { font-size: 1.3rem }
-code { font-family: var(--font-mono); font-size: .84em; background: var(--accent-soft); color: var(--ink); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere }
-header { display: flex; flex-direction: column; gap: 12px }
-.build { font: 500 .8rem var(--font-mono); color: var(--accent); letter-spacing: .04em }
-.sub { color: var(--muted); margin: 0; max-width: 64ch }
-.bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
-.meter { flex: 1 1 200px; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden }
-.meter > span { display: block; height: 100%; background: var(--done); width: 0; transition: width .25s ease }
-.count { font-variant-numeric: tabular-nums; font-weight: 600 }
-.nprob { font-weight: 600; color: var(--bad) }
-.nprob.zero { color: var(--done) }
-.status { font-size: .82rem; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; white-space: nowrap }
-.status.saving { color: var(--accent); border-color: var(--accent) }
-.status.local { color: var(--warn); border-color: var(--warn) }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .84rem; color: var(--muted); margin: 0; padding: 0; list-style: none }
-.legend li { display: flex; align-items: center; gap: 6px }
-button { font: inherit; font-size: .82rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
-  border-radius: 8px; padding: 4px 10px; cursor: pointer }
-button:hover { border-color: var(--accent) }
-button:focus-visible, input:focus-visible + .box, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
-.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .85rem; color: var(--muted) }
-.danger { color: var(--bad); border-color: var(--bad) }
-section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden }
-section > .head { margin: 0; font-size: 1.3rem }
-section:not(.closed) > .head { border-bottom: 1px solid var(--line) }
-.sec-toggle { width: 100%; display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 10px; border: 0; border-radius: 0;
-  background: none; font: inherit; color: inherit; text-align: left; cursor: pointer }
-.sec-toggle:hover { background: var(--accent-soft); border: 0 }
-.sec-toggle .chev { font-size: .8em; color: var(--muted); width: 1em; flex-shrink: 0 }
-.sec-toggle .title { flex: 1; min-width: 0 }
-.sec-toggle .count { font: 500 .85rem var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
-.sec-toggle .secprob { font: 600 .8rem var(--font-body); color: var(--bad); white-space: nowrap }
-section.complete .sec-toggle .count { color: var(--done) }
-.part { font: 700 1.05rem var(--font-display); color: var(--muted); margin: 6px 0 -10px; letter-spacing: .02em }
-.waiting { margin: 0; font-weight: 600; color: var(--accent) }
-.sec-toggle .ver { font: 500 .7em var(--font-mono); color: var(--muted) }
-.fold-all { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: -8px }
-section .note { margin: 0; padding: 8px 18px 0; color: var(--muted); font-size: .85rem }
-ul.rows { list-style: none; margin: 0; padding: 4px 0 }
-.row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 4px 12px; padding: 10px 18px }
-.row + .row { border-top: 1px solid var(--line) }
-.row.flagged { box-shadow: inset 3px 0 0 var(--bad) }
-.row.child { padding-left: 46px; background: var(--bg) }
-.tick { position: relative; margin-top: 2px; width: 20px; height: 20px; cursor: pointer }
-.tick input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer }
-.tick input:disabled { cursor: not-allowed }
-.box { width: 20px; height: 20px; border: 2px solid var(--muted); border-radius: 5px; display: grid; place-items: center; background: var(--surface) }
-.box svg { width: 13px; height: 13px; opacity: 0 }
-.tick input:checked + .box { background: var(--done); border-color: var(--done) }
-.tick input:checked + .box svg { opacity: 1 }
-.tick input:disabled:not(:checked) + .box { border-style: dashed; background: var(--accent-soft) }
-.row.over .tick input + .box { background: var(--warn); border-color: var(--warn) }
-.row.over .tick input + .box svg { opacity: 1 }
-.text { min-width: 0; display: flex; flex-direction: column; gap: 4px }
-.what { display: block }
-.row.done .what { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line) }
-.num { font: 500 .82em var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 2px }
-h2 .num { font-size: .8em }
-.badges { display: flex; flex-wrap: wrap; gap: 6px }
-.badge { font: 500 .72rem/1.6 var(--font-mono); padding: 0 7px; border-radius: 99px; white-space: nowrap; letter-spacing: .01em }
-.badge.exec { color: var(--exec); background: var(--exec-soft) }
-.badge.valid { color: var(--accent); background: var(--accent-soft) }
-.badge.fix { color: var(--bad); background: var(--bad-soft) }
-.badge.over { color: var(--warn); background: var(--warn-soft) }
-.tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body) }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 28px }
+header { display: flex; flex-direction: column; gap: 10px }
+.eyebrow { font: 500 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
+h1 { font: 700 clamp(26px, 5vw, 36px)/1.1 var(--display); margin: 0; text-wrap: balance }
+.lede { margin: 0; color: var(--muted); max-width: 62ch }
+.waiting { margin: 0; font: 600 14px var(--body); color: var(--accent) }
+.progress { display: flex; align-items: center; gap: 12px; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted) }
+.bar { flex: 1; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden }
+.bar > i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .25s }
+.toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-block: 10px; border-bottom: 1px solid var(--line) }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface) }
+.seg button { font: 500 13px var(--body); color: var(--muted); background: none; border: 0; padding: 6px 12px; cursor: pointer }
+.seg button + button { border-left: 1px solid var(--line) }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.toolbar > button:not(.clear) { font: 500 13px var(--body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer }
+.status { font-size: 13px; color: var(--muted); flex: 1; min-width: 160px }
+.status.warn { color: var(--accent) }
+.clear { font: 500 13px var(--body); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer }
+.clear.armed { color: var(--surface); background: var(--accent); border-color: var(--accent) }
+section { display: flex; flex-direction: column; gap: 6px }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px }
+h2 { font: 700 20px/1.2 var(--display); margin: 0 }
+.ver { font: 500 12px var(--mono); color: var(--muted) }
+.count { font: 500 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
+.count.done { color: var(--ok) }
+.sec-note { margin: 0 0 6px; color: var(--muted); font-size: 14px; max-width: 65ch }
+ul { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px }
+li { display: flex; gap: 12px 16px; padding: 12px 14px; align-items: flex-start }
+li + li { border-top: 1px solid var(--line) }
+li.complete .what { color: var(--muted) }
+li.complete .what p:first-child { text-decoration: line-through; text-decoration-color: var(--line) }
+.what { flex: 1; min-width: 0 }
+.what p { margin: 0 }
+.what .hint { color: var(--muted); font-size: 14px; margin-top: 2px }
+.boxes { display: flex; gap: 8px; flex-shrink: 0 }
+.box { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; cursor: pointer;
+  font: 500 12px var(--body); border: 1px solid transparent; user-select: none; background: var(--forever-soft); color: var(--forever) }
+.box input { width: 16px; height: 16px; margin: 0; accent-color: var(--ok); cursor: pointer }
+.box:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px }
+.box:has(input:checked) { border-color: currentColor }
+.cmd { font: 500 13px var(--mono); background: var(--code-bg); color: var(--ink); border: 0; border-radius: 4px; padding: 1px 5px; cursor: copy; overflow-wrap: anywhere; text-align: left }
+.cmd:hover { background: var(--accent-soft) }
+.cmd:focus-visible { outline: 2px solid var(--accent) }
+.cmd.copied { background: var(--ok); color: var(--surface) }
+.empty { padding: 14px; color: var(--muted); font-size: 14px }
+footer { color: var(--muted); font-size: 13px }
+@media (max-width: 560px) {
+  li { flex-direction: column }
+  .boxes { align-self: stretch }
+}
+.row-tools { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0 }
+.flag { font: 500 12px var(--body); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer }
+.flag:hover { color: var(--bad); border-color: var(--bad) }
 .flag[aria-pressed="true"] { color: var(--surface); background: var(--bad); border-color: var(--bad) }
-.overbtn[aria-pressed="true"] { color: var(--surface); background: var(--warn); border-color: var(--warn) }
-.notebox { display: flex; flex-direction: column; gap: 6px; margin-top: 4px }
-.notebox label { font-size: .8rem; color: var(--muted) }
-.notebox textarea { font: .88rem/1.4 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; resize: vertical; min-height: 2.6em; width: 100% }
-.notebox .acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center }
-.notebox .err { color: var(--bad); font-size: .8rem }
-.saved-note { font-size: .86rem; color: var(--ink); background: var(--bg); border-left: 3px solid var(--line); padding: 4px 8px; border-radius: 4px; overflow-wrap: anywhere }
-.saved-note.bad { border-left-color: var(--bad) }
-.saved-note.over { border-left-color: var(--warn) }
-footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 64ch; margin: 0 auto }
-@media (prefers-reduced-motion: reduce) { .meter > span { transition: none } }
-</style>
-
-<main id="app">
-  <header>
-    <h1>Quartermaster Release Checklist</h1>
-    <p class="sub">Standing Orders: Quartermaster, the first release.</p>
-  </header>
-  <p class="sub" id="loading">Loading the checklist…</p>
-</main>
-
-<script type="application/json" id="state">__STATE__</script>
-<script id="app-script">
+.flag:focus-visible, .note:focus-visible, .toolbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+li.flagged { box-shadow: inset 3px 0 0 var(--bad) }
+.note { display: block; margin-top: 8px; width: 100%; font: 14px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px }
+.problems { color: var(--bad); font-weight: 600 }
+@media (max-width: 560px) { .row-tools { flex-direction: row; align-items: center; justify-content: space-between; align-self: stretch } }
+.tog { all: unset; box-sizing: border-box; display: flex; align-items: baseline; gap: 10px; width: 100%; cursor: pointer; border-radius: 4px }
+.tog:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px }
+.tog::before { content: "\25B8"; font-size: .7em; transition: transform .15s; flex: none }
+.tog[aria-expanded="true"]::before { transform: rotate(90deg) }
+.tog .tog-meta { margin-left: auto; font: 600 14px/1 var(--body); white-space: nowrap; display: flex; gap: 8px; align-items: baseline }
+.sec-head h2 { flex: 1; min-width: 0 }
+.part { font: 700 clamp(22px, 4vw, 28px)/1.1 var(--display); margin: 12px 0 -8px; padding-top: 16px; border-top: 2px solid var(--ink) }
+.toolbar + .part { border-top: 0; padding-top: 0 }
+.stages { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; background: none; border: 0 }
+.stages li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 13px }
+.stages li + li { border-top: 1px solid var(--line) }
+.stages li span { font: 500 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums }
+.stages li.going { border-color: var(--accent) }
+.stages li.done { border-color: var(--ok) }
+.stages li.done span { color: var(--ok) }
+.tag { font: 500 11px var(--mono); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; white-space: nowrap }
+.tag.exec { color: var(--forever) }
+.tag.valid { color: var(--ok) }
+.tag.over { color: var(--surface); background: var(--accent); border-color: var(--accent) }
+.box:has(input:disabled) { cursor: not-allowed; opacity: .85 }
+.box input:disabled { cursor: not-allowed }
+.override { font: 500 12px var(--body); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer }
+.override:hover { color: var(--accent); border-color: var(--accent) }
+.override[aria-pressed="true"] { color: var(--surface); background: var(--accent); border-color: var(--accent) }
+.override:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.triage { margin: 6px 0 0; padding: 6px 8px; border-left: 3px solid var(--bad); background: var(--bg); border-radius: 0 6px 6px 0; font-size: 14px }
+.triage b { font-weight: 600 }
+.triage.done { border-left-color: var(--ok) }
+.need { color: var(--bad); font-size: 13px }
+li.sub { padding-left: 36px; background: var(--bg) }
+li.sub .what p:first-child { font-size: 14px }
+li.fixed { box-shadow: inset 3px 0 0 var(--ok) }
+.oid { font-family: var(--mono); font-size: .85em; font-weight: 600; color: var(--muted); white-space: nowrap; user-select: all }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none } .tog::before { transition: none } }
+</style><div id="app"></div><script type="application/json" id="state">__STATE__</script><script id="code">
 (function () {
-  // Built by tools/checklist-page.js from RELEASING.md and TESTING.md. Row: [id, text, hint, tags];
-  // tags.exec = trigger (Claude runs it), tags.valid = proof (a check ticks it). Standing sections stay
-  // across releases; each unit of work since the last release is its own 2.2.n section (unit: true).
+  var TITLE = "Quartermaster Release Checklist";
+  var FONTS = "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap";
+  var RESET = ":root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}";
+
+  // Built by tools/checklist-page.js from RELEASING.md and TESTING.md. Item: {id, oid, text, hint, exec, valid};
+  // exec = trigger (Claude runs it unasked), valid = a check proves it (only Claude ticks it). Standing sections stay
+  // across releases; each unit of work since the last release is its own 2.2.n section, added when the work starts.
   var SECTIONS = __SECTIONS__;
+  var WAITING = __WAITING__;
 
-  var STASH = "soq-checklist-pending";
-  var stateEl = document.getElementById("state");
   var state;
-  try { state = JSON.parse(stateEl.textContent) } catch (e) { state = {} }
-  ["checked", "overrides", "problems", "added"].forEach(function (k) { if (!state[k] || typeof state[k] !== "object") state[k] = {} });
-  try {
-    var pending = JSON.parse(sessionStorage.getItem(STASH) || "null");
-    if (pending && pending.checked) state = pending;
-  } catch (e) {}
+  try { state = JSON.parse(document.getElementById("state").textContent); } catch (e) { state = {}; }
+  if (!state || typeof state !== "object") state = {};
+  ["checked", "flags", "overrides", "triage"].forEach(function (k) { if (!state[k] || typeof state[k] !== "object") state[k] = {}; });
+  var BUILD = state.build || "not stamped";
 
-  var artifact = null, mode = "connecting", saveTimer = null, dirty = false, openBox = null;
-  // Which sections are open is this viewer's own choice, kept in browser storage, never in the saved page.
-  var OPEN_KEY = "soq-checklist-open", openMap = {}, toggled = {};
-  try { openMap = JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {} } catch (e) { openMap = {} }
-  function saveOpen() { try { localStorage.setItem(OPEN_KEY, JSON.stringify(openMap)) } catch (e) {} }
-  function isOpen(s, finished, needsYou) {
-    if (toggled[s.id] !== undefined) return toggled[s.id];
-    if (needsYou) return true;
-    if (openMap[s.id] !== undefined) return !!openMap[s.id];
+  // Fix and Re-test rows Claude adds under a flagged row while triaging it
+  SECTIONS.forEach(function (sec) {
+    for (var i = sec.items.length - 1; i >= 0; i--) {
+      var it = sec.items[i], t = state.triage[it.id];
+      if (!t || state.flags[it.id] === undefined) continue;
+      sec.items.splice(i + 1, 0,
+        { id: "fix-" + it.id, oid: it.oid + ".fix", sub: true, valid: true, exec: "when the problem is triaged", text: "Fix (Claude): " + t.fix },
+        { id: "retest-" + it.id, oid: it.oid + ".retest", sub: true, valid: it.valid, text: "Re-test: " + t.retest });
+    }
+  });
+  function resolved(id) { return state.triage[id] && !!state.checked["retest-" + id]; }
+  function overridden(id) { return typeof state.overrides[id] === "string" && state.overrides[id].trim() !== ""; }
+  function isDone(id) { return !!state.checked[id] || overridden(id); }
+
+  var filter = "all";
+  try { filter = localStorage.getItem("soq-filter") || "all"; } catch (e) {}
+  var OPEN = {}, closedNow = {};
+  try { OPEN = JSON.parse(localStorage.getItem("soq-open") || "{}") || {}; } catch (e) { OPEN = {}; }
+  function saveOpen() { try { localStorage.setItem("soq-open", JSON.stringify(OPEN)); } catch (e) {} }
+  function secProblems(sec) { return sec.items.filter(function (it) { return state.flags[it.id] !== undefined && !resolved(it.id); }).length; }
+  function nextRow() { var a = allItems(); for (var i = 0; i < a.length; i++) if (!isDone(a[i].id)) return a[i].id; return null; }
+  // Forced open (a problem, or the next row) wins unless you closed it during this visit.
+  function isOpen(key, finished, forced) {
+    if (forced && !closedNow[key]) return true;
+    if (OPEN[key] !== undefined) return OPEN[key];
     return !finished;
   }
-  var app = document.getElementById("app");
-  var CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c] }) }
-  // Outline ids come from position (2.2.2.1; 2.2.2.1.fix under it), so you can say "2.2.2.1 is in trouble".
-  // Ticks, overrides and problems are keyed by the row's own id, so they never move.
-  function rowsOf(sec) {
-    var out = [];
-    sec.items.forEach(function (it, i) {
-      var num = sec.num + "." + (i + 1), seen = {};
-      out.push({ id: it[0], num: num, text: it[1], hint: it[2], tags: it[3] || {} });
-      (state.added[it[0]] || []).forEach(function (a) {
-        var kind = a.kind === "fix" ? "fix" : "retest";
-        seen[kind] = (seen[kind] || 0) + 1;
-        out.push({ id: a.id, num: num + "." + kind + (seen[kind] > 1 ? seen[kind] : ""), text: esc(a.text), hint: "", child: true,
-          tags: a.kind === "fix" ? { exec: "on the fix's branch", fix: true } : {} });
-      });
-    });
-    return out;
+  function secOpen(sec, next) {
+    var st = totals(sec.items);
+    var forced = secProblems(sec) > 0 || sec.items.some(function (it) { return it.id === next; });
+    return isOpen(sec.id, st.all > 0 && st.done === st.all, forced);
   }
-  function allRows() { var a = []; SECTIONS.forEach(function (s) { a = a.concat(rowsOf(s)) }); return a }
-  function isDone(r) { return !!state.checked[r.id] || state.overrides[r.id] !== undefined }
-  function nProblems() { return Object.keys(state.problems).length }
-
-  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e }
-  function btn(cls, text, id) { var b = el("button", cls, text); b.type = "button"; if (id) b.id = id; return b }
-
-  function noteBox(r, kind) {
-    var wrap = el("div", "notebox");
-    var tid = kind + "-note-" + r.id;
-    var lab = el("label", null, kind === "problem" ? "What happened? Claude triages it the next time it reads this page." : "Why ship it anyway? This note goes into the release notes as a known issue.");
-    lab.htmlFor = tid;
-    var ta = document.createElement("textarea"); ta.id = tid;
-    ta.value = (kind === "problem" ? state.problems[r.id] : state.overrides[r.id]) || "";
-    var acts = el("div", "acts");
-    var ok = btn(kind === "problem" ? "danger" : "", kind === "problem" ? "Save problem" : "Override with this note", "save-" + tid);
-    var cancel = btn("", "Cancel", "cancel-" + tid);
-    var err = el("span", "err"); err.hidden = true;
-    acts.appendChild(ok); acts.appendChild(cancel); acts.appendChild(err);
-    wrap.appendChild(lab); wrap.appendChild(ta); wrap.appendChild(acts);
-    ok.addEventListener("click", function () {
-      var v = ta.value.trim();
-      if (!v) { err.textContent = "Write a note first."; err.hidden = false; ta.focus(); return }
-      if (kind === "problem") state.problems[r.id] = v; else { state.overrides[r.id] = v; delete state.checked[r.id] }
-      openBox = null; changed(); render();
-    });
-    cancel.addEventListener("click", function () { openBox = null; render() });
-    setTimeout(function () { ta.focus() }, 0);
-    return wrap;
+  function partOpen(part, next) {
+    var secs = SECTIONS.filter(function (x) { return x.part === part; }), items = [];
+    secs.forEach(function (x) { items = items.concat(x.items); });
+    var st = totals(items);
+    var forced = secs.some(function (x) { return secProblems(x) > 0 || x.items.some(function (it) { return it.id === next; }); });
+    return isOpen("part:" + part, st.all > 0 && st.done === st.all, forced);
   }
+  function problemTag(n) { return n ? '<span class="problems">' + n + (n === 1 ? " problem" : " problems") + "</span>" : ""; }
+  var mode = "pending"; // pending | shared | local
+  var api = null, timer = null, retried = false, armed = null;
+  var statusText = "", statusWarn = false;
 
-  function rowEl(r) {
-    var li = el("li", "row");
-    if (r.child) li.classList.add("child");
-    var valid = !!r.tags.valid, over = state.overrides[r.id] !== undefined, prob = state.problems[r.id] !== undefined;
-    if (isDone(r)) li.classList.add("done");
-    if (over) li.classList.add("over");
-    if (prob) li.classList.add("flagged");
-
-    var tick = el("label", "tick");
-    var input = document.createElement("input"); input.type = "checkbox"; input.id = "chk-" + r.id;
-    input.checked = !!state.checked[r.id];
-    if (valid) { input.disabled = true; input.title = over ? "Overridden by you" : "Claude ticks this when its proof passes" }
-    input.setAttribute("aria-label", "Done: " + r.text.replace(/<[^>]+>/g, ""));
-    tick.appendChild(input); tick.appendChild(el("span", "box", CHECK));
-    input.addEventListener("change", function () {
-      if (input.checked) state.checked[r.id] = true; else delete state.checked[r.id];
-      changed(); render();
-    });
-
-    var text = el("div", "text");
-    text.appendChild(el("span", "what", '<span class="num">' + r.num + "</span> " + r.text));
-    if (r.hint) text.appendChild(el("span", "sub", r.hint));
-    var badges = el("div", "badges");
-    if (r.tags.fix) badges.appendChild(el("span", "badge fix", "fix"));
-    if (r.child && !r.tags.fix) badges.appendChild(el("span", "badge fix", "re-test"));
-    if (r.tags.exec) badges.appendChild(el("span", "badge exec", "auto executed · " + esc(r.tags.exec)));
-    if (r.tags.valid) badges.appendChild(el("span", "badge valid", "auto validated"));
-    if (over) badges.appendChild(el("span", "badge over", "overridden: known issue"));
-    if (badges.childNodes.length) text.appendChild(badges);
-    if (over && openBox !== "override-" + r.id) text.appendChild(el("div", "saved-note over", esc(state.overrides[r.id])));
-    if (prob && openBox !== "problem-" + r.id) text.appendChild(el("div", "saved-note bad", "Problem: " + esc(state.problems[r.id])));
-
-    var tools = el("div", "tools");
-    var flag = btn("flag", prob ? "Problem noted" : "Problem", "flag-" + r.id);
-    flag.setAttribute("aria-pressed", String(prob));
-    flag.addEventListener("click", function () { openBox = openBox === "problem-" + r.id ? null : "problem-" + r.id; render() });
-    tools.appendChild(flag);
-    if (prob) {
-      var clr = btn("", "Withdraw problem", "unflag-" + r.id);
-      clr.addEventListener("click", function () { delete state.problems[r.id]; openBox = null; changed(); render() });
-      tools.appendChild(clr);
-    }
-    if (valid) {
-      var ob = btn("overbtn", over ? "Overridden" : "Override", "over-" + r.id);
-      ob.setAttribute("aria-pressed", String(over));
-      ob.addEventListener("click", function () { openBox = openBox === "override-" + r.id ? null : "override-" + r.id; render() });
-      tools.appendChild(ob);
-      if (over) {
-        var undo = btn("", "Undo override", "unover-" + r.id);
-        undo.addEventListener("click", function () { delete state.overrides[r.id]; openBox = null; changed(); render() });
-        tools.appendChild(undo);
-      }
-    }
-    text.appendChild(tools);
-    if (openBox === "problem-" + r.id) text.appendChild(noteBox(r, "problem"));
-    if (openBox === "override-" + r.id) text.appendChild(noteBox(r, "override"));
-
-    li.appendChild(tick); li.appendChild(text);
-    return li;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  function fmt(s) {
+    return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, function (m, c) { return '<button type="button" class="cmd" data-copy="' + c + '" title="Copy">' + c + "</button>"; });
   }
+  function totals(items) {
+    var done = 0, all = 0;
+    items.forEach(function (it) { all++; if (isDone(it.id)) done++; });
+    return { done: done, all: all };
+  }
+  function nFlags() { return Object.keys(state.flags).filter(function (id) { return !resolved(id); }).length; }
+  function allItems() { var a = []; SECTIONS.forEach(function (s) { a = a.concat(s.items); }); return a; }
 
   function render() {
-    var y = window.scrollY;
-    app.innerHTML = "";
-    var rows = allRows(), done = rows.filter(isDone).length, np = nProblems();
-    var header = el("header");
-    header.appendChild(el("span", "build", "Build under test: " + esc(state.build || "not stamped")));
-    header.appendChild(el("h1", null, "Quartermaster Release Checklist"));
-    header.appendChild(el("p", "sub", "Standing Orders: Quartermaster, the first release. Tick your rows as you go; press Problem on any row that doesn't do what it says. A fix restamps the build and unticks the smoke rows and every row it touches."));
-    var bar = el("div", "bar");
-    var meter = el("div", "meter"); meter.setAttribute("role", "progressbar");
-    meter.setAttribute("aria-valuenow", String(done)); meter.setAttribute("aria-valuemax", String(rows.length));
-    var fill = el("span"); fill.style.width = (rows.length ? 100 * done / rows.length : 0) + "%"; meter.appendChild(fill);
-    bar.appendChild(meter);
-    var units = SECTIONS.filter(function (x) { return x.unit }), urows = 0;
-    units.forEach(function (u) { urows += u.items.length });
-    header.appendChild(el("p", "waiting", "Waiting since the last release (none yet): " + units.length + (units.length === 1 ? " change, " : " changes, ") + urows + (urows === 1 ? " row" : " rows")));
-    bar.appendChild(el("span", "count", done + " / " + rows.length));
-    bar.appendChild(el("span", "nprob" + (np ? "" : " zero"), np ? np + (np === 1 ? " open problem" : " open problems") : "No open problems"));
-    bar.appendChild(el("span", "status", ""));
-    var reset = btn("", "Clear everything", "clear-all");
-    bar.appendChild(reset);
-    header.appendChild(bar);
-    var confirmRow = el("div", "confirm"); confirmRow.hidden = true;
-    confirmRow.appendChild(el("span", null, "Clear every tick, override and problem?"));
-    var yes = btn("danger", "Clear them", "clear-yes"), no = btn("", "Keep them", "clear-no");
-    confirmRow.appendChild(yes); confirmRow.appendChild(no);
-    header.appendChild(confirmRow);
-    var legend = el("ul", "legend");
-    legend.innerHTML = '<li><span class="badge exec">auto executed · trigger</span> Claude runs it when the trigger is met</li>' +
-      '<li><span class="badge valid">auto validated</span> a check proves it; only Claude ticks it, you can Override with a note</li>' +
-      "<li>No badge: yours to do and tick</li>" +
-      "<li><code>&lt;env&gt;</code> = <code>node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_</code>, game fully closed</li>";
-    header.appendChild(legend);
-    app.appendChild(header);
-    reset.addEventListener("click", function () { confirmRow.hidden = false });
-    no.addEventListener("click", function () { confirmRow.hidden = true });
-    yes.addEventListener("click", function () { state.checked = {}; state.overrides = {}; state.problems = {}; state.added = {}; changed(); render() });
-
-    var waiting = null;
-    SECTIONS.forEach(function (s) { if (!waiting && rowsOf(s).some(function (r) { return !isDone(r) })) waiting = s.id });
-    var tools = el("div", "fold-all");
-    var ex = btn("", "Expand all", "expand-all"), co = btn("", "Collapse all", "collapse-all");
-    tools.appendChild(ex); tools.appendChild(co);
-    app.appendChild(tools);
-    function setAll(v) { SECTIONS.forEach(function (s) { toggled[s.id] = v; openMap[s.id] = v }); saveOpen(); render() }
-    ex.addEventListener("click", function () { setAll(true) });
-    co.addEventListener("click", function () { setAll(false) });
-
-    SECTIONS.forEach(function (s) {
-      var rs = rowsOf(s), n = rs.filter(isDone).length;
-      var probs = rs.filter(function (r) { return state.problems[r.id] !== undefined }).length;
-      var open = isOpen(s, n === rs.length, probs > 0 || s.id === waiting);
-      if (s.part) app.appendChild(el("p", "part", s.part));
-      var sec = el("section"); sec.id = "sec-" + s.id;
-      if (n === rs.length) sec.classList.add("complete");
-      if (!open) sec.classList.add("closed");
-      var h2 = el("h2", "head");
-      var tg = btn("sec-toggle", "", "toggle-" + s.id);
-      tg.setAttribute("aria-expanded", String(open));
-      tg.setAttribute("aria-controls", "body-" + s.id);
-      tg.innerHTML = '<span class="chev" aria-hidden="true">' + (open ? "▾" : "▸") + '</span><span class="title"><span class="num">' + s.num + "</span> " + s.title + (s.version ? ' <span class="ver">· ' + s.version + "</span>" : "") + "</span>" +
-        (probs ? '<span class="secprob">' + probs + (probs === 1 ? " problem" : " problems") + "</span>" : "") +
-        '<span class="count">' + n + " / " + rs.length + "</span>";
-      tg.addEventListener("click", function () { toggled[s.id] = !open; openMap[s.id] = !open; saveOpen(); render() });
-      h2.appendChild(tg);
-      sec.appendChild(h2);
-      var body = el("div", "body"); body.id = "body-" + s.id; body.hidden = !open;
-      if (s.note) body.appendChild(el("p", "note", s.note));
-      var ul = el("ul", "rows");
-      rs.forEach(function (r) { ul.appendChild(rowEl(r)) });
-      body.appendChild(ul);
-      sec.appendChild(body);
-      app.appendChild(sec);
+    var app = document.getElementById("app");
+    var t = totals(allItems());
+    var h = '<div class="wrap"><header><span class="eyebrow">Standing Orders: Quartermaster · ' + esc(BUILD) + "</span>" +
+      "<h1>Release pipeline</h1>" +
+      '<p class="lede">Three stages in order, like CI: Claude\'s automated checks and the smoke test, the changes since the last release, then the gate and deploy. Untagged steps are yours: tick one once it does what the grey text says. Claude runs the auto executed steps and ticks the auto validated ones when their check passes; if a check fails and it should ship anyway, press Override and say why. If a step does not do what it says, press Problem and note what happened: it blocks the release until it is fixed and re-tested, unless you defer it. Each step has an id (2.2.4.3 is change 2.2.4, step 3), so you can say which one is in trouble. Click a grey command to copy it. Ticks and notes save to this page.</p>' +
+      '<p class="waiting">' + esc(WAITING) + "</p>" +
+      stageStrip() +
+      '<div class="progress"><div class="bar"><i id="bar" style="width:' + (t.all ? Math.round(100 * t.done / t.all) : 0) + '%"></i></div><span id="total">' + t.done + " / " + t.all + "</span>" + (nFlags() ? ' <span class="problems" id="nflags">' + nFlags() + (nFlags() === 1 ? " problem" : " problems") + "</span>" : "") + "</div></header>" +
+      '<div class="toolbar"><div class="seg" role="group" aria-label="Show">' +
+      [["all", "All"], ["todo", "To do"], ["flagged", "Problems"]].map(function (f) {
+        return '<button type="button" id="f-' + f[0] + '" data-filter="' + f[0] + '" aria-pressed="' + (filter === f[0]) + '">' + f[1] + "</button>";
+      }).join("") + "</div>" +
+      '<span class="status' + (statusWarn ? " warn" : "") + '" id="status" role="status">' + esc(statusText || idleStatus()) + "</span>" +
+      '<button type="button" id="open-all" data-all="open">Expand all</button><button type="button" id="close-all" data-all="close">Collapse all</button>' +
+      '<button type="button" class="clear" id="clear">Clear everything</button></div>';
+    var lastPart, partShut = false, next = nextRow();
+    SECTIONS.forEach(function (sec) {
+      if (sec.part !== lastPart) {
+        lastPart = sec.part;
+        var pItems = [], pProb = 0;
+        SECTIONS.forEach(function (x) { if (x.part === sec.part) { pItems = pItems.concat(x.items); pProb += secProblems(x); } });
+        var pst = totals(pItems), pOpen = partOpen(sec.part, next);
+        partShut = !pOpen;
+        h += '<h2 class="part"><button type="button" class="tog" id="tog-part-' + sec.id + '" data-toggle="part:' + esc(sec.part) + '" aria-expanded="' + pOpen + '"><span>' + esc(sec.part) + '</span><span class="tog-meta">' + problemTag(pProb) + '<span class="count' + (pst.all && pst.done === pst.all ? " done" : "") + '">' + pst.done + " / " + pst.all + "</span></span></button></h2>";
+      }
+      if (partShut) return;
+      var rows = sec.items.filter(function (it) {
+        if (filter === "todo") return !isDone(it.id);
+        if (filter === "flagged") return state.flags[it.id] !== undefined || (it.sub && state.flags[it.id.replace(/^(fix|retest)-/, "")] !== undefined);
+        return true;
+      });
+      var st = totals(sec.items);
+      var sOpen = secOpen(sec, next);
+      h += "<section" + (sOpen ? "" : ' class="closed"') + '><div class="sec-head"><h2><button type="button" class="tog" id="tog-' + sec.id + '" data-toggle="' + sec.id + '" aria-expanded="' + sOpen + '"><span><span class="oid">' + esc(sec.oid) + "</span> " + esc(sec.title) + (sec.version ? ' <span class="ver">· ' + esc(sec.version) + "</span>" : "") + '</span><span class="tog-meta">' + problemTag(secProblems(sec)) + '<span class="count' + (st.done === st.all && st.all ? " done" : "") + '" data-count="' + sec.id + '">' + st.done + " / " + st.all + "</span></span></button></h2></div>";
+      if (!sOpen) { h += "</section>"; return; }
+      if (sec.note) h += '<p class="sec-note">' + fmt(sec.note) + "</p>";
+      h += "<ul>";
+      if (!rows.length) h += '<li class="empty">' + (filter === "todo" ? "All done here." : "No problems here.") + "</li>";
+      rows.forEach(function (it) {
+        var flagged = state.flags[it.id] !== undefined;
+        var cls = (isDone(it.id) ? "complete" : "") + (flagged ? " flagged" : "");
+        if (it.sub) cls += " sub";
+        if (flagged && resolved(it.id)) cls = cls.replace(" flagged", " fixed");
+        h += '<li data-item="' + esc(it.id) + '"' + (cls ? ' class="' + cls.trim() + '"' : "") + '><div class="what"><p><span class="oid">' + esc(it.oid) + "</span> " + fmt(it.text) + badges(it) + "</p>" + (it.hint ? '<p class="hint">' + fmt(it.hint) + "</p>" : "") + triageHtml(it) +
+          (state.overrides[it.id] !== undefined ? '<input type="text" class="note" id="onote-' + esc(it.id) + '" data-onote="' + esc(it.id) + '" placeholder="Why it ships anyway (required; goes into the release notes as a known issue)" value="' + esc(state.overrides[it.id]) + '">' + (overridden(it.id) ? "" : '<span class="need">Needs a note before it counts.</span>') : "") +
+          (flagged ? '<input type="text" class="note" id="note-' + esc(it.id) + '" data-note="' + esc(it.id) + '" placeholder="What happened? (saves when you press Enter or click away)" value="' + esc(state.flags[it.id]) + '">' : "") +
+          '</div><div class="row-tools"><div class="boxes"><label class="box"><input type="checkbox" id="k-' + esc(it.id) + '" data-key="' + esc(it.id) + '"' + (state.checked[it.id] ? " checked" : "") + (it.valid ? ' disabled title="Claude ticks this when the check passes"' : "") + "><span>Done</span></label></div>" +
+          (it.valid && !it.sub ? '<button type="button" class="override" id="over-' + esc(it.id) + '" data-override="' + esc(it.id) + '" aria-pressed="' + (state.overrides[it.id] !== undefined) + '" title="Ship this row as a known issue">Override</button>' : "") +
+          (it.sub ? "" : '<button type="button" class="flag" id="flag-' + esc(it.id) + '" data-flag="' + esc(it.id) + '" aria-pressed="' + flagged + '">Problem</button>') + "</div></li>";
+      });
+      h += "</ul></section>";
     });
-    app.appendChild(el("footer", null, "Ticks, overrides and problems are saved into this page. Claude reads it when you finish a pass, ticks the auto validated rows whose proof passed, and triages each problem: a Fix row and Re-test rows, deferred only on your word, or the row's text corrected."));
-    showStatus();
-    window.scrollTo(0, y);
+    h += "<footer>Auto validated rows are ticked by Claude from the saved self-test, BugGrabber and the gate after you exit the game: just do them. An Override ships a row as a known issue in the release notes. A fix sends the build back to stage 1. <code>&lt;env&gt;</code> in a command means <code>node ~/.claude/skills/wow-mod-dev/scripts/wow-env.js --client _forever_</code>, and needs the game fully closed: Claude runs those.</footer></div>";
+    app.innerHTML = h;
   }
 
-  function showStatus() {
-    var st = app.querySelector(".status");
-    if (!st) return;
-    st.className = "status";
-    if (mode === "local") { st.textContent = "Saved in this browser only"; st.classList.add("local") }
-    else if (dirty) { st.textContent = "Saving…"; st.classList.add("saving") }
-    else if (mode === "connecting") st.textContent = "Connecting…";
-    else st.textContent = "Saved";
+  function badges(it) {
+    var b = "";
+    if (it.exec) b += ' <span class="tag exec" title="Claude runs this unasked when the trigger is met">auto executed · ' + esc(it.exec) + "</span>";
+    if (it.valid) b += ' <span class="tag valid" title="Proven by a check; Claude ticks it">auto validated</span>';
+    if (overridden(it.id)) b += ' <span class="tag over">overridden: known issue</span>';
+    return b;
+  }
+  function triageHtml(it) {
+    var t = state.triage[it.id];
+    if (!t || state.flags[it.id] === undefined) return "";
+    return (t.fix ? '<p class="triage' + (t.fixed ? " done" : "") + '"><b>Fix (Claude):</b> ' + fmt(t.fix) + (t.fixed ? " Done." : "") + "</p>" : "") +
+      (t.retest ? '<p class="triage"><b>Re-test (you):</b> ' + fmt(t.retest) + "</p>" : "");
   }
 
-  function stash() { try { sessionStorage.setItem(STASH, JSON.stringify(state)) } catch (e) {} }
-  function clearStash() { try { sessionStorage.removeItem(STASH) } catch (e) {} }
-  function changed() {
-    if (mode === "local") { saveLocal(); return }
-    dirty = true; stash(); showStatus();
-    clearTimeout(saveTimer); saveTimer = setTimeout(save, 2000);
-  }
-  function saveLocal() { try { localStorage.setItem(STASH, JSON.stringify(state)) } catch (e) {} showStatus() }
-  function goLocal() {
-    mode = "local"; dirty = false;
-    try { var l = JSON.parse(localStorage.getItem(STASH) || "null"); if (l && l.checked) state = l } catch (e) {}
-    render();
+  function stageStrip() {
+    var parts = [], by = {};
+    SECTIONS.forEach(function (sec) { if (!by[sec.part]) { by[sec.part] = []; parts.push(sec.part); } by[sec.part] = by[sec.part].concat(sec.items); });
+    return '<ol class="stages">' + parts.map(function (p) {
+      var st = totals(by[p]);
+      return '<li class="' + (st.all && st.done === st.all ? "done" : st.done ? "going" : "") + '"><b>' + esc(p) + "</b><span>" + st.done + " / " + st.all + "</span></li>";
+    }).join("") + "</ol>";
   }
 
-  var RESET_CSS = ":root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}";
-  function documentHtml() {
-    var S = "script", fonts = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis"]');
+  function idleStatus() {
+    if (mode === "local") return "Ticks are saved in this browser only.";
+    if (!state.updated) return "No ticks saved yet.";
+    var d = new Date(state.updated);
+    return "Last saved " + d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + ".";
+  }
+  function setStatus(text, warn) {
+    statusText = text || ""; statusWarn = !!warn;
+    var el = document.getElementById("status");
+    if (el) { el.textContent = statusText || idleStatus(); el.className = "status" + (statusWarn ? " warn" : ""); }
+  }
+
+  function refreshCounts() {
+    var strip = document.querySelector(".stages");
+    if (strip) strip.outerHTML = stageStrip();
+    var t = totals(allItems());
+    var bar = document.getElementById("bar"), tot = document.getElementById("total");
+    if (bar) bar.style.width = (t.all ? Math.round(100 * t.done / t.all) : 0) + "%";
+    if (tot) tot.textContent = t.done + " / " + t.all;
+    SECTIONS.forEach(function (sec) {
+      var el = document.querySelector('[data-count="' + sec.id + '"]');
+      if (!el) return;
+      var st = totals(sec.items);
+      el.textContent = st.done + " / " + st.all;
+      el.className = "count" + (st.done === st.all && st.all ? " done" : "");
+    });
+    allItems().forEach(function (it) {
+      var li = document.querySelector('[data-item="' + it.id + '"]');
+      if (li) li.classList.toggle("complete", isDone(it.id));
+    });
+  }
+
+  function buildDoc() {
+    var css = document.getElementById("css").textContent;
+    var code = document.getElementById("code").textContent;
     var json = JSON.stringify(state).replace(/</g, "\\u003c");
-    return "<!doctype html><html><head><meta charset=utf8><meta name=viewport content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><style>" + RESET_CSS + "</style></head><body>" +
-      "<title>Quartermaster Release Checklist</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n" +
-      "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
-      "<link rel=\"stylesheet\" href=\"" + (fonts ? fonts.getAttribute("href") : "") + "\">\n" +
-      "<style id=\"app-style\">" + document.getElementById("app-style").textContent + "</style>\n\n" +
-      "<main id=\"app\">\n  <header>\n    <h1>Quartermaster Release Checklist</h1>\n    <p class=\"sub\">Standing Orders: Quartermaster, the first release.</p>\n  </header>\n  <p class=\"sub\" id=\"loading\">Loading the checklist…</p>\n</main>\n\n" +
-      "<" + S + " type=\"application/json\" id=\"state\">" + json + "</" + S + ">\n" +
-      "<" + S + " id=\"app-script\">" + document.getElementById("app-script").textContent + "</" + S + ">\n" +
-      "</body></html>";
+    return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' + RESET + "</style></head><body>" +
+      "<title>" + TITLE + '</title><meta name="claude:viewport-fit-sides" content="cover"><link rel="stylesheet" href="' + FONTS + '">' +
+      '<style id="css">' + css + '</style><div id="app"></div><script type="application/json" id="state">' + json + "<\/script>" +
+      '<script id="code">' + code + "<\/script></body></html>";
+  }
+
+  function saveLocal() {
+    try { localStorage.setItem("soq-checks", JSON.stringify(state)); } catch (e) {}
+    setStatus("");
+  }
+  function goLocal(reason) {
+    mode = "local";
+    if (reason) setStatus(reason, true); else setStatus("");
   }
   function save() {
-    if (!artifact || mode !== "shared") return;
-    stash();
-    artifact.publish(documentHtml()).then(function () { clearStash(); dirty = false; showStatus() }, function (err) {
+    timer = null;
+    if (mode === "local") { saveLocal(); return; }
+    if (mode === "pending") { timer = setTimeout(save, 800); return; }
+    try { sessionStorage.setItem("soq-scroll", String(window.scrollY)); } catch (e) {}
+    setStatus("Saving…");
+    api.publish(buildDoc()).then(function () {
+      setStatus("Saved.");
+    }, function (err) {
       var code = err && err.code;
-      if (code === "conflict") return;
-      if (code === "rate_limited") { saveTimer = setTimeout(save, 8000); return }
-      if (code === "upstream_error") { saveTimer = setTimeout(save, 3000 + Math.random() * 2000); return }
-      clearStash(); goLocal(); saveLocal();
+      if (code === "conflict") { setStatus("Someone else saved first. Loading their version.", true); return; }
+      if (code === "rate_limited") { setStatus("Saving too often. Trying again shortly.", true); timer = setTimeout(save, 6000); return; }
+      if (code === "upstream_error" && !retried) { retried = true; timer = setTimeout(save, 1500 + Math.random() * 1500); return; }
+      goLocal(code === "not_writer" || code === "not_granted" || code === "consent_required"
+        ? "This view can't save to the page, so ticks are kept in this browser only."
+        : "Couldn't save to the page, so ticks are kept in this browser only.");
+      saveLocal();
+      setStatus(statusText, true);
     });
+  }
+  function scheduleSave() {
+    retried = false;
+    if (timer) clearTimeout(timer);
+    setStatus(mode === "local" ? "" : "Unsaved ticks…");
+    timer = setTimeout(save, 1500);
+  }
+
+  document.addEventListener("change", function (e) {
+    var noteId = e.target && e.target.getAttribute && e.target.getAttribute("data-note");
+    if (noteId) { state.flags[noteId] = e.target.value; state.updated = new Date().toISOString(); scheduleSave(); return; }
+    var oid = e.target && e.target.getAttribute && e.target.getAttribute("data-onote");
+    if (oid) { state.overrides[oid] = e.target.value; state.updated = new Date().toISOString(); render(); scheduleSave(); return; }
+    var k = e.target && e.target.getAttribute && e.target.getAttribute("data-key");
+    if (!k) return;
+    if (e.target.checked) state.checked[k] = true; else delete state.checked[k];
+    state.updated = new Date().toISOString();
+    refreshCounts();
+    scheduleSave();
+  });
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target.closest("button") : null;
+    if (!t) return;
+    if (t.hasAttribute("data-flag")) {
+      var fid = t.getAttribute("data-flag");
+      var adding = state.flags[fid] === undefined;
+      if (adding) state.flags[fid] = ""; else delete state.flags[fid];
+      state.updated = new Date().toISOString();
+      render();
+      if (adding) { var inp = document.getElementById("note-" + fid); if (inp) inp.focus(); }
+      scheduleSave();
+    } else if (t.hasAttribute("data-override")) {
+      var vid = t.getAttribute("data-override");
+      var on = state.overrides[vid] === undefined;
+      if (on) state.overrides[vid] = ""; else delete state.overrides[vid];
+      state.updated = new Date().toISOString();
+      render();
+      if (on) { var oi = document.getElementById("onote-" + vid); if (oi) oi.focus(); }
+      scheduleSave();
+    } else if (t.hasAttribute("data-toggle")) {
+      var key = t.getAttribute("data-toggle"), was = t.getAttribute("aria-expanded") === "true";
+      OPEN[key] = !was;
+      if (was) closedNow[key] = true; else delete closedNow[key];
+      saveOpen(); render();
+      var again = document.querySelector('[data-toggle="' + key.replace(/"/g, '\\"') + '"]'); if (again) again.focus();
+    } else if (t.hasAttribute("data-all")) {
+      var openAll = t.getAttribute("data-all") === "open";
+      SECTIONS.forEach(function (x) {
+        OPEN[x.id] = openAll; OPEN["part:" + x.part] = openAll;
+        if (openAll) { delete closedNow[x.id]; delete closedNow["part:" + x.part]; } else { closedNow[x.id] = true; closedNow["part:" + x.part] = true; }
+      });
+      saveOpen(); render();
+    } else if (t.hasAttribute("data-filter")) {
+      filter = t.getAttribute("data-filter");
+      try { localStorage.setItem("soq-filter", filter); } catch (x) {}
+      render();
+    } else if (t.hasAttribute("data-copy")) {
+      var text = t.getAttribute("data-copy");
+      var done = function () { t.classList.add("copied"); setTimeout(function () { t.classList.remove("copied"); }, 900); };
+      try { navigator.clipboard.writeText(text).then(done, function () { selectText(t); }); } catch (x) { selectText(t); }
+    } else if (t.id === "clear") {
+      if (armed) {
+        clearTimeout(armed); armed = null;
+        state.checked = {}; state.flags = {}; state.overrides = {}; state.triage = {}; state.updated = new Date().toISOString();
+        render(); scheduleSave();
+      } else {
+        t.textContent = "Click again to clear"; t.classList.add("armed");
+        armed = setTimeout(function () { armed = null; t.textContent = "Clear everything"; t.classList.remove("armed"); }, 4000);
+      }
+    }
+  });
+  function selectText(el) {
+    try { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (x) {}
   }
 
   render();
-  if (window.claude && window.claude.use) {
-    window.claude.use("artifact").then(function (a) {
-      if (!a) { goLocal(); return }
-      artifact = a; mode = "shared";
-      var saved; try { saved = JSON.parse(stateEl.textContent) } catch (e) { saved = {} }
-      if (JSON.stringify(saved) !== JSON.stringify(state)) { dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(save, 1500) }
-      else clearStash();
-      showStatus();
-    }, goLocal);
-  } else goLocal();
+  try {
+    var y = sessionStorage.getItem("soq-scroll");
+    if (y) { sessionStorage.removeItem("soq-scroll"); requestAnimationFrame(function () { window.scrollTo(0, +y); }); }
+  } catch (e) {}
+
+  var use = window.claude && typeof window.claude.use === "function" ? window.claude.use("artifact") : Promise.resolve(null);
+  Promise.resolve(use).then(function (a) {
+    if (a && typeof a.publish === "function") { api = a; mode = "shared"; setStatus(statusText); return; }
+    try {
+      var saved = JSON.parse(localStorage.getItem("soq-checks") || "null");
+      if (saved && saved.checked) state = saved;
+    } catch (e) {}
+    goLocal();
+    render();
+  }, function () { goLocal(); render(); });
 })();
 </script>
