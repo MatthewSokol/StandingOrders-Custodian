@@ -32,7 +32,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 **Waiting since the last release (none yet): 8 changes, 89 rows.**
 
-To tick rows off, use the standing GitHub issue [#2](https://github.com/MatthewSokol/StandingOrders-Quartermaster/issues/2) ("Next release testing (standing)"). `node tools/checklist-issue.js` builds its body from this checklist and `TESTING.md`, with the `TESTING.md` rows each group needs written out; Claude refreshes it whenever the checklist changes, keeping the ticks.
+To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
 This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
 work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
