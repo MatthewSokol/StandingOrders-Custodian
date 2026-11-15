@@ -17,14 +17,14 @@ Other addons use its API through the `StandingOrdersQuartermaster` global (see b
 Levels are per item ID. A mark applies to all your characters, or to one character only:
 
 - **Alt+Shift+Left-click** an item to move its mark between all characters and this character only.
-- `/soq scope char` makes new marks this-character-only by default (`/soq scope account` switches back). SellAll's settings panel has the same switch.
+- `/soq scope char` makes new marks this-character-only by default (`/soq scope account` switches back). Standing Orders: Vendor's settings panel has the same switch.
 - A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal).
 - Tooltips and `/soq list` show *(this character)* for character marks.
 
 | Level | Icon | What happens |
 |---|---|---|
-| Junk | coin | Safe to lose. SellAll sells these automatically when a vendor opens |
-| Mail | letter | To send to your bank character (for a mailing addon). SellAll never sells these |
+| Junk | coin | Safe to lose. Standing Orders: Vendor sells these automatically when a vendor opens |
+| Mail | letter | To send to your bank character (for a mailing addon). Standing Orders: Vendor never sells these |
 | Normal | none | The default |
 | Confirm | star | Temp hold. The action is stopped like Locked, then a window asks whether to **allow it once**: do it again within 2 minutes (selling, trading or mailing: until you close that window) |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |

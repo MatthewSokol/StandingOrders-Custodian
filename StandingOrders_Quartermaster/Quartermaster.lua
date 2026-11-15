@@ -2,8 +2,8 @@
 -- destroying, trading, mailing) honors.
 --
 -- Levels (stored per item ID, account wide):
---   Junk     safe to get rid of (SellAll sells these automatically when a vendor opens)
---   Mail     to be mailed to a bank character (for a mailing addon; SellAll never sells these).
+--   Junk     safe to get rid of (Standing Orders: Vendor sells these automatically when a vendor opens)
+--   Mail     to be mailed to a bank character (for a mailing addon; Standing Orders: Vendor never sells these).
 --   Auto-marks (on by default, /soq settings): grays and useless whites become Junk, crafting
 --   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
 --   Normal   the default, stored as nil
@@ -19,7 +19,7 @@ local KS = {}
 _G.StandingOrdersQuartermaster = KS
 
 -- Mail sits between Junk and Normal. It's 1.5 rather than renumbering, so saved marks and addons that
--- compare against the old numbers (SellAll: Normal 2, Confirm 3) keep working.
+-- compare against the old numbers (Standing Orders: Vendor: Normal 2, Confirm 3) keep working.
 local JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME = 1, 1.5, 2, 3, 4, 5
 KS.LEVELS = { JUNK = JUNK, MAIL = MAIL, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
 local ORDER = { JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
@@ -986,7 +986,7 @@ end
 -- from a vendor, or mailed to you by a player) are left alone on the character that got them.
 -- Each item ID is only decided once (StandingOrdersQuartermasterDB.autoSeen), so a level you change by hand stays.
 
-KS.AUTO_MARKS = true -- SellAll checks this and leaves auto-marking to Quartermaster
+KS.AUTO_MARKS = true -- Standing Orders: Vendor checks this and leaves auto-marking to Quartermaster
 
 local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, boeMail = true, matsMail = true, keepReceived = true }
 local AUTO_KEYS = { "grayJunk", "whiteJunk", "boeMail", "matsMail", "keepReceived" }
@@ -1610,14 +1610,14 @@ local INTRO_VERSION = 5
 local INTRO_TEXT = table.concat({
   "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. Confirm is a temp hold: Quartermaster stops the action, then asks whether to allow it once.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
-  "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: SellAll sells them when a vendor opens.",
+  "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: Standing Orders: Vendor sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
   "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /soq settings.",
   "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
   "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soq scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
-  "- Selling it: it's bought straight back while the vendor is open (SellAll's Sell All skips it)",
+  "- Selling it: it's bought straight back while the vendor is open (Vendor's Sell All skips it)",
   "- Disenchant, Prospecting, Milling: the click is blocked",
   "- Destroying: the delete popup closes",
   "- Trade and mail: the item is taken back out",

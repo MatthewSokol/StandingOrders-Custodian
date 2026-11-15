@@ -20,7 +20,7 @@ A copy mark only helps if each guard can tell *which* copy is involved.
 | Guard | Can it see the copy? | How |
 |---|---|---|
 | Bag icons, Alt+Click, bag tooltips | Yes | Bag button, then its `ItemLocation`, then the GUID |
-| Sell All / Up to / Junk (SellAll) | Yes | SellAll scans bag slots, so it can check each copy's GUID before selling |
+| Sell All / Up to / Junk (Standing Orders: Vendor) | Yes | Standing Orders: Vendor scans bag slots, so it can check each copy's GUID before selling |
 | Disenchant / Prospect / Mill blocker | Yes | The red cover sits on one bag slot |
 | Destroy | Likely | `C_Cursor.GetCursorItem()` should give the location of the item being held. Needs checking |
 | Bank (Always on me) | Yes | Bank slots have item locations too |

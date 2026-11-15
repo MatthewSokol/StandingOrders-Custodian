@@ -1,6 +1,6 @@
 # Quartermaster
 
-WoW **Forever** addon (interface 16001, modern `C_Container` and bag frame APIs). The addon lives in `StandingOrders_Quartermaster/`; `README.md` documents its features. SellAll (`C:\Users\Matt\code\SellAll`) and VendorFlip depend on its API.
+WoW **Forever** addon (interface 16001, modern `C_Container` and bag frame APIs). The addon lives in `StandingOrders_Quartermaster/`; `README.md` documents its features. Standing Orders: Vendor (`C:\Users\Matt\code\Standing Orders: Vendor`) and VendorFlip depend on its API.
 
 ## Workflow after every edit (always, without being asked)
 
@@ -15,8 +15,8 @@ Pipeline: .devroutine/pipeline.json, run with the dev-routine skill (`pipeline.j
 ## Notes
 
 - Every action that would lose an item must go through `StandingOrdersQuartermaster.Guard(itemID, link, action)`. Add new guards (auction house, a future confirm window) there instead of writing separate checks.
-- The public API (`GetLevel`, `IsLocked`, `Guard`, `LEVELS`, `ImportLevels`) is used by SellAll and VendorFlip: don't change it without updating them.
-- Levels: Junk 1, Mail 1.5, Normal 2 (stored as nil), Confirm 3, Locked 4, Always on me 5. Confirm ("temp hold") is stopped like Locked, then Guard opens a window offering a one-time pass (`UsePass`); never let the pass redo the action itself. SellAll compares against the numbers 2 and 3, so never renumber.
+- The public API (`GetLevel`, `IsLocked`, `Guard`, `LEVELS`, `ImportLevels`) is used by Standing Orders: Vendor and VendorFlip: don't change it without updating them.
+- Levels: Junk 1, Mail 1.5, Normal 2 (stored as nil), Confirm 3, Locked 4, Always on me 5. Confirm ("temp hold") is stopped like Locked, then Guard opens a window offering a one-time pass (`UsePass`); never let the pass redo the action itself. Standing Orders: Vendor compares against the numbers 2 and 3, so never renumber.
 - Don't replace Blizzard functions (`UseContainerItem`, `C_AuctionHouse.*`) to block actions: that taints them. Block before the action (PreClick, the red blocker over bag slots) or undo it afterwards (buyback, removing trade/mail items).
 - **Mechanic** (the in-game dev tool, `!Mechanic` + `Mechanic`) is optional: `## OptionalDeps` only, never a dependency, since players won't have it. When it's loaded, Quartermaster registers its self-tests (Tests tab), guard log (Console) and debug setting, and runs the self-tests once at login, so every session's results are saved for `green.js --game`. MechanicLib's `tests.runAll` must return `passed, total`. Keep the self-tests in the "Self-tests and Mechanic" section read-only.
 - **Releases:** follow `RELEASING.md` (the pipeline: lessons learned → task list → Mechanic output → green run → deploy steps). `TESTING.md` is the in-game checklist; `release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip`.

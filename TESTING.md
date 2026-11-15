@@ -28,7 +28,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 2.6 Mark an item Locked account wide, then `/soq normal <item> char`: Normal on this character, still Locked on others
 - [ ] 2.7 `/soq list` shows both kinds, character marks labelled
 - [ ] 2.8 `/reload` a few times: no errors at login or when the bags first open
-- [ ] 2.9 Works with SellAll disabled (Quartermaster alone loads with no errors)
+- [ ] 2.9 Works with Standing Orders: Vendor disabled (Quartermaster alone loads with no errors)
 
 </details>
 
@@ -81,7 +81,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.21 A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
 - [ ] 5.22 Changing an auto-marked item's level sticks after /reload and more loot
 - [ ] 5.23 /soq settings: each switch stops its rule; turning one back on marks matching items in your bags
-- [ ] 5.24 With Quartermaster auto-marks, SellAll's own auto-mark Junk doesn't run and its panel points to /soq settings
+- [ ] 5.24 With Quartermaster auto-marks, Standing Orders: Vendor's own auto-mark Junk doesn't run and its panel points to /soq settings
 - [ ] 5.25 Alt+Right-click steps it back down
 - [ ] 5.26 At a vendor, Alt+Right-click changes the level without selling the item
 - [ ] 5.27 Icons and tooltip lines show in the combined bag
@@ -121,7 +121,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 7.4 `powershell -File ./release.ps1` builds `dist\StandingOrders_Quartermaster-<version>.zip` and the release notes from the tag
 - [ ] 7.5 The zip unpacks to a single `StandingOrders_Quartermaster\` folder, its .toc shows the version, and that install loads in game
 - [ ] 7.6 After your go-ahead: `git push origin v<version>` (only that tag), then the zip uploaded to CurseForge with the notes from `dist\`
-- [ ] 7.7 Released before (or together with) SellAll, whose warning links to it
+- [ ] 7.7 Released before (or together with) Standing Orders: Vendor, whose warning links to it
 
 </details>
 
