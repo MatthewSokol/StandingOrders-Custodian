@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 7 changes, 85 rows.**
+**Waiting since the last release (none yet): 8 changes, 88 rows.**
 
 This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
 work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
@@ -80,7 +80,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 85</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 88</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -139,6 +139,15 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.7 Quartermaster icon</b> (#21) · open · 0 / 1</summary>
 
 - [ ] 2.2.7.1 The AddOn List (character select > AddOns) shows the ledger icon next to Standing Orders: Quartermaster
+
+</details>
+
+<details open>
+<summary><b>2.2.8 The icon on Quartermaster's windows</b> (#22) · open · 0 / 3</summary>
+
+- [ ] 2.2.8.1 `/soq settings`: the ledger icon sits left of the "Standing Orders: Quartermaster" title
+- [ ] 2.2.8.2 `/soq intro`: a small ledger icon sits left of the window title
+- [ ] 2.2.8.3 Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
 
 </details>
 

@@ -190,8 +190,8 @@ STUB_POPUP = nil
 STUB_TRADE_PLAYER[1] = 2770
 FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
 CHECK("held item taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
-CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "FAVES_CONFIRM" and STUB_POPUP.a2 == "traded")
-CALL("Allow once", StaticPopupDialogs.FAVES_CONFIRM and StaticPopupDialogs.FAVES_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
+CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "SOQ_CONFIRM" and STUB_POPUP.a2 == "traded")
+CALL("Allow once", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
 STUB_TRADE_PLAYER[1] = 2770
 FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
 FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
@@ -201,7 +201,7 @@ FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
 CHECK("the pass ends when the trade closes", STUB_TRADE_PLAYER[1] == nil)
 STUB_POPUP = nil
 CHECK("disenchant stopped without a pass", KS.Guard(2770, nil, "disenchant") == true)
-CALL("Allow once (disenchant)", StaticPopupDialogs.FAVES_CONFIRM.OnAccept, nil, STUB_POPUP.data)
+CALL("Allow once (disenchant)", StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP.data)
 CHECK("blocker steps aside for the pass", KS.HasPass(2770))
 CHECK("one disenchant allowed", KS.Guard(2770, nil, "disenchant") == false)
 CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
@@ -236,6 +236,11 @@ CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
 CALL("/soq set Nope lock", SlashCmdList.SOQ, "set Nope lock")
 -- The settings panel's equipment set rows: the default first, then each set; clicks cycle the level.
 local panel = SOQuartermasterSettings
+CHECK("icon path is the addon's Icon.tga", KS.ICON == "Interface\\AddOns\\StandingOrders_Quartermaster\\Icon", KS.ICON)
+CHECK("settings panel shows the icon", panel and panel.icon ~= nil)
+CHECK("hold window text shows the icon", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.text:find(KS.ICON, 1, true) ~= nil)
+CALL("intro", KS.ShowIntro, KS)
+CHECK("intro shows the icon", SOQuartermasterIntro and SOQuartermasterIntro.icon ~= nil)
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)

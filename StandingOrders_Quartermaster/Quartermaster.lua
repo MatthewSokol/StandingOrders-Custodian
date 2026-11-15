@@ -17,6 +17,8 @@
 local ADDON = ...
 local KS = {}
 _G.StandingOrdersQuartermaster = KS
+-- The addon icon (Icon.tga, the ledger): the AddOn List, the settings panel, the intro and the hold window.
+KS.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Icon"
 
 -- Mail sits between Junk and Normal. It's 1.5 rather than renumbering, so saved marks and addons that
 -- compare against the old numbers (Standing Orders: Vendor: Normal 2, Confirm 3) keep working.
@@ -236,8 +238,8 @@ end
 
 local function AskToAllow(id, link, action)
   if not (StaticPopupDialogs and StaticPopup_Show) then return end
-  StaticPopupDialogs.FAVES_CONFIRM = StaticPopupDialogs.FAVES_CONFIRM or {
-    text = "%s is on hold.\n\nAllow it to be %s once? Then do it again.",
+  StaticPopupDialogs.SOQ_CONFIRM = StaticPopupDialogs.SOQ_CONFIRM or {
+    text = "|T" .. KS.ICON .. ":32:32|t\n%s is on hold.\n\nAllow it to be %s once? Then do it again.", -- pipes:ok (an inline texture)
     button1 = "Allow once", button2 = "Keep it",
     OnAccept = function(_, data)
       passes[data.id] = { expires = GetTime() + PASS_TIME }
@@ -246,7 +248,7 @@ local function AskToAllow(id, link, action)
     end,
     timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
   }
-  StaticPopup_Show("FAVES_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
+  StaticPopup_Show("SOQ_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
 end
 
 function KS.Guard(id, link, action)
@@ -1480,8 +1482,13 @@ local function CreatePanel()
   local panel = CreateFrame("Frame", "SOQuartermasterSettings")
   panel.name = "Standing Orders: Quartermaster"
 
+  panel.icon = panel:CreateTexture(nil, "ARTWORK")
+  panel.icon:SetSize(32, 32)
+  panel.icon:SetPoint("TOPLEFT", 16, -10)
+  panel.icon:SetTexture(KS.ICON)
+
   local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-  title:SetPoint("TOPLEFT", 16, -16)
+  title:SetPoint("LEFT", panel.icon, "RIGHT", 8, 0)
   title:SetText("Standing Orders: Quartermaster")
 
   local prev = Header(panel, "Auto-mark items in your bags", title, -16)
@@ -1648,8 +1655,12 @@ function KS:ShowIntro()
     intro:SetScript("OnDragStop", intro.StopMovingOrSizing)
 
     local title = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    title:SetPoint("TOP", 0, -5)
+    title:SetPoint("TOP", 8, -5)
     title:SetText("Standing Orders: what Confirm and Locked protect")
+    intro.icon = intro:CreateTexture(nil, "OVERLAY")
+    intro.icon:SetSize(16, 16)
+    intro.icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
+    intro.icon:SetTexture(KS.ICON)
 
     local body = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", 18, -38)
