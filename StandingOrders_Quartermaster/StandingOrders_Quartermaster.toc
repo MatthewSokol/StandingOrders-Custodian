@@ -6,7 +6,7 @@
 ## SavedVariables: StandingOrdersQuartermasterDB
 ## SavedVariablesPerCharacter: StandingOrdersQuartermasterCharDB
 ## OptionalDeps: !Mechanic
-## IconTexture: Interface\Icons\INV_Misc_Key_03
+## IconTexture: Interface\AddOns\StandingOrders_Quartermaster\Icon
 ## Category: Inventory
 ## X-Website: https://github.com/MatthewSokol/StandingOrders-Quartermaster
 ## X-License: MIT

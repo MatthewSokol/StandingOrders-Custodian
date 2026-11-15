@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 6 changes, 84 rows.**
+**Waiting since the last release (none yet): 7 changes, 85 rows.**
 
 This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
 work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
@@ -80,7 +80,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 84</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 85</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -132,6 +132,13 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Quartermaster"
 - [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
 - [ ] 2.2.6.3 Marks and settings from before the rename are all still there
+
+</details>
+
+<details open>
+<summary><b>2.2.7 Quartermaster icon</b> (#21) · open · 0 / 1</summary>
+
+- [ ] 2.2.7.1 The AddOn List (character select > AddOns) shows the ledger icon next to Standing Orders: Quartermaster
 
 </details>
 

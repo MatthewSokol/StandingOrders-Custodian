@@ -8,6 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
+- **New icon:** a quartermaster's ledger with Locked, Junk and Mail tags, in the AddOn List and on the project page.
 - **New name: Standing Orders: Quartermaster.** Faves (its test-build name) is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq` (`/faves` is gone), the folder is `StandingOrders_Quartermaster` and the API global is `StandingOrdersQuartermaster`.
 
 ### Added

@@ -1,5 +1,7 @@
 # Standing Orders: Quartermaster
 
+<img src="docs/logo.png" alt="Quartermaster logo: an open supply ledger on a crate, with gold, gray and blue item tags and a red wax seal" width="160" align="right">
+
 A World of Warcraft **Forever** addon (interface 16001). Mark the items you care about, and Standing Orders stops you losing them by accident: selling, disenchanting, destroying, trading or mailing them.
 
 Part of **Standing Orders**, three addons that deal with the items you've already decided about, so the interesting ones stand out. Each works on its own:
