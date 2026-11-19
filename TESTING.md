@@ -10,7 +10,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 1.1 The intro window appears a few seconds after the first login; "Got it" closes it and it doesn't come back
 - [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
 - [ ] 1.3 `/soq intro` reopens it
-- [ ] 1.4 Delete `WTF\Account\<account>\SavedVariables\StandingOrders_Quartermaster.lua`, log in: no Lua errors
+- [ ] 1.4 With the game fully closed, delete `WTF\Account\<account>\SavedVariables\StandingOrders_Quartermaster.lua` (or ask Claude for `<env> profile clean`; deleting it while you play does nothing, the game writes it back), then log in: no Lua errors
 - [ ] 1.5 `/soq list` says nothing is marked
 - [ ] 1.6 `/soq status` shows every guard on
 - [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
@@ -23,7 +23,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 2.1 Alt+Shift+Left-click a marked item: chat says it's now for this character only; the tooltip shows "(this character)"
 - [ ] 2.2 Log in a second character: that item isn't marked there
 - [ ] 2.3 Alt+Shift+Left-click it again on the first character: back to all characters
-- [ ] 2.4 `/soq scope char`, then Alt+Click a new item: it's marked for this character only; `/soq scope account` switches back
+- [ ] 2.4 `/soq scope char`, then Alt+Click a new piece of gear (not a potion, food, reagent or vendor trade good: those are always per character, see 5.20): it's marked for this character only; `/soq scope account`, then Alt+Click another piece of gear: no "(this character)"
 - [ ] 2.5 `/soq lock <item> char` marks for this character only
 - [ ] 2.6 Mark an item Locked account wide, then `/soq normal <item> char`: Normal on this character, still Locked on others
 - [ ] 2.7 `/soq list` shows both kinds, character marks labelled
