@@ -1,5 +1,5 @@
-// Builds the release checklist page (an Artifact with ticks, Problem and Override buttons; same layout as the Idle
-// Cup checklist) from RELEASING.md's checklist and TESTING.md. Each 2.2 group's "`TESTING.md` 5.9–5.12" row becomes
+// Builds the release checklist page (an Artifact with ticks, Problem and Override buttons; same look as the
+// Waterboy release checklist) from RELEASING.md's checklist and TESTING.md. Each 2.2 group's "`TESTING.md` 5.9–5.12" row becomes
 // the TESTING.md rows it names. The page's look and script are tools/checklist-page.template.html.
 // Usage: node tools/checklist-page.js <out.html> [--state <state.json>] [--build <text>]
 // --state keeps ticks, problems and overrides (the JSON in the live page's <script id="state">); rows keep their
@@ -19,7 +19,7 @@ function row(line) {
   const r = { id: m[1] };
   let text = m[2];
   text = text.replace(/\s*`auto executed · ([^`]+)`/, (_, t) => { r.exec = t; return ""; });
-  text = text.replace(/\s*`auto validated`/, () => { r.valid = true; return ""; });
+  text = text.replace(/\s*`auto validated(?: · ([^`]+))?`/, (_, proof) => { r.valid = proof || true; return ""; });
   r.text = text.trim();
   return r;
 }
