@@ -128,13 +128,13 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 <details open>
 <summary><b>8 Bag addons</b> · 0 / 8</summary>
 
-- [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed`
+- [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed` `auto validated · snapshot saved`
 - [ ] 8.2 ArkInventory: `<env> profile only StandingOrders_Quartermaster ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ArkInventory as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.3 Bagnon: `<env> profile only StandingOrders_Quartermaster Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Bagnon as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.4 Baganator: `<env> profile only StandingOrders_Quartermaster Baganator !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists Baganator as supported; away from the bank and in another character's bags, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.5 AdiBags: `<env> profile only StandingOrders_Quartermaster AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists AdiBags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.6 BetterBags: `<env> profile only StandingOrders_Quartermaster BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists BetterBags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
 - [ ] 8.7 ElvUI bags: `<env> profile only StandingOrders_Quartermaster ElvUI ElvUI_Libraries !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window Alt+Click an item: the level changes and the icon shows; `/soq status` lists ElvUI bags as supported; away from the bank, Alt+Click does nothing in Quartermaster; no Quartermaster errors
-- [ ] 8.8 `<env> restore` puts your addons back as they were `auto executed · after the last pass`
+- [ ] 8.8 `<env> restore` puts your addons back as they were `auto executed · after the last pass` `auto validated · restore verified`
 
 </details>

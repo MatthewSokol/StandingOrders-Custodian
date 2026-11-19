@@ -51,7 +51,7 @@ problems); finished sections start closed, and a section with an open problem or
 
 **Who does each row** (dev-routine's convention; on a checklist page they're badges):
 - **auto executed · \<trigger\>**: Claude runs the row unasked as soon as the trigger is met, and ticks it when it succeeds.
-- **auto validated**: a check proves it (`green.js --game`: the saved self-test and BugGrabber's errors). Your checkbox
+- **auto validated · \<proof\>**: a check proves it: the command's own output (a saved snapshot, `wow-env status`, a verified restore) or `green.js --game` (the saved self-test and BugGrabber's errors). Your checkbox
   is disabled and Claude ticks it when the proof passes. If the proof fails or can't run, you can **Override** it with a
   note: the row shows "overridden: known issue" and the note goes into the release notes' known issues. Only you override.
 - **Both** tags: rows Claude runs that prove themselves, like the gate.
@@ -70,13 +70,13 @@ problems); finished sections start closed, and a section with an open problem or
 <details open>
 <summary><b>2.1 Smoke</b> (standing) · 0 / 8</summary>
 
-- [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed`
-- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster` (no saved data), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed`
+- [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed` `auto validated · snapshot saved`
+- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster` (no saved data), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
 - [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
 - [ ] 2.1.4 Log in: no Lua errors; the intro window shows after a few seconds, and "Got it" closes it
 - [ ] 2.1.5 `/soq selftest` passes, then `/reload` so the result is saved `auto validated · saved self-test`
 - [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
-- [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done`
+- [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done` `auto validated · restore verified`
 - [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soq selftest` passes, no Quartermaster errors `auto validated · saved self-test and BugGrabber`
 
 </details>
@@ -168,10 +168,10 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
 - [ ] 3.3 You review the listing: name, summary, first lines of the description, categories and screenshots, side by side with two or three similar addons, with every character name hidden, and say it's good
 - [ ] 3.4 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated · prep`
-- [ ] 3.5 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after prep passes`
-- [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag`
+- [ ] 3.5 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after prep passes` `auto validated · git tag`
+- [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
-- [ ] 3.8 `<env> restore` `auto executed · after the zip test`
+- [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
 
 </details>
