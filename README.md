@@ -34,6 +34,8 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 
 Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soq junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/soq list` shows every marked item. Item tooltips show the level.
 
+The icons sit in the bottom left of the item button, covering 30% of it at 75% opacity, so stack counts stay readable. Change their size (10% to 100%), corner (or center) and opacity in `/soq settings` under Mark icons, or with `/soq icon size 50`, `/soq icon position center`, `/soq icon opacity 60` and `/soq icon reset`.
+
 ## Auto-marks
 
 New items in your bags are marked for you (all on by default; turn each off in `/soq settings`):
@@ -102,4 +104,4 @@ if StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) 
 
 ## Commands
 
-`/soq selftest` (checks this install and saves the results; handy for bug reports), `/soq settings` (auto-marks and where new marks go), `/soq help`, `/soq intro` (what protection covers, also shown once on first login), `/soq status` (which guards are active), `/soq log` (recent guard decisions), `/soq debug`.
+`/soq selftest` (checks this install and saves the results; handy for bug reports), `/soq settings` (auto-marks, where new marks go, mark icons, equipment sets), `/soq icon` (mark icon size, position and opacity), `/soq help`, `/soq intro` (what protection covers, also shown once on first login), `/soq status` (which guards are active), `/soq log` (recent guard decisions), `/soq debug`.

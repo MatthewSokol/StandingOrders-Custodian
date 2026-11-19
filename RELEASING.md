@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 8 changes, 89 rows.**
+**Waiting since the last release (none yet): 9 changes, 94 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 89</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 94</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -151,6 +151,13 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 2.2.8.1 `/soq settings`: the ledger icon sits left of the "Standing Orders: Quartermaster" title
 - [ ] 2.2.8.2 `/soq intro`: a small ledger icon sits left of the window title
 - [ ] 2.2.8.3 Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
+
+</details>
+
+<details open>
+<summary><b>2.2.9 Mark icon size, position and opacity</b> (#24) · open · 0 / 5</summary>
+
+- [ ] 2.2.9.1 `TESTING.md` 9.1–9.5: mark icons
 
 </details>
 
