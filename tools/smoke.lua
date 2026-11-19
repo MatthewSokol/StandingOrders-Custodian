@@ -25,6 +25,7 @@ local function button(bag, slot)
     GetID = function() return slot end,
     HookScript = function(self, script, fn) self["__h_" .. script] = fn end,
     CreateTexture = function() return STUB("Texture") end,
+    GetWidth = function() return 37 end,
   }
 end
 local bagButtons = { button(0, 1), nil, button(0, 3) }
@@ -253,6 +254,31 @@ if rows[2] then
   CHECK("default moved from Locked to Always on me", KS.GetSetDefault() == L.ONME, KS.GetSetDefault())
   KS.SetSetChoice(nil, L.LOCK)
 end
+
+-- Mark icons: 30% of the button, bottom left, 75% opaque by default; /soq icon and the panel change them.
+local function style() return table.concat({ tostring(KS.GetIconStyle()), select(2, KS.GetIconStyle()), tostring(select(3, KS.GetIconStyle())) }, " ") end
+CHECK("icon style defaults", style() == "30 BOTTOMLEFT 75", style())
+local px, point, ix, iy, a = KS.IconLayout(40)
+CHECK("icon layout on a 40px button", px == 12 and point == "BOTTOMLEFT" and ix == 1 and iy == 1 and a == 0.75, px)
+CALL("/soq icon size 50", SlashCmdList.SOQ, "icon size 50")
+CALL("/soq icon position center", SlashCmdList.SOQ, "icon position center")
+CALL("/soq icon opacity 60", SlashCmdList.SOQ, "icon opacity 60")
+CHECK("/soq icon sets size, position and opacity", style() == "50 CENTER 60", style())
+CALL("/soq icon size 3", SlashCmdList.SOQ, "icon size 3")
+CHECK("size can't go below 10%", style() == "10 CENTER 60", style())
+CHAT = {}
+CALL("/soq icon position middle", SlashCmdList.SOQ, "icon position middle")
+CHECK("an unknown position is refused and kept", style() == "10 CENTER 60" and CHAT_HAS("/soq icon"), style())
+local st = panel and panel.iconStyle
+CHECK("settings panel has the mark icon controls", st ~= nil and panel.iconSample ~= nil)
+if st then
+  CALL("panel: Size +", rawget(st.sizePlus, "__s_OnClick"), st.sizePlus)
+  CALL("panel: Position click", rawget(st.pos, "__s_OnClick"), st.pos, "LeftButton")
+  CALL("panel: Opacity -", rawget(st.alphaMinus, "__s_OnClick"), st.alphaMinus)
+  CHECK("panel: Size +5, Center -> Bottom left, Opacity -5", style() == "15 BOTTOMLEFT 55", style())
+end
+CALL("/soq icon reset", SlashCmdList.SOQ, "icon reset")
+CHECK("/soq icon reset goes back to the defaults", style() == "30 BOTTOMLEFT 75", style())
 
 -- ElvUI bags, AdiBags and BetterBags: Alt+Click on a live bag button marks the item in that slot; a
 -- closed bank's buttons (and a BetterBags button showing another item) are left alone.

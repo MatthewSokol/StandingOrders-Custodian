@@ -712,6 +712,51 @@ local function ButtonSlot(btn)
   return parent and parent:GetID(), btn:GetID()
 end
 
+-- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
+-- they don't hide counts and other addons' text. Account-wide (StandingOrdersQuartermasterDB.icon).
+local ICON_DEFAULTS = { size = 30, anchor = "BOTTOMLEFT", alpha = 75 }
+local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENTER" }
+local ANCHOR_TEXT = { BOTTOMLEFT = "Bottom left", TOPLEFT = "Top left", TOPRIGHT = "Top right",
+  BOTTOMRIGHT = "Bottom right", CENTER = "Center" }
+local ANCHOR_OFFSET = { BOTTOMLEFT = { 1, 1 }, TOPLEFT = { 1, -1 }, TOPRIGHT = { -1, -1 }, BOTTOMRIGHT = { -1, 1 }, CENTER = { 0, 0 } }
+KS.ICON_ANCHORS, KS.ANCHOR_TEXT = ICON_ANCHORS, ANCHOR_TEXT
+
+function KS.GetIconStyle()
+  local st = db and db.icon or ICON_DEFAULTS
+  return st.size, st.anchor, st.alpha
+end
+
+-- key is "size" or "alpha" (percent, 10-100, in steps of 5) or "anchor" (one of ICON_ANCHORS).
+function KS.SetIconStyle(key, value)
+  if not (db and db.icon) then return false end
+  if key == "size" or key == "alpha" then
+    value = tonumber(value)
+    if not value then return false end
+    value = math.max(10, math.min(100, math.floor(value / 5 + 0.5) * 5))
+  elseif key ~= "anchor" or not ANCHOR_TEXT[value] then
+    return false
+  end
+  db.icon[key] = value
+  RefreshBags()
+  return true
+end
+
+-- Pixel size, point, x, y and alpha of the mark icon on a button of width w.
+function KS.IconLayout(w)
+  local size, anchor, alpha = KS.GetIconStyle()
+  w = (type(w) == "number" and w > 0) and w or 37
+  local off = ANCHOR_OFFSET[anchor] or ANCHOR_OFFSET.BOTTOMLEFT
+  return math.max(6, w * size / 100), anchor, off[1], off[2], alpha / 100
+end
+
+function KS.StyleIcon(tex, btn)
+  local px, point, x, y, alpha = KS.IconLayout(btn.GetWidth and btn:GetWidth())
+  tex:SetSize(px, px)
+  tex:ClearAllPoints()
+  tex:SetPoint(point, btn, point, x, y)
+  tex:SetAlpha(alpha)
+end
+
 local function UpdateButton(btn)
   local bag, slot = ButtonSlot(btn)
   local info = bag and slot and C.GetContainerItemInfo(bag, slot)
@@ -720,10 +765,9 @@ local function UpdateButton(btn)
   if icon then
     if not tex then
       tex = btn:CreateTexture(nil, "OVERLAY", nil, 7)
-      tex:SetSize(14, 14)
-      tex:SetPoint("TOPLEFT", 1, -1)
       btn.favesIcon = tex
     end
+    KS.StyleIcon(tex, btn)
     tex:SetTexture(icon)
     tex:Show()
   elseif tex then
@@ -1528,7 +1572,78 @@ local function CreatePanel()
   -- panel opens. Last on the panel, since the number of rows changes. Click cycles; right-click goes back.
   local DEFAULT_CHOICES = { CONFIRM, LOCK, ONME, "off" }
   local SET_CHOICES = { "default", CONFIRM, LOCK, ONME, "off" }
-  prev = Header(panel, "Equipment sets protect their items", intro, -22)
+  -- Mark icons: size, position and opacity, with a sample bag button that shows the result.
+  prev = Header(panel, "Mark icons on bag items", intro, -22)
+  local iconRows = {}
+  local function IconRow(i, label)
+    local fs = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    fs:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
+    fs:SetWidth(80)
+    fs:SetJustifyH("LEFT")
+    fs:SetText(label)
+    iconRows[i] = fs
+    return fs
+  end
+  local function Stepper(i, label, key)
+    local fs = IconRow(i, label)
+    local minus = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    minus:SetSize(24, 22)
+    minus:SetPoint("LEFT", fs, "RIGHT", 10, 0)
+    minus:SetText("-")
+    local value = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    value:SetPoint("LEFT", minus, "RIGHT", 6, 0)
+    value:SetWidth(160)
+    local plus = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    plus:SetSize(24, 22)
+    plus:SetPoint("LEFT", value, "RIGHT", 6, 0)
+    plus:SetText("+")
+    local function Step(d)
+      local size, _, alpha = KS.GetIconStyle()
+      KS.SetIconStyle(key, (key == "size" and size or alpha) + d)
+      RefreshPanel()
+    end
+    minus:SetScript("OnClick", function() Step(-5) end)
+    plus:SetScript("OnClick", function() Step(5) end)
+    return value, minus, plus
+  end
+  local sizeText, sizeMinus, sizePlus = Stepper(1, "Size", "size")
+  local posLabel = IconRow(2, "Position")
+  local pos = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+  pos:SetSize(220, 22)
+  pos:SetPoint("LEFT", posLabel, "RIGHT", 10, 0)
+  pos:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  pos:SetScript("OnClick", function(_, mouse)
+    local _, cur = KS.GetIconStyle()
+    local n = 1
+    for k, a in ipairs(ICON_ANCHORS) do if a == cur then n = k end end
+    n = (n + (mouse == "RightButton" and -2 or 0)) % #ICON_ANCHORS + 1
+    KS.SetIconStyle("anchor", ICON_ANCHORS[n])
+    RefreshPanel()
+  end)
+  local alphaText, alphaMinus, alphaPlus = Stepper(3, "Opacity", "alpha")
+  panel.iconStyle = { sizeMinus = sizeMinus, sizePlus = sizePlus, pos = pos, alphaMinus = alphaMinus, alphaPlus = alphaPlus }
+
+  local sample = CreateFrame("Frame", nil, panel)
+  sample:SetSize(37, 37)
+  sample:SetPoint("LEFT", pos, "RIGHT", 40, 0)
+  local item = sample:CreateTexture(nil, "ARTWORK")
+  item:SetAllPoints()
+  item:SetTexture("Interface\\Icons\\INV_Misc_Bag_08")
+  local count = sample:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+  count:SetPoint("BOTTOMRIGHT", -2, 2)
+  count:SetText("20")
+  local mark = sample:CreateTexture(nil, "OVERLAY", nil, 7)
+  mark:SetTexture(ICONS[LOCK])
+  panel.iconSample = mark
+  refreshers[#refreshers + 1] = function()
+    local size, anchor, alpha = KS.GetIconStyle()
+    sizeText:SetText(size .. "% of the item button")
+    pos:SetText(ANCHOR_TEXT[anchor] or anchor)
+    alphaText:SetText(alpha .. "% opaque (" .. (100 - alpha) .. "% see-through)")
+    KS.StyleIcon(mark, sample)
+  end
+
+  prev = Header(panel, "Equipment sets protect their items", iconRows[3], -22)
   local setsNote = Note(panel, "", prev, 0, -6)
   local rows = {}
   panel.setRows = rows
@@ -1904,13 +2019,31 @@ local function ListItems()
   if not any then Print("No items are marked. Alt+Click an item in your bags to mark it.") end
 end
 
+local ANCHOR_WORDS = { bottomleft = "BOTTOMLEFT", topleft = "TOPLEFT", topright = "TOPRIGHT", bottomright = "BOTTOMRIGHT", center = "CENTER" }
+
+-- /soq icon [size <percent> | position <corner or center> | opacity <percent> | reset]
+local function IconCommand(rest)
+  local key, value = rest:lower():match("^(%a*)%s*(%S*)$")
+  local ok = key ~= nil
+  if key == "size" then ok = KS.SetIconStyle("size", value)
+  elseif key == "opacity" or key == "alpha" then ok = KS.SetIconStyle("alpha", value)
+  elseif key == "position" or key == "corner" or key == "anchor" then ok = KS.SetIconStyle("anchor", ANCHOR_WORDS[value])
+  elseif key == "reset" then
+    for k, v in pairs(ICON_DEFAULTS) do KS.SetIconStyle(k, v) end
+  elseif key ~= "" then ok = false end
+  if not ok then return Err("Use /soq icon size 10-100, /soq icon position bottomleft||topleft||topright||bottomright||center, /soq icon opacity 10-100 or /soq icon reset.") end
+  local size, anchor, alpha = KS.GetIconStyle()
+  Print("Mark icons: %d%% of the item button, %s, %d%% opaque.", size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
+end
+
 local function Help()
   Print("Commands:")
   print("  /soq junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
   print("  /soq list - show marked items")
   print("  /soq sets - equipment sets and how they protect their items; /soq set <name> default||confirm||lock||onme||off")
   print("  /soq scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
-  print("  /soq settings - auto-marking (Junk and Mail) and where new marks go")
+  print("  /soq settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
+  print("  /soq icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items")
   print("  /soq status - check which guards are active")
   print("  /soq intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /soq log [n] - show the last n guard log lines (default 25)")
@@ -1966,6 +2099,8 @@ SlashCmdList.SOQ = function(msg)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then
     KS.SetScope(rest)
     Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
+  elseif cmd == "icon" or cmd == "icons" then
+    IconCommand(rest)
   elseif cmd == "settings" or cmd == "config" or cmd == "options" then
     KS.OpenSettings()
   elseif cmd == "automail" and (rest == "on" or rest == "off") then -- older command: both Mail rules
@@ -2044,6 +2179,11 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
       if db.auto[key] == nil then db.auto[key] = on end
     end
     db.autoMailSeen, db.autoMailed, db.autoMail = nil, nil, nil
+    db.icon = db.icon or {}
+    for key, v in pairs(ICON_DEFAULTS) do
+      if db.icon[key] == nil then db.icon[key] = v end
+    end
+    if not ANCHOR_TEXT[db.icon.anchor] then db.icon.anchor = ICON_DEFAULTS.anchor end
   elseif event == "PLAYER_LOGIN" then
     HookBags()
     HookCasts()
