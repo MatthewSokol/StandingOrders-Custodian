@@ -71,7 +71,7 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.1 Smoke</b> (standing) · 0 / 8</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed` `auto validated · snapshot saved`
-- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster` (no saved data), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
+- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster --addon !BugGrabber` (no saved data, and BugSack starts with no errors; restore brings the old ones back), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
 - [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
 - [ ] 2.1.4 Log in: no Lua errors; the intro window shows after a few seconds, and "Got it" closes it
 - [ ] 2.1.5 `/soq selftest` passes, then `/reload` so the result is saved `auto validated · saved self-test`
