@@ -28,7 +28,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Level | Icon | What happens |
 |---|---|---|
 | Junk | coin | Safe to lose. Standing Orders: Vendor (coming soon) will sell these when a vendor opens |
-| Mail | letter | To send to your bank character. Standing Orders: Mail (coming soon) will mail these; Vendor never sells them |
+| Mail | letter | To send to your bank character. Standing Orders: Mail (coming soon) will mail these |
 | Normal | none | The default |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
