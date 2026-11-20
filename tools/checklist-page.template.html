@@ -27,6 +27,7 @@ main { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; 
 h1, h2 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: .01em }
 h1 { font-size: 2rem; line-height: 1.1 }
 h2 { font-size: 1.3rem }
+.what a, .sub a, .note a { color: var(--accent); font-weight: 600 }
 code, .cmd { font-family: var(--font-mono); font-size: .84em; background: var(--accent-soft); color: var(--ink); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere }
 .cmd { border: 0; cursor: copy; text-align: left; line-height: inherit }
 .cmd:hover { outline: 1px solid var(--accent) }
@@ -157,9 +158,11 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
   var CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c] }) }
-  // Markdown-ish row text: **bold**, and `commands` as grey buttons that copy themselves
+  // Markdown-ish row text: **bold**, [links](https://…) that open in a new tab, and `commands` as grey buttons that copy themselves
   function fmt(s) {
-    return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, function (m, c) {
+    return esc(s).replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, function (m, label, url) {
+      return '<a href="' + url + '" target="_blank" rel="noopener">' + label.replace(/`/g, "") + "</a>";
+    }).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, function (m, c) {
       return '<button type="button" class="cmd" data-copy="' + c + '" title="Click to copy">' + c + "</button>";
     });
   }

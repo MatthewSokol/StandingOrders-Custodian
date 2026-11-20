@@ -110,7 +110,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.3 Checklists: outline ids, folding sections</b> (#14) · open · 0 / 1</summary>
 
-- [ ] 2.2.3.1 On GitHub, `RELEASING.md` and `TESTING.md` sections fold open and closed, and every row starts with its id
+- [ ] 2.2.3.1 On GitHub, [`RELEASING.md`](https://github.com/MatthewSokol/StandingOrders-Quartermaster/blob/fix/intro-button-width/RELEASING.md) and [`TESTING.md`](https://github.com/MatthewSokol/StandingOrders-Quartermaster/blob/fix/intro-button-width/TESTING.md) sections fold open and closed, and every row starts with its id
 
 </details>
 
