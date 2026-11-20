@@ -230,7 +230,7 @@ CALL("/soq sets onme", SlashCmdList.SOQ, "sets onme")
 CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 CHAT = {}
 KS.SetLevel(9999, L.JUNK)
-CHECK("lowering a set item explains it stays protected", CHAT_HAS("equipment set") and KS.GetLevel(9999) == L.ONME)
+CHECK("lowering a set item explains it stays protected", CHAT_HAS([[equipment set "Tank Gear"]]) and KS.GetLevel(9999) == L.ONME)
 STUB_SETS[1].items[16] = nil
 FIRE("EQUIPMENT_SETS_CHANGED")
 CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))

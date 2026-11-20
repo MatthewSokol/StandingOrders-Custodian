@@ -181,7 +181,7 @@ function KS.SetLevel(id, level, link, opts)
   if not opts.quiet then
     Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
     if KS.GetLevel(id) > level and setNameOf[id] then
-      Print("It stays %s while it's in the equipment set %s (/soq sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
+      Print("It stays %s while it's in the equipment set \"%s\" (/soq sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
     end
   end
   RefreshBags()
@@ -371,10 +371,10 @@ local function SetsCommand(rest)
   for _, set in ipairs(KS.EquipmentSets()) do
     if set.name:lower() == target:lower() then
       KS.SetSetChoice(set.id, choice)
-      return Print("Equipment set %s: %s.", set.name, KS.SetChoiceText(choice))
+      return Print("Equipment set \"%s\": %s.", set.name, KS.SetChoiceText(choice))
     end
   end
-  Err(("No equipment set called %s on this character (/soq sets lists them)."):format(target))
+  Err(("No equipment set called \"%s\" on this character (/soq sets lists them)."):format(target))
 end
 KS.SetsCommand = SetsCommand
 
@@ -1733,7 +1733,7 @@ local function HookTooltip()
   TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tip, data)
     local level = KS.GetLevel(data and data.id)
     local setName, setLevel = KS.GetSetProtection(data and data.id)
-    local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set " .. setName .. ")|r") or ScopeText(KS.GetItemScope(data.id))
+    local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set \"" .. setName .. "\")|r") or ScopeText(KS.GetItemScope(data.id))
     if level ~= NORMAL then tip:AddLine("Standing Orders: " .. LevelText(level) .. from) end
   end)
 end
