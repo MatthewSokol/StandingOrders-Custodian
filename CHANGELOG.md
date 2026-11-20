@@ -6,6 +6,8 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-20
+
 ### Fixed
 
 - **Settings panel:** it scrolls instead of running past the bottom of the settings window.
