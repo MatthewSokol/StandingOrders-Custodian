@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Disenchant guard error:** clicking a protected item while Disenchant targeting was up gave an "AddOn tried to call the protected function SpellStopTargeting()" error. The click is still blocked and the item kept; press Esc or right-click to end targeting.
+
 ### Changed
 
 - **New icon:** a quartermaster's ledger with Locked, Junk and Mail tags, in the AddOn List, the settings panel, the intro, the hold window and on the project page.

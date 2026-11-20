@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 9 changes, 94 rows.**
+**Waiting since the last release (none yet): 10 changes, 95 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 94</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 95</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -158,6 +158,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.9 Mark icon size, position and opacity</b> (#24) · open · 0 / 5</summary>
 
 - [ ] 2.2.9.1 `TESTING.md` 9.1–9.5: mark icons
+
+</details>
+
+<details open>
+<summary><b>2.2.10 Disenchant guard without protected calls</b> (#25) · open · 0 / 1</summary>
+
+- [ ] 2.2.10.1 After `TESTING.md` 4.1–4.6 pass again on this build, `/soq selftest` passes and BugSack has no `ADDON_ACTION_FORBIDDEN` from Quartermaster; `/soq log` names spells and says just "item" for item uses `auto validated · green.js --game`
 
 </details>
 

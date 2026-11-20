@@ -220,7 +220,7 @@ StaticPopupDialogs = {}
 StaticPopup_Show = function(which, a1, a2, data) STUB_POPUP = { which = which, a1 = a1, a2 = a2, data = data } end
 StaticPopup_Hide = function() end
 SpellIsTargeting = function() return false end
-SpellStopTargeting = function() end
+SpellStopTargeting = function() error("ADDON_ACTION_FORBIDDEN: SpellStopTargeting() is protected on Forever") end
 IsAltKeyDown = function() return STUB_ALT or false end
 IsShiftKeyDown = function() return false end
 IsControlKeyDown = function() return false end

@@ -58,6 +58,10 @@ for (const f of files.filter(f => f.endsWith(".lua"))) {
   const r3 = node("pipes.js", path.join(ADDON, f)); // a bare "|" in chat text is a WoW escape: write "||"
   if (r3.status === 0) say("PASS", "chat pipes", `${f}: no bare pipes`);
   else r3.stdout.trim().split("\n").forEach(l => say("FAIL", "chat pipes", l));
+  // Protected on Forever: an addon call gets ADDON_ACTION_FORBIDDEN (seen in game 2026-11-20).
+  const code = fs.readFileSync(path.join(ADDON, f), "utf8").split("\n").map(l => l.replace(/--.*$/, ""));
+  const hits = code.map((l, i) => /\bSpellStopTargeting\s*\(/.test(l) ? i + 1 : 0).filter(Boolean);
+  say(hits.length ? "FAIL" : "PASS", "protected calls", hits.length ? `${f}: SpellStopTargeting() at line ${hits.join(", ")}` : `${f}: none`);
 }
 
 // --- Smoke test (addon loaded in a Lua VM with a stubbed WoW API)

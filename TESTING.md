@@ -45,7 +45,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 
 - [ ] 4.1 With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
 - [ ] 4.2 `/soq log` shows "targeting started: destructive" and "blocker caught click" lines
-- [ ] 4.3 Disenchant from an action bar button, then click a Locked item: targeting cancels, error shown, item kept
+- [ ] 4.3 Disenchant from an action bar button, then click a Locked item: the click is blocked, error shown, item kept, and no "AddOn tried to call the protected function" error; the cursor stays until Esc or right-click
 - [ ] 4.4 Same with a `/cast Disenchant` macro
 - [ ] 4.5 Same with Disenchant cast from the spellbook
 - [ ] 4.6 Disenchanting a Normal item still works

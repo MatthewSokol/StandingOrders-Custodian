@@ -579,7 +579,11 @@ local function Record(kind, spell)
     if not id and type(spell) == "number" then id = spell end
   end
   castRecord = { kind = kind, id = id, name = name, time = GetTime() }
-  Log("cast/use recorded: %s %s %s", kind, tostring(name), tostring(id))
+  if kind == "spell" then
+    Log("cast/use recorded: spell %s %s", tostring(name), tostring(id))
+  else
+    Log("cast/use recorded: %s", kind)
+  end
 end
 
 local function HookCasts()
@@ -815,8 +819,9 @@ local function PreClick(btn, mouse)
     if spellID == 13262 then action = "disenchant"
     elseif spellID == 31252 then action = "prospect"
     elseif spellID == 51005 then action = "mill" end
+    -- No SpellStopTargeting(): it's protected on this client (ADDON_ACTION_FORBIDDEN). The click is
+    -- still eaten; Esc or right-click ends the targeting cursor.
     if KS.Guard(info.itemID, info.hyperlink, action) then
-      SpellStopTargeting()
       btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     end
   end
@@ -936,7 +941,7 @@ local function GetBlocker(btn)
   b:SetScript("OnClick", function()
     local bag, slot = ButtonSlot(btn)
     local info = bag and slot and C.GetContainerItemInfo(bag, slot)
-    SpellStopTargeting()
+    -- The blocker takes the click; it can't cancel the cursor (SpellStopTargeting is protected here).
     Log("blocker caught click on %s", info and info.hyperlink or "?")
     if info then KS.Guard(info.itemID, info.hyperlink, BlockAction()) end
   end)
