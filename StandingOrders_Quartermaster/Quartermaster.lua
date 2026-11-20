@@ -24,7 +24,16 @@ KS.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Icon"
 -- compare against the old numbers (Standing Orders: Vendor: Normal 2, Confirm 3) keep working.
 local JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME = 1, 1.5, 2, 3, 4, 5
 KS.LEVELS = { JUNK = JUNK, MAIL = MAIL, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
-local ORDER = { JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
+-- Confirm (a temp hold that asks before allowing an action once) is held back from the first release: its
+-- "Allow once" didn't let a sale through in testing (BACKLOG.md). While it's off, nothing offers it, and a
+-- saved Confirm mark or set choice counts as Locked; the saved data keeps the 3, so turning it back on
+-- restores those marks as they were.
+local CONFIRM_ENABLED = false
+KS.CONFIRM_ENABLED = CONFIRM_ENABLED
+local function Effective(level) return (level == CONFIRM and not CONFIRM_ENABLED) and LOCK or level end
+local ORDER = CONFIRM_ENABLED and { JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
+  or { JUNK, MAIL, NORMAL, LOCK, ONME }
+local CONFIRM_LATER = "Confirm is coming in a later version; use Locked (lock) for now."
 
 local NAMES = { [JUNK] = "Junk", [MAIL] = "Mail", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
 local COLORS = { [JUNK] = "ff9d9d9d", [MAIL] = "ff4fb3ff", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
@@ -103,7 +112,7 @@ local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set 
 
 function KS.GetLevel(id)
   if not id then return NORMAL end
-  local level = (cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL
+  local level = Effective((cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL)
   local fromSet = setLevelOf[id]
   return (fromSet and fromSet > level) and fromSet or level
 end
@@ -169,6 +178,7 @@ end
 -- opts (optional): { scope = "account"|"char", quiet = true }. The old third-argument link still works.
 function KS.SetLevel(id, level, link, opts)
   if not id then return end
+  level = Effective(level) -- another addon asking for Confirm while it's off gets Locked
   opts = opts or {}
   local scope = opts.scope or (KS.IsPersonal(id) and "char") or KS.GetScope()
   if scope == "char" then
@@ -198,7 +208,7 @@ function KS.ToggleItemScope(id, link)
   elseif shared then
     cdb.items[id] = shared
     db.items[id] = nil
-    Print("%s is now %s%s; your other characters no longer have it marked.", link, LevelText(shared), ScopeText("char"))
+    Print("%s is now %s%s; your other characters no longer have it marked.", link, LevelText(Effective(shared)), ScopeText("char"))
   else
     Print("%s isn't marked. Alt+Click it first.", link)
     return
@@ -293,10 +303,10 @@ end
 -- turns it off. It's a layer on top of marks: an item's level is the higher of its mark and its sets',
 -- and an item taken out of a set loses that protection by itself. Marks are never written.
 
-local SET_LEVELS = { confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+local SET_LEVELS = { confirm = CONFIRM_ENABLED and CONFIRM or nil, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
-function KS.GetSetDefault() return (db and db.setDefault) or LOCK end
-function KS.GetSetChoice(setID) return (cdb and cdb.sets[setID]) or "default" end
+function KS.GetSetDefault() return Effective((db and db.setDefault) or LOCK) end
+function KS.GetSetChoice(setID) return Effective((cdb and cdb.sets[setID]) or "default") end
 
 local function LevelForSet(setID)
   local choice = KS.GetSetChoice(setID)
@@ -361,10 +371,13 @@ end
 local function SetsCommand(rest)
   local target, word = rest:match("^(.-)%s*(%a+)$")
   local w = word and word:lower()
+  if w == "confirm" and not CONFIRM_ENABLED then return Err(CONFIRM_LATER) end
   local choice = (w == "off" or w == "default") and w or SET_LEVELS[w or ""]
   if rest == "" or not choice then return ListSets() end
   if target == "" or target:lower() == "default" then
-    if choice == "default" then return Err("The default for sets can be confirm, lock, onme or off.") end
+    if choice == "default" then
+      return Err(CONFIRM_ENABLED and "The default for sets can be confirm, lock, onme or off." or "The default for sets can be lock, onme or off.")
+    end
     KS.SetSetChoice(nil, choice)
     return Print("Default for equipment sets: %s.", KS.SetChoiceText(choice))
   end
@@ -1638,8 +1651,8 @@ local function CreatePanel()
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
   -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
-  local DEFAULT_CHOICES = { CONFIRM, LOCK, ONME, "off" }
-  local SET_CHOICES = { "default", CONFIRM, LOCK, ONME, "off" }
+  local DEFAULT_CHOICES = CONFIRM_ENABLED and { CONFIRM, LOCK, ONME, "off" } or { LOCK, ONME, "off" }
+  local SET_CHOICES = CONFIRM_ENABLED and { "default", CONFIRM, LOCK, ONME, "off" } or { "default", LOCK, ONME, "off" }
   -- Mark icons: size, position and opacity, with a sample bag button that shows the result.
   prev = Header(panel, "Mark icons on bag items", intro, -22)
   local iconRows = {}
@@ -1800,7 +1813,7 @@ end
 
 local INTRO_VERSION = 5
 local INTRO_TEXT = table.concat({
-  "|cffffd100Confirm|r (star icon) and |cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less. Confirm is a temp hold: Quartermaster stops the action, then asks whether to allow it once.",
+  "|cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less.",
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose: Standing Orders: Vendor sells them when a vendor opens.",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character.",
@@ -1841,7 +1854,7 @@ function KS:ShowIntro()
 
     local title = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 8, -5)
-    title:SetText("Standing Orders: what Confirm and Locked protect")
+    title:SetText("Standing Orders: what Locked protects")
     intro.icon = intro:CreateTexture(nil, "OVERLAY")
     intro.icon:SetSize(16, 16)
     intro.icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
@@ -2079,7 +2092,7 @@ local function ListItems()
   for _, level in ipairs(ORDER) do
     for _, scope in ipairs({ "account", "char" }) do
       for id, l in pairs(scope == "char" and cdb.items or db.items) do
-        if l == level then
+        if Effective(l) == level then -- a saved Confirm lists under Locked while Confirm is off
           any = true
           Print("%s: %s%s", LevelText(level), ItemLink(id), ScopeText(scope))
         end
@@ -2108,14 +2121,14 @@ end
 
 local function Help()
   Print("Commands:")
-  print("  /soq junk||mail||normal||confirm||lock||onme <item link or ID> [char||account] - set an item's level")
+  print("  /soq junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
   print("  /soq list - show marked items")
-  print("  /soq sets - equipment sets and how they protect their items; /soq set <name> default||confirm||lock||onme||off")
+  print("  /soq sets - equipment sets and how they protect their items; /soq set <name> default||lock||onme||off")
   print("  /soq scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /soq settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
   print("  /soq icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soq status - check which guards are active")
-  print("  /soq intro - what Confirm and Locked protect (and what they don't yet)")
+  print("  /soq intro - what Locked protects (and what it doesn't yet)")
   print("  /soq log [n] - show the last n guard log lines (default 25)")
   print("  /soq debug - toggle debug messages")
   print("  /soq selftest - check this install (results are saved for bug reports)")
@@ -2149,13 +2162,16 @@ local function Status()
   end
 end
 
-local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, confirm = CONFIRM, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+if CONFIRM_ENABLED then LEVEL_CMDS.confirm = CONFIRM end
 
 SLASH_SOQ1 = "/soq"
 SlashCmdList.SOQ = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
-  if LEVEL_CMDS[cmd] and rest ~= "" then
+  if cmd == "confirm" and not CONFIRM_ENABLED then
+    Err(CONFIRM_LATER)
+  elseif LEVEL_CMDS[cmd] and rest ~= "" then
     local scope
     local item, word = rest:match("^(.-)%s+(%a+)$")
     if word and (word:lower() == "char" or word:lower() == "account") then

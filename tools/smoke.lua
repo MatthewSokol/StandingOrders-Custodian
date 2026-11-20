@@ -174,6 +174,8 @@ local function arkButton(loc, bag, slot, itemID)
   b.IsVisible = function() return true end
   return b
 end
+-- One Alt+Left-click up from Normal: Confirm while it's on, Locked while it's held back from the release.
+local STEP_UP = KS.CONFIRM_ENABLED and L.CONFIRM or L.LOCK
 STUB_BAGS[0][3] = 25
 KS.SetLevel(25, L.NORMAL, nil, { quiet = true, scope = "account" })
 local ark = arkButton(1, 0, 3, 25)
@@ -181,39 +183,54 @@ CALL("Ark ItemFrameUpdated", ArkInventory.API.ItemFrameUpdated, ark, 1, 1, 3)
 CHECK("Ark bag button hooked", ark.__h_PreClick ~= nil)
 STUB_ALT = true
 CALL("Alt+Left-click in Ark bags", ark.__h_PreClick, ark, "LeftButton")
-CHECK("Alt+Click in Ark raised the level", KS.GetLevel(25) == L.CONFIRM, KS.GetLevel(25))
+CHECK("Alt+Click in Ark raised the level", KS.GetLevel(25) == STEP_UP, KS.GetLevel(25))
 local offline = arkButton(3, 0, 3, 25)
 CALL("Ark offline bank button", ArkInventory.API.ItemFrameUpdated, offline, 3, 1, 3)
 CALL("Alt+Left-click an offline view", offline.__h_PreClick, offline, "LeftButton")
-CHECK("offline view leaves the item alone", KS.GetLevel(25) == L.CONFIRM, KS.GetLevel(25))
+CHECK("offline view leaves the item alone", KS.GetLevel(25) == STEP_UP, KS.GetLevel(25))
 local stale = arkButton(1, 0, 3, 4865)
 CALL("Ark button showing another item", ArkInventory.API.ItemFrameUpdated, stale, 1, 1, 3)
 CALL("Alt+Left-click a mismatched button", stale.__h_PreClick, stale, "LeftButton")
-CHECK("mismatched button leaves both items alone", KS.GetLevel(25) == L.CONFIRM and KS.GetLevel(4865) == L.JUNK)
+CHECK("mismatched button leaves both items alone", KS.GetLevel(25) == STEP_UP and KS.GetLevel(4865) == L.JUNK)
 STUB_ALT = false
 
--- Confirm (temp hold): the action is stopped, a window offers to allow it once; the pass lasts until
--- the trade closes, and a disenchant pass is used up by one try.
-KS.SetLevel(2770, L.CONFIRM, nil, { quiet = true, scope = "account" })
-STUB_POPUP = nil
-STUB_TRADE_PLAYER[1] = 2770
-FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
-CHECK("held item taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
-CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "SOQ_CONFIRM" and STUB_POPUP.a2 == "traded")
-CALL("Allow once", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
-STUB_TRADE_PLAYER[1] = 2770
-FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
-FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
-CHECK("allowed item stays in the trade", STUB_TRADE_PLAYER[1] == 2770)
-FIRE("TRADE_CLOSED")
-FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
-CHECK("the pass ends when the trade closes", STUB_TRADE_PLAYER[1] == nil)
-STUB_POPUP = nil
-CHECK("disenchant stopped without a pass", KS.Guard(2770, nil, "disenchant") == true)
-CALL("Allow once (disenchant)", StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP.data)
-CHECK("blocker steps aside for the pass", KS.HasPass(2770))
-CHECK("one disenchant allowed", KS.Guard(2770, nil, "disenchant") == false)
-CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
+if KS.CONFIRM_ENABLED then
+  -- Confirm (temp hold): the action is stopped, a window offers to allow it once; the pass lasts until
+  -- the trade closes, and a disenchant pass is used up by one try.
+  KS.SetLevel(2770, L.CONFIRM, nil, { quiet = true, scope = "account" })
+  STUB_POPUP = nil
+  STUB_TRADE_PLAYER[1] = 2770
+  FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+  CHECK("held item taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
+  CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "SOQ_CONFIRM" and STUB_POPUP.a2 == "traded")
+  CALL("Allow once", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
+  STUB_TRADE_PLAYER[1] = 2770
+  FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+  FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+  CHECK("allowed item stays in the trade", STUB_TRADE_PLAYER[1] == 2770)
+  FIRE("TRADE_CLOSED")
+  FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+  CHECK("the pass ends when the trade closes", STUB_TRADE_PLAYER[1] == nil)
+  STUB_POPUP = nil
+  CHECK("disenchant stopped without a pass", KS.Guard(2770, nil, "disenchant") == true)
+  CALL("Allow once (disenchant)", StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP.data)
+  CHECK("blocker steps aside for the pass", KS.HasPass(2770))
+  CHECK("one disenchant allowed", KS.Guard(2770, nil, "disenchant") == false)
+  CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
+else
+  -- Confirm is held back from the first release: a saved Confirm protects as Locked, nothing offers it.
+  KS.SetLevel(2770, L.NORMAL, nil, { quiet = true, scope = "account" })
+  StandingOrdersQuartermasterDB.items[2770] = L.CONFIRM
+  CHECK("a saved Confirm mark counts as Locked", KS.GetLevel(2770) == L.LOCK, KS.GetLevel(2770))
+  STUB_POPUP = nil
+  CHECK("...and is stopped with no hold window", KS.Guard(2770, nil, "sell") == true and STUB_POPUP == nil)
+  CHAT = {}
+  CALL("/soq confirm <item>", SlashCmdList.SOQ, "confirm 2770")
+  CHECK("/soq confirm says it's coming later", CHAT_HAS("later version"), CHAT[1])
+  KS.SetLevel(2770, L.CONFIRM, nil, { quiet = true, scope = "account" })
+  CHECK("another addon asking for Confirm gets Locked", StandingOrdersQuartermasterDB.items[2770] == L.LOCK, StandingOrdersQuartermasterDB.items[2770])
+  KS.SetLevel(2770, L.NORMAL, nil, { quiet = true, scope = "account" })
+end
 STUB_POPUP = nil
 CHECK("Locked and above still just stop, no window", KS.Guard(6948, nil, "sell") == true and STUB_POPUP == nil)
 
@@ -226,8 +243,12 @@ CHECK("item in a set is Locked by default", KS.GetLevel(9999) == L.LOCK, KS.GetL
 CHECK("a Mail mark under a set is outranked", KS.GetLevel(15210) == L.LOCK, KS.GetLevel(15210))
 CHECK("ignored slot isn't protected", KS.GetLevel(4306) ~= L.LOCK, KS.GetLevel(4306))
 CHECK("the set is named as the reason", KS.GetSetProtection(9999) == "Tank Gear")
-CALL("/soq set Tank Gear confirm", SlashCmdList.SOQ, "set Tank Gear confirm")
-CHECK("per-set choice applies", KS.GetLevel(9999) == L.CONFIRM, KS.GetLevel(9999))
+CALL("/soq set Tank Gear onme", SlashCmdList.SOQ, "set Tank Gear onme")
+CHECK("per-set choice applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
+if not KS.CONFIRM_ENABLED then
+  CALL("/soq set Tank Gear confirm", SlashCmdList.SOQ, "set Tank Gear confirm")
+  CHECK("a set can't be put on Confirm while it's held back", KS.GetSetChoice(1) == L.ONME, KS.GetSetChoice(1))
+end
 CALL("/soq set Tank Gear off", SlashCmdList.SOQ, "set Tank Gear off")
 CHECK("set turned off: back to the item's own mark", KS.GetLevel(9999) == L.NORMAL and KS.GetLevel(15210) == L.MAIL)
 CALL("/soq set Tank Gear default", SlashCmdList.SOQ, "set Tank Gear default")
@@ -247,7 +268,7 @@ CALL("/soq set Nope lock", SlashCmdList.SOQ, "set Nope lock")
 local panel = SOQuartermasterSettings
 CHECK("icon path is the addon's Icon.tga", KS.ICON == "Interface\\AddOns\\StandingOrders_Quartermaster\\Icon", KS.ICON)
 CHECK("settings panel shows the icon", panel and panel.icon ~= nil)
-CHECK("hold window text shows the icon", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.text:find(KS.ICON, 1, true) ~= nil)
+if KS.CONFIRM_ENABLED then CHECK("hold window text shows the icon", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.text:find(KS.ICON, 1, true) ~= nil) end -- the hold window is only made for Confirm
 CALL("intro", KS.ShowIntro, KS)
 CHECK("intro shows the icon", SOQuartermasterIntro and SOQuartermasterIntro.icon ~= nil)
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
@@ -256,14 +277,21 @@ CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetTe
 if rows[2] then
   CHECK("set rows are dropdowns", rows[1].dropdown and rows[2].dropdown)
   local setMenu, defMenu = MENU_RADIOS(rows[2].button), MENU_RADIOS(rows[1].button)
-  CHECK("a set's menu: default, Confirm, Locked, Always on me, not protected", #setMenu == 5 and setMenu[1].text:find("default", 1, true) == 1, #setMenu)
-  CHECK("the default's menu has no \"default\" choice", #defMenu == 4, #defMenu)
+  local n = KS.CONFIRM_ENABLED and 1 or 0 -- Confirm's extra entry
+  CHECK("a set's menu: default, (Confirm,) Locked, Always on me, not protected", #setMenu == 4 + n and setMenu[1].text:find("default", 1, true) == 1, #setMenu)
+  CHECK("the default's menu has no \"default\" choice", #defMenu == 3 + n, #defMenu)
+  if not KS.CONFIRM_ENABLED then
+    local any = false
+    for _, r in ipairs(setMenu) do if r.text:find("Confirm", 1, true) then any = true end end
+    CHECK("no menu offers Confirm while it's held back", not any)
+  end
   CHECK("the set's current choice is checked", setMenu[1] and setMenu[1].selected() and not setMenu[2].selected())
-  CALL("pick Confirm for the set", setMenu[2] and setMenu[2].pick)
-  CHECK("picking Confirm sets it", KS.GetSetChoice(1) == L.CONFIRM and setMenu[2].selected(), KS.GetSetChoice(1))
+  local second = KS.CONFIRM_ENABLED and L.CONFIRM or L.LOCK
+  CALL("pick the second choice for the set", setMenu[2] and setMenu[2].pick)
+  CHECK("picking it sets it", KS.GetSetChoice(1) == second and setMenu[2].selected(), KS.GetSetChoice(1))
   CALL("pick default for the set", setMenu[1] and setMenu[1].pick)
   CHECK("back to default", KS.GetSetChoice(1) == "default", KS.GetSetChoice(1))
-  CALL("pick Always on me for the default", defMenu[3] and defMenu[3].pick)
+  CALL("pick Always on me for the default", defMenu[2 + n] and defMenu[2 + n].pick)
   CHECK("default moved from Locked to Always on me", KS.GetSetDefault() == L.ONME, KS.GetSetDefault())
   KS.SetSetChoice(nil, L.LOCK)
 end
@@ -319,17 +347,17 @@ local function altClick(label, btn, id, want)
 end
 local elv = plain({ BagID = 2, SlotID = 1 })
 CALL("ElvUI UpdateSlot", ElvB.UpdateSlot, ElvB, { Bags = { [2] = { [1] = elv } } }, 2, 1)
-altClick("ElvUI bags", elv, 7001, L.CONFIRM)
+altClick("ElvUI bags", elv, 7001, STEP_UP)
 local elvBank = plain({ BagID = -1, SlotID = 1 })
 CALL("ElvUI bank UpdateSlot", ElvB.UpdateSlot, ElvB, { isBank = true, Bags = { [-1] = { [1] = elvBank } } }, -1, 1)
-altClick("ElvUI closed bank", elvBank, 7001, L.CONFIRM)
+altClick("ElvUI closed bank", elvBank, 7001, STEP_UP)
 -- On Forever, AdiBags' secure overlay takes right-clicks; the item button's PreClick never sees them.
 local adiOverlay = { HookScript = function(self, script, fn) self["__h_" .. script] = fn end }
 local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end, ForeverSecureUse = adiOverlay })
 CALL("AdiBags_UpdateButton", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adi)
-altClick("AdiBags", adi, 7002, L.CONFIRM)
+altClick("AdiBags", adi, 7002, STEP_UP)
 CALL("AdiBags overlay: plain right-click", adiOverlay.__h_PreClick, adiOverlay, "RightButton")
-CHECK("a plain right-click on the overlay leaves the level", KS.GetLevel(7002) == L.CONFIRM, KS.GetLevel(7002))
+CHECK("a plain right-click on the overlay leaves the level", KS.GetLevel(7002) == STEP_UP, KS.GetLevel(7002))
 STUB_ALT = true
 CALL("AdiBags overlay: Alt+Right-click", adiOverlay.__h_PreClick, adiOverlay, "RightButton")
 STUB_ALT = false
@@ -339,14 +367,14 @@ CALL("Alt+Left-click: AdiBags (back up)", adi.__h_PreClick, adi, "LeftButton")
 STUB_ALT = false
 local adiBank = plain({ bag = -1, slot = 1, IsBank = function() return true end })
 CALL("AdiBags_UpdateButton (bank)", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adiBank)
-altClick("AdiBags closed bank", adiBank, 7001, L.CONFIRM)
+altClick("AdiBags closed bank", adiBank, 7001, STEP_UP)
 local function bbItem(bag, slot, id) return { button = plain({}), currentData = { bagid = bag, slotid = slot, itemInfo = { itemLink = STUB_LINK(id) } } } end
 local bb = bbItem(2, 3, 7003)
 CALL("BetterBags item/Updated", BB_MSG["item/Updated"], {}, bb, {})
-altClick("BetterBags", bb.button, 7003, L.CONFIRM)
+altClick("BetterBags", bb.button, 7003, STEP_UP)
 local bbStale = bbItem(2, 3, 7001)
 CALL("BetterBags item/Updated (stale)", BB_MSG["item/Updated"], {}, bbStale, {})
-altClick("BetterBags showing another item", bbStale.button, 7003, L.CONFIRM)
+altClick("BetterBags showing another item", bbStale.button, 7003, STEP_UP)
 local function parentWithID(id) return { GetID = function() return id end } end
 local bag8r = plain({ BGR = { itemLocation = {}, itemID = 7001 }, GetParent = function() return parentWithID(2) end, GetID = function() return 1 end })
 bag8r.SetItemDetails = BaganatorClassicLiveContainerItemButtonMixin.SetItemDetails -- Mixin() copies it onto the button
@@ -354,13 +382,13 @@ CHECK("Baganator's mixin is frozen (hooking it fails)", not pcall(hooksecurefunc
 CHECK("Quartermaster listens to Baganator's skin API", #BAGANATOR_LISTENERS == 1, #BAGANATOR_LISTENERS)
 for _, fn in ipairs(BAGANATOR_LISTENERS) do CALL("Baganator hands over a button", fn, { regionType = "ItemButton", region = bag8r }) end
 CALL("Baganator SetItemDetails", bag8r.SetItemDetails, bag8r, {})
-altClick("Baganator", bag8r, 7001, L.LOCK)
+altClick("Baganator", bag8r, 7001, KS.CONFIRM_ENABLED and L.LOCK or L.ONME) -- a second step up
 local bagnon = plain({ GetBag = function() return 2 end, GetID = function() return 2 end, IsCached = function() return false end })
 CALL("Bagnon Item:Update", Bagnon.Item.Update, bagnon)
-altClick("Bagnon", bagnon, 7002, L.LOCK)
+altClick("Bagnon", bagnon, 7002, KS.CONFIRM_ENABLED and L.LOCK or L.ONME)
 local cached = plain({ GetBag = function() return 2 end, GetID = function() return 3 end, IsCached = function() return true end })
 CALL("Bagnon Item:Update (cached)", Bagnon.Item.Update, cached)
-altClick("Bagnon cached view", cached, 7003, L.CONFIRM)
+altClick("Bagnon cached view", cached, 7003, STEP_UP)
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
 
 local undefined = {}
