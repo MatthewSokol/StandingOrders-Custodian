@@ -115,7 +115,7 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16) · open · 0 / 5</summary>
+<summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16, #29) · open · 0 / 5</summary>
 
 - [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/soq settings`, back to own mark
 
