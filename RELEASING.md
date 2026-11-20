@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 10 changes, 95 rows.**
+**Waiting since the last release (none yet): 10 changes, 76 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -72,7 +72,7 @@ problems); finished sections start closed, and a section with an open problem or
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed` `auto validated · snapshot saved`
 - [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster --addon !BugGrabber` (no saved data, and BugSack starts with no errors; restore brings the old ones back), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
-- [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
+- [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (with its ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
 - [ ] 2.1.4 Log in: no Lua errors; the intro window shows after a few seconds, and "Got it" closes it
 - [ ] 2.1.5 `/soq selftest` passes, then `/reload` so the result is saved `auto validated · saved self-test`
 - [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
@@ -82,21 +82,21 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 95</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 76</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
 yet (no test journal; see `BACKLOG.md`).
 
 <details open>
-<summary><b>2.2.1 First build: levels, guards, auto-marks, ArkInventory</b> (#1, #3, #4, #11) · 0.1.0 · 0 / 63</summary>
+<summary><b>2.2.1 First build: levels, guards, auto-marks, ArkInventory</b> (#1, #3, #4, #11) · 0.1.0 · 0 / 45</summary>
 
 - [ ] 2.2.1.1 `TESTING.md` 1.1–1.7: fresh install
 - [ ] 2.2.1.2 `TESTING.md` 2.1–2.9: per-character marks
 - [ ] 2.2.1.3 `TESTING.md` 3.1–3.2: moving from SellAll test builds
 - [ ] 2.2.1.4 `TESTING.md` 4.1–4.9: disenchant guard
 - [ ] 2.2.1.5 `TESTING.md` 5.1–5.8, 5.13–5.32: vendor, destroy, trade, mail and bank guards, Alt+Click, auto-marks, icons
-- [ ] 2.2.1.6 `TESTING.md` 6.1–6.8: combat, ArkInventory, blocked actions
+- [ ] 2.2.1.6 `TESTING.md` 6.1–6.8: combat and blocked actions (ArkInventory is in 2.2.5)
 
 </details>
 
@@ -124,24 +124,23 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.5 More bag addons</b> (#17) · open · 0 / 8</summary>
 
-- [ ] 2.2.5.1 `TESTING.md` 8.1–8.8: one pass each for ArkInventory, Bagnon, Baganator, AdiBags, BetterBags and ElvUI bags
+- [ ] 2.2.5.1 `TESTING.md` 8.1–8.8: a spot check each for ArkInventory, Bagnon, Baganator, AdiBags, BetterBags and ElvUI bags
 
 </details>
 
 <details open>
-<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19, #20) · open · 0 / 4</summary>
+<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19, #20) · open · 0 / 3</summary>
 
 - [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Faves"
 - [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
-- [ ] 2.2.6.3 Marks and settings from before the rename are all still there
-- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Quartermaster once and no Faves (the old folder is in `_forever_\AddOns-backup`)
+- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Quartermaster once, with the ledger icon, and no Faves (the old folder is in `_forever_\AddOns-backup`)
 
 </details>
 
 <details open>
 <summary><b>2.2.7 Quartermaster icon</b> (#21) · open · 0 / 1</summary>
 
-- [ ] 2.2.7.1 The AddOn List (character select > AddOns) shows the ledger icon next to Standing Orders: Quartermaster
+- [ ] 2.2.7.1 Covered by 2.1.3 and 2.2.6.4 (the ledger icon in the AddOn List) `auto validated · same rows`
 
 </details>
 
@@ -186,7 +185,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
-- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below
+- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 
 </details>
 

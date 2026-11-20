@@ -31,7 +31,10 @@ function ids(ranges) {
   for (const r of ranges.split(/,\s*/)) {
     const [a, b = a] = r.split(/[–-]/).map(s => s.trim());
     const sec = a.split(".")[0], from = Number(a.split(".")[1]), to = Number(b.split(".")[1]);
-    for (let n = from; n <= to; n++) list.push(`${sec}.${n}`);
+    const before = list.length;
+    // Rows dropped from TESTING.md leave gaps in a range; skip them, but a range must name at least one row.
+    for (let n = from; n <= to; n++) if (testing[`${sec}.${n}`]) list.push(`${sec}.${n}`);
+    if (list.length === before) throw new Error("no TESTING.md rows in " + r);
   }
   return list;
 }
