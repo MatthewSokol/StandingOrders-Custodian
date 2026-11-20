@@ -34,7 +34,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 
 Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soq junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/soq list` shows every marked item. Item tooltips show the level.
 
-The icons sit in the bottom left of the item button, covering 30% of it at 75% opacity, so stack counts stay readable. Change their size (10% to 100%), corner (or center) and opacity in `/soq settings` under Mark icons, or with `/soq icon size 50`, `/soq icon position center`, `/soq icon opacity 60` and `/soq icon reset`.
+The icons sit in the bottom left of the item button, 40% of its width across (so they cover about a sixth of it), at 75% opacity, so stack counts stay readable. Change their size (10% to 100% of the button's width), corner (or center) and opacity in `/soq settings` under Mark icons, or with `/soq icon size 50`, `/soq icon position center`, `/soq icon opacity 60` and `/soq icon reset`.
 
 ## Auto-marks
 

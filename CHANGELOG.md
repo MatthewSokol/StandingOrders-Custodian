@@ -13,7 +13,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
-- **Mark icon size, position and opacity:** in `/soq settings` (with a sample button) or `/soq icon`, choose how much of the item button the mark covers (10% to 100%), which corner it sits in (or the center) and how opaque it is, so it doesn't hide stack counts or other addons' text. The default is now 30%, bottom left, 75% opaque (it used to be a small solid icon in the top left).
+- **Mark icon size, position and opacity:** in `/soq settings` (with a sample button) or `/soq icon`, choose how big the mark is (10% to 100% of the item button's width), which corner it sits in (or the center) and how opaque it is, so it doesn't hide stack counts or other addons' text. The default is now 40% of the button's width, bottom left, 75% opaque (it used to be a small solid icon in the top left).
 - **More bag addons:** Alt+Click, level icons and the disenchant blocker now work in Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI's bags, as well as the default bags and ArkInventory.
 - **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/soq sets <level>`) or per set (`/soq set <name> <level>`), in `/soq settings` or with commands.
 - **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Quartermaster still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.

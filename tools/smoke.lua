@@ -255,11 +255,11 @@ if rows[2] then
   KS.SetSetChoice(nil, L.LOCK)
 end
 
--- Mark icons: 30% of the button, bottom left, 75% opaque by default; /soq icon and the panel change them.
+-- Mark icons: 40% of the button's width, bottom left, 75% opaque by default; /soq icon and the panel change them.
 local function style() return table.concat({ tostring(KS.GetIconStyle()), select(2, KS.GetIconStyle()), tostring(select(3, KS.GetIconStyle())) }, " ") end
-CHECK("icon style defaults", style() == "30 BOTTOMLEFT 75", style())
+CHECK("icon style defaults", style() == "40 BOTTOMLEFT 75", style())
 local px, point, ix, iy, a = KS.IconLayout(40)
-CHECK("icon layout on a 40px button", px == 12 and point == "BOTTOMLEFT" and ix == 1 and iy == 1 and a == 0.75, px)
+CHECK("icon layout on a 40px button", px == 16 and point == "BOTTOMLEFT" and ix == 1 and iy == 1 and a == 0.75, px)
 CALL("/soq icon size 50", SlashCmdList.SOQ, "icon size 50")
 CALL("/soq icon position center", SlashCmdList.SOQ, "icon position center")
 CALL("/soq icon opacity 60", SlashCmdList.SOQ, "icon opacity 60")
@@ -278,7 +278,7 @@ if st then
   CHECK("panel: Size +5, Center -> Bottom left, Opacity -5", style() == "15 BOTTOMLEFT 55", style())
 end
 CALL("/soq icon reset", SlashCmdList.SOQ, "icon reset")
-CHECK("/soq icon reset goes back to the defaults", style() == "30 BOTTOMLEFT 75", style())
+CHECK("/soq icon reset goes back to the defaults", style() == "40 BOTTOMLEFT 75", style())
 
 -- ElvUI bags, AdiBags and BetterBags: Alt+Click on a live bag button marks the item in that slot; a
 -- closed bank's buttons (and a BetterBags button showing another item) are left alone.

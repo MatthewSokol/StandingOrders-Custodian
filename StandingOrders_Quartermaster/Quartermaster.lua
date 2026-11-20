@@ -714,7 +714,8 @@ end
 
 -- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
 -- they don't hide counts and other addons' text. Account-wide (StandingOrdersQuartermasterDB.icon).
-local ICON_DEFAULTS = { size = 30, anchor = "BOTTOMLEFT", alpha = 75 }
+-- size: the icon's side as a % of the item button's width (40% of the width covers 16% of the area).
+local ICON_DEFAULTS = { size = 40, anchor = "BOTTOMLEFT", alpha = 75 }
 local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENTER" }
 local ANCHOR_TEXT = { BOTTOMLEFT = "Bottom left", TOPLEFT = "Top left", TOPRIGHT = "Top right",
   BOTTOMRIGHT = "Bottom right", CENTER = "Center" }
@@ -1637,7 +1638,7 @@ local function CreatePanel()
   panel.iconSample = mark
   refreshers[#refreshers + 1] = function()
     local size, anchor, alpha = KS.GetIconStyle()
-    sizeText:SetText(size .. "% of the item button")
+    sizeText:SetText(size .. "% of the button's width")
     pos:SetText(ANCHOR_TEXT[anchor] or anchor)
     alphaText:SetText(alpha .. "% opaque (" .. (100 - alpha) .. "% see-through)")
     KS.StyleIcon(mark, sample)
@@ -2033,7 +2034,7 @@ local function IconCommand(rest)
   elseif key ~= "" then ok = false end
   if not ok then return Err("Use /soq icon size 10-100, /soq icon position bottomleft||topleft||topright||bottomright||center, /soq icon opacity 10-100 or /soq icon reset.") end
   local size, anchor, alpha = KS.GetIconStyle()
-  Print("Mark icons: %d%% of the item button, %s, %d%% opaque.", size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
+  Print("Mark icons: %d%% of the button's width, %s, %d%% opaque.", size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
 end
 
 local function Help()
@@ -2043,7 +2044,7 @@ local function Help()
   print("  /soq sets - equipment sets and how they protect their items; /soq set <name> default||confirm||lock||onme||off")
   print("  /soq scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /soq settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
-  print("  /soq icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items")
+  print("  /soq icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soq status - check which guards are active")
   print("  /soq intro - what Confirm and Locked protect (and what they don't yet)")
   print("  /soq log [n] - show the last n guard log lines (default 25)")
@@ -2180,6 +2181,11 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     end
     db.autoMailSeen, db.autoMailed, db.autoMail = nil, nil, nil
     db.icon = db.icon or {}
+    -- Test builds defaulted to 30% of the width (a tenth of the area); 40% is the new default.
+    if not db.icon.v then
+      if db.icon.size == 30 then db.icon.size = nil end
+      db.icon.v = 2
+    end
     for key, v in pairs(ICON_DEFAULTS) do
       if db.icon[key] == nil then db.icon[key] = v end
     end
