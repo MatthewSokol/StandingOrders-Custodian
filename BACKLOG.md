@@ -12,6 +12,8 @@ Work to pick from. One line per item: `- [ ] **Title:** what and why (source; le
 
 ## Later
 
+- [ ] **Always on me: a target quantity** (e.g. 20, or 1 stack): keep that many on you and let the rest go to the bank, mail or vendor; set per item (Alt+Click menu or `/soq onme <item> 20`) (user request 2026-11-20, after the first release; level: minor)
+
 - [ ] **Test: VendorFlip's Disenchant button skips a Locked item** (TESTING.md 4.9): deferred from the first release on the user's word, 2026-11-20; it needs an EnchantFlip item (bought by hand) to test with. VendorFlip asks Standing Orders: Vendor, which reads Quartermaster's marks (release testing; level: none)
 
 
