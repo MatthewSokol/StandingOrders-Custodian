@@ -867,10 +867,28 @@ end
 
 -- Hooks each loaded bag addon once; its adapter hands buttons over with add(button). A failing adapter
 -- only switches itself off.
+-- Some bag addons lay another frame over the item button that takes some clicks itself (AdiBags on Forever:
+-- a secure right-click button). adapter.clickFrames(btn) names them; their Alt+clicks count as the item
+-- button's. Only Alt+clicks, so a plain right-click (use the item) or one during targeting is untouched.
+local overlayHooked = setmetatable({}, { __mode = "k" })
+local function HookOverlays(adapter, btn)
+  if not adapter.clickFrames then return end
+  local ok, frames = pcall(adapter.clickFrames, btn)
+  if not ok or type(frames) ~= "table" then return end
+  for _, f in ipairs(frames) do
+    if type(f) == "table" and f.HookScript and not overlayHooked[f] then
+      overlayHooked[f] = true
+      f:HookScript("PreClick", function(_, mouse) if IsAltKeyDown() then PreClick(btn, mouse) end end)
+      f:HookScript("PostClick", function() PostClick(btn) end)
+    end
+  end
+end
+
 local function AdoptButton(adapter, btn)
   if type(btn) ~= "table" or not btn.HookScript then return end
   btn.favesAdapter = adapter
   HookButton(btn)
+  HookOverlays(adapter, btn)
   UpdateButton(btn)
 end
 

@@ -320,9 +320,20 @@ altClick("ElvUI bags", elv, 7001, L.CONFIRM)
 local elvBank = plain({ BagID = -1, SlotID = 1 })
 CALL("ElvUI bank UpdateSlot", ElvB.UpdateSlot, ElvB, { isBank = true, Bags = { [-1] = { [1] = elvBank } } }, -1, 1)
 altClick("ElvUI closed bank", elvBank, 7001, L.CONFIRM)
-local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end })
+-- On Forever, AdiBags' secure overlay takes right-clicks; the item button's PreClick never sees them.
+local adiOverlay = { HookScript = function(self, script, fn) self["__h_" .. script] = fn end }
+local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end, ForeverSecureUse = adiOverlay })
 CALL("AdiBags_UpdateButton", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adi)
 altClick("AdiBags", adi, 7002, L.CONFIRM)
+CALL("AdiBags overlay: plain right-click", adiOverlay.__h_PreClick, adiOverlay, "RightButton")
+CHECK("a plain right-click on the overlay leaves the level", KS.GetLevel(7002) == L.CONFIRM, KS.GetLevel(7002))
+STUB_ALT = true
+CALL("AdiBags overlay: Alt+Right-click", adiOverlay.__h_PreClick, adiOverlay, "RightButton")
+STUB_ALT = false
+CHECK("Alt+Right-click on AdiBags' overlay lowers the level", KS.GetLevel(7002) == L.NORMAL, KS.GetLevel(7002))
+STUB_ALT = true
+CALL("Alt+Left-click: AdiBags (back up)", adi.__h_PreClick, adi, "LeftButton")
+STUB_ALT = false
 local adiBank = plain({ bag = -1, slot = 1, IsBank = function() return true end })
 CALL("AdiBags_UpdateButton (bank)", ADI_MSG.AdiBags_UpdateButton, "AdiBags_UpdateButton", adiBank)
 altClick("AdiBags closed bank", adiBank, 7001, L.CONFIRM)

@@ -88,7 +88,9 @@ KS.AddBagAddon({
 ---------------------------------------------------------------------------------------------------
 -- AdiBags: its own message library (ABEvent-1.0) sends AdiBags_UpdateButton(button) for every item
 -- button update. Buttons are pooled and reused, so the slot is read each time: button.bag / .slot.
--- No offline views; bank buttons only count while the bank is open.
+-- No offline views; bank buttons only count while the bank is open. On Forever each button has a secure
+-- right-click button laid over it (button.ForeverSecureUse) that calls the item button's OnClick directly
+-- for modified clicks, so the item button's PreClick never sees Alt+Right-click: clickFrames names it.
 
 local function AdiBags()
   local ace = LibStub and LibStub("AceAddon-3.0", true)
@@ -103,6 +105,7 @@ KS.AddBagAddon({
     LibStub("ABEvent-1.0"):Embed(listener)
     listener:RegisterMessage("AdiBags_UpdateButton", function(_, button) add(button) end)
   end,
+  clickFrames = function(btn) return { btn.ForeverSecureUse } end,
   slot = function(btn)
     local isBank = btn.IsBank and btn:IsBank()
     if not (btn.bag and btn.slot and BankLive(isBank)) then return end
