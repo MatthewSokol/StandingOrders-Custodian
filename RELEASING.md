@@ -154,7 +154,7 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.9 Mark icon size, position and opacity</b> (#24) · open · 0 / 5</summary>
+<summary><b>2.2.9 Mark icon size, position and opacity</b> (#24, #34) · open · 0 / 5</summary>
 
 - [ ] 2.2.9.1 `TESTING.md` 9.1–9.5: mark icons
 
