@@ -12,6 +12,10 @@ Work to pick from. One line per item: `- [ ] **Title:** what and why (source; le
 
 ## Later
 
+- [ ] **Marks on one copy of an item:** protect "my" copy and leave the rest of the same item free, e.g. a Mooncloth Robe you wear and copies you craft to sell. The mark would key on the item's GUID (`C_Item.GetItemGUID` with an ItemLocation; AdiBags and Baganator already use it on Forever) instead of the item ID. A per-copy mark beats the item ID mark, and the vendor/destroy/trade/mail guards check the copy that moves. Check first that a GUID survives logout, the bank and the mail; it changes on a trade. Equipment sets have the same gap today: they protect by item ID, so a set item blocks selling every copy. Alt+Ctrl+Click could mark just this copy (user request 2026-11-20, after the first release; level: minor)
+
+- [ ] **Protection per action:** choose for each level (or each item) what happens per action: vendor, destroy, disenchant, trade, mail, bank. For example, never sell but ask before disenchanting. Today a level sets them all at once (Confirm asks for all, Locked blocks all). Could be a matrix in `/soq settings` (level x action: allow, ask, block), or custom levels built from it (user request 2026-11-20, after the first release; level: minor)
+
 - [ ] **Reagents by need:** at login and when a spell is learned (LEARNED_SPELL_IN_TAB / SPELLS_CHANGED), check which spell reagents this character uses (e.g. a mage with Slow Fall needs Light Feathers); reagents it has no spell for get Mail "(this character)" so they go to the bank alt, and ones it now needs lose that auto-mark. Needs a reagent -> spell table (or the spell tooltips) per class (user request 2026-11-20, after the first release; level: minor)
 
 - [ ] **Always on me: a target quantity** (e.g. 20, or 1 stack): keep that many on you and let the rest go to the bank, mail or vendor; set per item (Alt+Click menu or `/soq onme <item> 20`) (user request 2026-11-20, after the first release; level: minor)
