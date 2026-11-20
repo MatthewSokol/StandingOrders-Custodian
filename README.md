@@ -2,15 +2,17 @@
 
 <img src="docs/logo.png" alt="Quartermaster logo: an open supply ledger on a crate, with gold, gray and blue item tags and a red wax seal" width="160" align="right">
 
-A World of Warcraft **Forever** addon (interface 16001). Mark the items you care about, and Standing Orders stops you losing them by accident: selling, disenchanting, destroying, trading or mailing them.
+**Item lock** for World of Warcraft **Forever** (interface 16001): lock the items you care about, and Standing Orders stops you losing them by accident: selling, disenchanting, destroying, trading or mailing them. It also marks junk to sell and materials to send to your bank alt.
 
-Part of **Standing Orders**, three addons that deal with the items you've already decided about, so the interesting ones stand out. Each works on its own:
+Part of **Standing Orders**, a set of addons that deal with the items you've already decided about, so the interesting ones stand out. Each works on its own:
 
 | Addon | Command | Does |
 |---|---|---|
 | **Standing Orders: Quartermaster** (this one) | `/soq` | Marks items Junk, Mail, Locked or Always on me, and guards the protected ones |
-| [Standing Orders: Vendor](https://github.com/MatthewSokol/StandingOrders-Vendor) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
-| [Standing Orders: Mail](https://github.com/MatthewSokol/StandingOrders-Mail) | `/som` | Mails items marked Mail to your bank alt in one click |
+| [Standing Orders: Vendor](https://www.curseforge.com/wow/addons/standing-orders-vendor) (**coming soon**) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
+| [Standing Orders: Mail](https://www.curseforge.com/wow/addons/standing-orders-mail) (**coming soon**) | `/som` | Mails items marked Mail to your bank alt in one click |
+
+Quartermaster's marks and guards work today on their own; Junk and Mail marks are what Vendor and Mail will act on when they're out.
 
 Other addons use its API through the `StandingOrdersQuartermaster` global (see below); its folder is `StandingOrders_Quartermaster`.
 
@@ -19,14 +21,14 @@ Other addons use its API through the `StandingOrdersQuartermaster` global (see b
 Levels are per item ID. A mark applies to all your characters, or to one character only:
 
 - **Alt+Shift+Left-click** an item to move its mark between all characters and this character only.
-- `/soq scope char` makes new marks this-character-only by default (`/soq scope account` switches back). Standing Orders: Vendor's settings panel has the same switch.
+- `/soq scope char` makes new marks this-character-only by default (`/soq scope account` switches back), or use the switch in `/soq settings`.
 - A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal).
 - Tooltips and `/soq list` show *(this character)* for character marks.
 
 | Level | Icon | What happens |
 |---|---|---|
-| Junk | coin | Safe to lose. Standing Orders: Vendor sells these automatically when a vendor opens |
-| Mail | letter | To send to your bank character (for a mailing addon). Standing Orders: Vendor never sells these |
+| Junk | coin | Safe to lose. Standing Orders: Vendor (coming soon) will sell these when a vendor opens |
+| Mail | letter | To send to your bank character. Standing Orders: Mail (coming soon) will mail these; Vendor never sells them |
 | Normal | none | The default |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
@@ -56,7 +58,7 @@ Only unmarked items are marked, and each item only once: change an auto-marked i
 
 ## Guards
 
-Every action that would lose an item goes through one check, `StandingOrdersQuartermaster.Guard(itemID, link, action)`. When the item is Locked, the action is blocked and you see *"… is Locked. Unfavorite it to … it"*. When it's Confirm, it's blocked the same way and a window offers **Allow once**.
+Every action that would lose an item goes through one check, `StandingOrdersQuartermaster.Guard(itemID, link, action)`. When the item is Locked (or Always on me), the action is blocked and an error says so.
 
 | Action | How it's blocked |
 |---|---|
@@ -67,11 +69,11 @@ Every action that would lose an item goes through one check, `StandingOrdersQuar
 | Mail | The attachment is removed |
 | Bank (Always on me only) | While the bank is open, the item is moved straight back to your bags (if they have room) |
 
-**Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and in ArkInventory (see Bag addons below). The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
+**Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and the bag addons listed below. The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
 ## Equipment sets
 
-Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Always on me or not at all, for every set or one set: in `/soq settings` (click a set's button to change its level), or `/soq sets onme` and `/soq set <name> confirm`. `/soq sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
+Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Always on me or not at all, for every set or one set: in `/soq settings` (pick a set's level from its dropdown), or `/soq sets onme` and `/soq set <name> lock`. `/soq sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
 
 ## Bag addons
 
@@ -96,7 +98,7 @@ If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, S
 ```lua
 if StandingOrdersQuartermaster and StandingOrdersQuartermaster.IsLocked(itemID) then --[[ skip it ]] end
 if StandingOrdersQuartermaster and StandingOrdersQuartermaster.Guard(itemID, link, "disenchant") then return end -- shows the error for you
-local level = StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) -- StandingOrdersQuartermaster.LEVELS.JUNK / MAIL / NORMAL / CONFIRM / LOCK / ONME
+local level = StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) -- StandingOrdersQuartermaster.LEVELS.JUNK / MAIL / NORMAL / LOCK / ONME (CONFIRM exists but is held back: GetLevel never returns it yet)
 -- MAIL is 1.5 (between JUNK 1 and NORMAL 2), so compare with StandingOrdersQuartermaster.LEVELS, not with level + 1.
 if StandingOrdersQuartermaster and StandingOrdersQuartermaster.GetLevel(itemID) == StandingOrdersQuartermaster.LEVELS.MAIL then --[[ send it to the bank character ]] end
 ```
