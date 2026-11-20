@@ -1518,6 +1518,33 @@ local refreshers = {}
 
 local function RefreshPanel() for _, fn in ipairs(refreshers) do fn() end end
 
+-- A dropdown (the game's menu system) of choices() where the client has one; otherwise a button that
+-- cycles (right-click goes back). current() is the checked choice, text(c) its label, choose(c) picks it.
+-- Returns the frame and a Show() that brings its text up to date (call it from a refresher).
+local function ChoiceControl(parent, width, choices, current, text, choose)
+  local function Pick(c) choose(c); RefreshPanel() end
+  local ok, dd = pcall(CreateFrame, "DropdownButton", nil, parent, "WowStyle1DropdownTemplate")
+  if ok and dd and dd.SetupMenu then
+    dd:SetWidth(width)
+    dd:SetupMenu(function(_, root)
+      for _, c in ipairs(choices()) do
+        root:CreateRadio(text(c), function() return current() == c end, function() Pick(c) end)
+      end
+    end)
+    dd.isDropdown = true
+    return dd, function() dd:GenerateMenu() end
+  end
+  local btn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+  btn:SetSize(width, 22)
+  btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  btn:SetScript("OnClick", function(_, mouse)
+    local list, cur, n = choices(), current(), 1
+    for k, c in ipairs(list) do if c == cur then n = k end end
+    Pick(list[(n + (mouse == "RightButton" and -2 or 0)) % #list + 1])
+  end)
+  return btn, function() btn:SetText(text(current())) end
+end
+
 local function Check(panel, text, anchor, y, onClick)
   local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
   cb:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, y or -2)
@@ -1649,18 +1676,12 @@ local function CreatePanel()
   end
   local sizeText, sizeMinus, sizePlus = Stepper(1, "Size", "size")
   local posLabel = IconRow(2, "Position")
-  local pos = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-  pos:SetSize(290, 22) -- as wide as a stepper row: - (24), gap, value (230), gap, + (24)
+  -- As wide as a stepper row: - (24), gap, value (230), gap, + (24).
+  local pos, showPos = ChoiceControl(panel, 290, function() return ICON_ANCHORS end,
+    function() return select(2, KS.GetIconStyle()) end,
+    function(a) return ANCHOR_TEXT[a] or a end,
+    function(a) KS.SetIconStyle("anchor", a) end)
   pos:SetPoint("LEFT", posLabel, "RIGHT", 10, 0)
-  pos:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-  pos:SetScript("OnClick", function(_, mouse)
-    local _, cur = KS.GetIconStyle()
-    local n = 1
-    for k, a in ipairs(ICON_ANCHORS) do if a == cur then n = k end end
-    n = (n + (mouse == "RightButton" and -2 or 0)) % #ICON_ANCHORS + 1
-    KS.SetIconStyle("anchor", ICON_ANCHORS[n])
-    RefreshPanel()
-  end)
   local alphaText, alphaMinus, alphaPlus = Stepper(3, "Opacity", "alpha")
   panel.iconStyle = { sizeMinus = sizeMinus, sizePlus = sizePlus, pos = pos, alphaMinus = alphaMinus, alphaPlus = alphaPlus }
 
@@ -1679,7 +1700,7 @@ local function CreatePanel()
   refreshers[#refreshers + 1] = function()
     local size, anchor, alpha = KS.GetIconStyle()
     sizeText:SetText(size .. "% of the button's width")
-    pos:SetText(ANCHOR_TEXT[anchor] or anchor)
+    showPos()
     alphaText:SetText(alpha .. "% opaque (" .. (100 - alpha) .. "% see-through)")
     KS.StyleIcon(mark, sample)
   end
@@ -1695,37 +1716,14 @@ local function CreatePanel()
     r.label:SetPoint("TOPLEFT", setsNote, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
     r.label:SetWidth(180)
     r.label:SetJustifyH("LEFT")
-    local function Choices() return r.setID and SET_CHOICES or DEFAULT_CHOICES end
-    local function Current() return r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault() end
-    local function Choose(c) KS.SetSetChoice(r.setID, c); RefreshPanel() end
-    -- A dropdown (the game's menu system) where the client has one; otherwise a button that cycles.
-    local ok, dd = pcall(CreateFrame, "DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
-    if ok and dd and dd.SetupMenu then
-      r.dropdown = true
-      r.button = dd
-      dd:SetWidth(240)
-      dd:SetupMenu(function(_, root)
-        for _, c in ipairs(Choices()) do
-          root:CreateRadio(KS.SetChoiceText(c), function() return Current() == c end, function() Choose(c) end)
-        end
-      end)
-    else
-      r.button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-      r.button:SetSize(240, 22)
-      r.button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-      r.button:SetScript("OnClick", function(_, mouse)
-        local choices, cur, n = Choices(), Current(), 1
-        for k, c in ipairs(choices) do if c == cur then n = k end end
-        Choose(choices[(n + (mouse == "RightButton" and -2 or 0)) % #choices + 1])
-      end)
-    end
+    r.button, r.show = ChoiceControl(panel, 240, function() return r.setID and SET_CHOICES or DEFAULT_CHOICES end,
+      function() return r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault() end,
+      KS.SetChoiceText,
+      function(c) KS.SetSetChoice(r.setID, c) end)
+    r.dropdown = r.button.isDropdown
     r.button:SetPoint("LEFT", r.label, "RIGHT", 10, 0)
     rows[i] = r
     return r
-  end
-  -- A dropdown rebuilds its menu (its text follows the checked choice); the fallback button shows the text.
-  local function ShowChoice(r, choice)
-    if r.dropdown then r.button:GenerateMenu() else r.button:SetText(KS.SetChoiceText(choice)) end
   end
   refreshers[#refreshers + 1] = function()
     local sets = KS.EquipmentSets()
@@ -1734,12 +1732,12 @@ local function CreatePanel()
     local r = Row(1)
     r.setID = nil
     r.label:SetText("Default for all sets")
-    ShowChoice(r, KS.GetSetDefault())
+    r.show()
     for i, set in ipairs(sets) do
       r = Row(i + 1)
       r.setID = set.id
       r.label:SetText(set.name)
-      ShowChoice(r, KS.GetSetChoice(set.id))
+      r.show()
     end
     for i, row in ipairs(rows) do
       local shown = i <= #sets + 1

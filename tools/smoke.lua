@@ -290,7 +290,10 @@ CHECK("settings content scrolls inside the page", panel and panel.scroll ~= nil 
 CALL("settings panel fits its content", function() panel.FitPanel() end)
 if st then
   CALL("panel: Size +", rawget(st.sizePlus, "__s_OnClick"), st.sizePlus)
-  CALL("panel: Position click", rawget(st.pos, "__s_OnClick"), st.pos, "LeftButton")
+  local posMenu = MENU_RADIOS(st.pos)
+  CHECK("Position is a dropdown of the five positions", st.pos.isDropdown and #posMenu == 5 and posMenu[1].text == "Bottom left", #posMenu)
+  CHECK("Position's menu checks the current one (Center)", posMenu[5] and posMenu[5].selected() and not posMenu[1].selected())
+  CALL("panel: pick Bottom left", posMenu[1] and posMenu[1].pick)
   CALL("panel: Opacity -", rawget(st.alphaMinus, "__s_OnClick"), st.alphaMinus)
   CHECK("panel: Size +5, Center -> Bottom left, Opacity -5", style() == "15 BOTTOMLEFT 55", style())
 end

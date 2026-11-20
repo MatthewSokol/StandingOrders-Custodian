@@ -113,7 +113,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 
 - [ ] 9.1 Upgrade or fresh install: marked items' icons sit in the bottom left of the item button, 40% of its width across (a test build's old 30% moves to 40% once), slightly see-through, and stack counts stay readable
 - [ ] 9.2 `/soq settings`, Mark icons on bag items: Size reads "N% of the button's width" and -/+ moves it by 5% (10% to 100%); at 50% the icon is half the button across; the sample button and your open bags change at once
-- [ ] 9.3 Position: click cycles Bottom left > Top left > Top right > Bottom right > Center, right-click goes back; the sample and your bags follow
+- [ ] 9.3 Position is a dropdown: Bottom left, Top left, Top right, Bottom right, Center; pick one and the dropdown shows it; the sample and your bags follow
 - [ ] 9.4 Opacity -/+ moves by 5% (10% to 100%); at 100% the icon is solid; `/soq icon size 50`, `/soq icon position center`, `/soq icon opacity 60` do the same, and `/soq icon reset` goes back to 40%, bottom left, 75%
 - [ ] 9.5 The settings panel still shows every equipment set row below the mark icon controls (scroll if the panel scrolls); after `/reload` and on another character the icon settings are kept
 
