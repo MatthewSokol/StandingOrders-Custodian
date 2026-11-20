@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Standing Orders: Quartermaster
-## Notes: Mark items Junk, Mail, Confirm, Locked or Always on me. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident; Always on me items also stay out of the bank.
+## Notes: Mark items Junk, Mail, Locked or Always on me. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident; Always on me items also stay out of the bank.
 ## Author: MatthewSokol
 ## Version: @project-version@
 ## SavedVariables: StandingOrdersQuartermasterDB
@@ -10,6 +10,7 @@
 ## Category: Inventory
 ## X-Website: https://github.com/MatthewSokol/StandingOrders-Quartermaster
 ## X-License: MIT
+## X-Curse-Project-ID: 1806484
 
 Quartermaster.lua
 Adapters.lua
