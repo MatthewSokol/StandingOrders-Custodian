@@ -122,7 +122,7 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.5 More bag addons</b> (#17, #32) · open · 0 / 8</summary>
+<summary><b>2.2.5 More bag addons</b> (#17, #32, #33) · open · 0 / 8</summary>
 
 - [ ] 2.2.5.1 `TESTING.md` 8.1–8.8: a spot check each for ArkInventory, Bagnon, Baganator, AdiBags, BetterBags and ElvUI bags
 
