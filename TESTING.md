@@ -64,10 +64,10 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.12 "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
 - [ ] 5.13 Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
 - [ ] 5.14 Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
-- [ ] 5.15 Opening a profession window takes the Mail mark off materials its recipes use; /soq status lists professions and which still need their window opened
+- [ ] 5.15 Opening a profession window takes the **auto-marked** Mail off materials its recipes use (a Mail mark you set yourself stays); /soq status lists professions and which still need their window opened
 - [ ] 5.17 Auto-marks leave alone: quest items, enchanting materials (Strange Dust, essences, shards), food/drink, bags, ammo, shirts, tabards, soulbound gear, VendorFlip's held items
 - [ ] 5.18 Items traded to you, bought from a vendor or the AH, or mailed by a player aren't auto-marked; one already auto-marked elsewhere becomes Normal on this character
-- [ ] 5.19 Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them are removed at login
+- [ ] 5.19 Consumables, reagents (Ankh, Light Feather) and vendor trade goods (thread, vials) are never auto-marked; old auto-marks on them, account-wide or "(this character)", are removed at login
 - [ ] 5.20 Alt+Clicking one of those marks it "(this character)" even with new marks set to all characters
 - [ ] 5.21 A trade good first seen on a vendor (not in the built-in list) becomes per-character after opening that vendor
 - [ ] 5.22 Changing an auto-marked item's level sticks after /reload and more loot

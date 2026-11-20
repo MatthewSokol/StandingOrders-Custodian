@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 10 changes, 76 rows.**
+**Waiting since the last release (none yet): 11 changes, 77 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 76</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 77</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -167,6 +167,13 @@ yet (no test journal; see `BACKLOG.md`).
 
 </details>
 
+<details open>
+<summary><b>2.2.11 Old per-character auto-marks on reagents come off</b> (#27) · open · 0 / 1</summary>
+
+- [ ] 2.2.11.1 `TESTING.md` 5.19: consumables, reagents and vendor trade goods
+
+</details>
+
 </details>
 
 - [ ] 2.3 No step is still flagged as a problem
@@ -185,7 +192,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
-- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
+- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 
 </details>
 

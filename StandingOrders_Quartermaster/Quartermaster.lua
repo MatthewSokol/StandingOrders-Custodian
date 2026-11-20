@@ -1343,11 +1343,15 @@ end
 -- that an item is sold there) are taken off again.
 local function DropPersonalAutoMarks()
   local n = 0
-  for id, level in pairs(db.autoMarked) do
-    if KS.IsPersonal(id) then
-      if db.items[id] == level then db.items[id] = nil end
-      db.autoMarked[id] = nil
-      n = n + 1
+  -- Both account-wide and this character's own auto-marks (older builds marked crafting materials,
+  -- Light Feathers among them, Mail per character).
+  for _, store in ipairs({ db, cdb }) do
+    for id, level in pairs(store.autoMarked) do
+      if KS.IsPersonal(id) then
+        if store.items[id] == level then store.items[id] = nil end
+        store.autoMarked[id] = nil
+        n = n + 1
+      end
     end
   end
   if n > 0 then

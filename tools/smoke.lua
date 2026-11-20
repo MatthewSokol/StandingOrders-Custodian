@@ -60,10 +60,13 @@ local AceAddon = { GetAddon = function(_, name) return (name == "AdiBags" and Ad
 Baganator = {}
 Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
+-- An older build's per-character Mail auto-mark on a reagent (seen in game on Light Feathers).
+StandingOrdersQuartermasterCharDB = { items = { [17030] = 1.5 }, autoMarked = { [17030] = 1.5 } }
 FIRE("ADDON_LOADED", "StandingOrders_Quartermaster")
 FIRE("PLAYER_LOGIN")
 local KS = StandingOrdersQuartermaster
 local L = KS.LEVELS
+CHECK("a per-character auto-mark on a reagent comes off at login", KS.GetLevel(17030) == L.NORMAL and next(StandingOrdersQuartermasterCharDB.autoMarked) == nil, KS.GetLevel(17030))
 CHECK("Quartermaster global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
 CHECK("slash command: /soq only (the old /faves is gone)", SLASH_SOQ1 == "/soq" and SLASH_SOQ2 == nil)
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
