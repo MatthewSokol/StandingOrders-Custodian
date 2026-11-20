@@ -199,7 +199,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
-- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon) (before, or together with, Standing Orders: Vendor, whose warning links to this addon) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
+- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 
 </details>
 
