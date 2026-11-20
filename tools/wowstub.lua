@@ -37,6 +37,7 @@ local function stub(name)
         local ev = rawget(t, "__ev") or {}; ev[a[1]] = true; rawset(t, "__ev", ev); return
       end
       if k == "GetID" then return rawget(t, "__id") or 0 end
+      if k == "SetupMenu" then rawset(t, "__menu", a[1]); return end -- DropdownButton: MENU_RADIOS() reads it
       return nil
     end
   end })
@@ -62,6 +63,15 @@ function CALL(label, fn, ...)
   if type(fn) ~= "function" then print("ERROR " .. label .. ": not a function"); return end
   local ok, err = xpcall(fn, debug.traceback, ...)
   print((ok and "ok    " or "ERROR ") .. label .. (ok and "" or (": " .. err)))
+end
+-- A dropdown's menu as a list of radios { text, selected(), pick() }, built like the game's menu system does.
+function MENU_RADIOS(dropdown)
+  local gen, radios = rawget(dropdown, "__menu"), {}
+  if not gen then return radios end
+  gen(dropdown, { CreateRadio = function(_, text, isSelected, onSelect)
+    radios[#radios + 1] = { text = text, selected = isSelected, pick = onSelect }
+  end })
+  return radios
 end
 function CHECK(label, cond, got)
   print((cond and "ok    " or "FAIL  ") .. label .. (cond and "" or ("  (got " .. tostring(got) .. ")")))

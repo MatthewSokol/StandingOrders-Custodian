@@ -81,7 +81,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.34 `/soq set <name> confirm`, `onme` or `off` changes that set's items; `/soq sets onme` changes the default for sets
 - [ ] 5.35 Save the set again without the item: it goes back to its own mark
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
-- [ ] 5.37 `/soq settings`, Equipment sets: left-click a row steps its level forward, right-click back; the default row changes every set left on "default"
+- [ ] 5.37 `/soq settings`, Equipment sets: each row is a dropdown: pick a level and the row shows it (a set also offers "default"); the default row changes every set left on "default"
 
 </details>
 

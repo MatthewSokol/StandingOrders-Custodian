@@ -1592,7 +1592,7 @@ local function CreatePanel()
   intro:SetScript("OnClick", function() KS:ShowIntro() end)
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
-  -- panel opens. Last on the panel, since the number of rows changes. Click cycles; right-click goes back.
+  -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
   local DEFAULT_CHOICES = { CONFIRM, LOCK, ONME, "off" }
   local SET_CHOICES = { "default", CONFIRM, LOCK, ONME, "off" }
   -- Mark icons: size, position and opacity, with a sample bag button that shows the result.
@@ -1677,35 +1677,51 @@ local function CreatePanel()
     r.label:SetPoint("TOPLEFT", setsNote, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
     r.label:SetWidth(180)
     r.label:SetJustifyH("LEFT")
-    r.button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    r.button:SetSize(240, 22)
+    local function Choices() return r.setID and SET_CHOICES or DEFAULT_CHOICES end
+    local function Current() return r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault() end
+    local function Choose(c) KS.SetSetChoice(r.setID, c); RefreshPanel() end
+    -- A dropdown (the game's menu system) where the client has one; otherwise a button that cycles.
+    local ok, dd = pcall(CreateFrame, "DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
+    if ok and dd and dd.SetupMenu then
+      r.dropdown = true
+      r.button = dd
+      dd:SetWidth(240)
+      dd:SetupMenu(function(_, root)
+        for _, c in ipairs(Choices()) do
+          root:CreateRadio(KS.SetChoiceText(c), function() return Current() == c end, function() Choose(c) end)
+        end
+      end)
+    else
+      r.button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+      r.button:SetSize(240, 22)
+      r.button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+      r.button:SetScript("OnClick", function(_, mouse)
+        local choices, cur, n = Choices(), Current(), 1
+        for k, c in ipairs(choices) do if c == cur then n = k end end
+        Choose(choices[(n + (mouse == "RightButton" and -2 or 0)) % #choices + 1])
+      end)
+    end
     r.button:SetPoint("LEFT", r.label, "RIGHT", 10, 0)
-    r.button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    r.button:SetScript("OnClick", function(_, mouse)
-      local choices = r.setID and SET_CHOICES or DEFAULT_CHOICES
-      local cur = r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault()
-      local n = 1
-      for k, c in ipairs(choices) do if c == cur then n = k end end
-      n = (n + (mouse == "RightButton" and -2 or 0)) % #choices + 1
-      KS.SetSetChoice(r.setID, choices[n])
-      RefreshPanel()
-    end)
     rows[i] = r
     return r
+  end
+  -- A dropdown rebuilds its menu (its text follows the checked choice); the fallback button shows the text.
+  local function ShowChoice(r, choice)
+    if r.dropdown then r.button:GenerateMenu() else r.button:SetText(KS.SetChoiceText(choice)) end
   end
   refreshers[#refreshers + 1] = function()
     local sets = KS.EquipmentSets()
     setsNote:SetText(#sets == 0 and "This character has no equipment sets yet. Make one in the character window's equipment manager; its items are then protected at the default below."
-      or "Items in a set are protected at its level, on top of their own marks. Click a button to change it; right-click goes back.")
+      or "Items in a set are protected at its level, on top of their own marks. Pick a level from its menu.")
     local r = Row(1)
     r.setID = nil
     r.label:SetText("Default for all sets")
-    r.button:SetText(KS.SetChoiceText(KS.GetSetDefault()))
+    ShowChoice(r, KS.GetSetDefault())
     for i, set in ipairs(sets) do
       r = Row(i + 1)
       r.setID = set.id
       r.label:SetText(set.name)
-      r.button:SetText(KS.SetChoiceText(KS.GetSetChoice(set.id)))
+      ShowChoice(r, KS.GetSetChoice(set.id))
     end
     for i, row in ipairs(rows) do
       local shown = i <= #sets + 1

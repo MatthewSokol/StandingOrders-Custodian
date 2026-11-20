@@ -238,7 +238,7 @@ CALL("/soq sets", SlashCmdList.SOQ, "sets")
 CALL("/soq sets default lock", SlashCmdList.SOQ, "sets default lock")
 CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
 CALL("/soq set Nope lock", SlashCmdList.SOQ, "set Nope lock")
--- The settings panel's equipment set rows: the default first, then each set; clicks cycle the level.
+-- The settings panel's equipment set rows: the default first, then each set; each picks its level from a dropdown.
 local panel = SOQuartermasterSettings
 CHECK("icon path is the addon's Icon.tga", KS.ICON == "Interface\\AddOns\\StandingOrders_Quartermaster\\Icon", KS.ICON)
 CHECK("settings panel shows the icon", panel and panel.icon ~= nil)
@@ -249,11 +249,16 @@ CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
 if rows[2] then
-  CALL("click the set's button", rawget(rows[2].button, "__s_OnClick"), rows[2].button, "LeftButton")
-  CHECK("a click moves the set to the next level", KS.GetSetChoice(1) == L.CONFIRM, KS.GetSetChoice(1))
-  CALL("right-click goes back", rawget(rows[2].button, "__s_OnClick"), rows[2].button, "RightButton")
-  CHECK("right-click went back to default", KS.GetSetChoice(1) == "default", KS.GetSetChoice(1))
-  CALL("click the default's button", rawget(rows[1].button, "__s_OnClick"), rows[1].button, "LeftButton")
+  CHECK("set rows are dropdowns", rows[1].dropdown and rows[2].dropdown)
+  local setMenu, defMenu = MENU_RADIOS(rows[2].button), MENU_RADIOS(rows[1].button)
+  CHECK("a set's menu: default, Confirm, Locked, Always on me, not protected", #setMenu == 5 and setMenu[1].text:find("default", 1, true) == 1, #setMenu)
+  CHECK("the default's menu has no \"default\" choice", #defMenu == 4, #defMenu)
+  CHECK("the set's current choice is checked", setMenu[1] and setMenu[1].selected() and not setMenu[2].selected())
+  CALL("pick Confirm for the set", setMenu[2] and setMenu[2].pick)
+  CHECK("picking Confirm sets it", KS.GetSetChoice(1) == L.CONFIRM and setMenu[2].selected(), KS.GetSetChoice(1))
+  CALL("pick default for the set", setMenu[1] and setMenu[1].pick)
+  CHECK("back to default", KS.GetSetChoice(1) == "default", KS.GetSetChoice(1))
+  CALL("pick Always on me for the default", defMenu[3] and defMenu[3].pick)
   CHECK("default moved from Locked to Always on me", KS.GetSetDefault() == L.ONME, KS.GetSetDefault())
   KS.SetSetChoice(nil, L.LOCK)
 end
