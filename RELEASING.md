@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 13 changes, 79 rows.**
+**Waiting since the last release (none yet): 14 changes, 80 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 79</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 80</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -101,7 +101,7 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.2 Confirm is a temp hold: allow once from a window</b> (#13) · open · 0 / 4</summary>
+<summary><b>2.2.2 Confirm is a temp hold: allow once from a window</b> (#13; deferred to a later version with Confirm, #35) · open · 0 / 4</summary>
 
 - [ ] 2.2.2.1 `TESTING.md` 5.9–5.12: sell, disenchant, trade and mail a Confirm item; Allow once; Keep it
 
@@ -149,7 +149,7 @@ yet (no test journal; see `BACKLOG.md`).
 
 - [ ] 2.2.8.1 `/soq settings`: the ledger icon sits left of the "Standing Orders: Quartermaster" title
 - [ ] 2.2.8.2 `/soq intro`: a small ledger icon sits left of the window title
-- [ ] 2.2.8.3 Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
+- [ ] 2.2.8.3 (Deferred with Confirm) Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
 
 </details>
 
@@ -185,6 +185,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.13 The settings panel scrolls</b> (#30) · open · 0 / 1</summary>
 
 - [ ] 2.2.13.1 `/soq settings`: nothing spills past the bottom of the settings window; scroll down to reach the equipment set rows; the opacity text (e.g. "70% opaque (30% see-through)") fits on one line
+
+</details>
+
+<details open>
+<summary><b>2.2.14 Confirm held back for a later version</b> (#35) · open · 0 / 1</summary>
+
+- [ ] 2.2.14.1 Confirm is nowhere: Alt+Click steps Normal > Locked, `/soq confirm <item>` and `/soq set <name> confirm` say it's coming later, the settings dropdowns have no Confirm, and `/soq help` doesn't list it; an item you marked Confirm before shows Locked (tooltip and key icon) and is blocked like Locked
 
 </details>
 

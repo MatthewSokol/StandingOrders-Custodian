@@ -15,6 +15,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
+- **Confirm is held back for a later version:** its "allow once" didn't reliably let a sale through. Nothing offers Confirm now, and an item already marked Confirm is protected as Locked (its mark is kept, so it comes back when Confirm does).
 - **New icon:** a quartermaster's ledger with Locked, Junk and Mail tags, in the AddOn List, the settings panel, the intro, the hold window and on the project page.
 - **New name: Standing Orders: Quartermaster.** Faves (its test-build name) is now part of the Standing Orders suite, with Standing Orders: Vendor (selling) and Standing Orders: Mail (mailing to alts). The command is `/soq` (`/faves` is gone), the folder is `StandingOrders_Quartermaster` and the API global is `StandingOrdersQuartermaster`.
 
@@ -22,8 +23,7 @@ gets its own version, and a release publishes one of them.
 
 - **Mark icon size, position and opacity:** in `/soq settings` (with a sample button) or `/soq icon`, choose how big the mark is (10% to 100% of the item button's width), which corner it sits in (or the center) and how opaque it is, so it doesn't hide stack counts or other addons' text. The default is now 40% of the button's width, bottom left, 75% opaque (it used to be a small solid icon in the top left).
 - **More bag addons:** Alt+Click, level icons and the disenchant blocker now work in Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI's bags, as well as the default bags and ArkInventory.
-- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Confirm, Always on me or off for all sets (`/soq sets <level>`) or per set (`/soq set <name> <level>`), in `/soq settings` or with commands.
-- **Confirm is a temp hold now:** when you sell, disenchant, destroy, trade or mail a Confirm item, Quartermaster still stops it, then asks whether to allow it once. Allow it and do it again (within 2 minutes, or while that vendor, trade or mailbox stays open). Locked items are unchanged.
+- **Equipment sets:** items in your equipment sets are protected automatically, Locked by default. Choose Always on me or off for all sets (`/soq sets <level>`) or per set (`/soq set <name> <level>`), in `/soq settings` or with commands.
 
 ## [0.1.0] - 2026-11-13
 

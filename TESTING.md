@@ -38,7 +38,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 <details open>
 <summary><b>4 Disenchant guard</b> · 0 / 7</summary>
 
-- [ ] 4.1 With Disenchant targeting up, Confirm/Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
+- [ ] 4.1 With Disenchant targeting up, Locked bag slots turn red; hovering one shows the tooltip plus a "blocked" line
 - [ ] 4.2 `/soq log` shows "targeting started: destructive" and "blocker caught click" lines
 - [ ] 4.3 Disenchant from an action bar button, a `/cast Disenchant` macro or the spellbook (try at least two), then click a Locked item: the click is blocked, error shown, item kept, and no "AddOn tried to call the protected function" error; the cursor stays until Esc or right-click
 - [ ] 4.6 Disenchanting a Normal item still works
@@ -57,11 +57,11 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.5 Destroy: dragging a Locked item out of the bags closes the delete popup, item kept
 - [ ] 5.6 Trade: a Locked item put into a trade pops back out, Normal items stay
 - [ ] 5.7 Mail: a Locked attachment is removed, Normal attachments stay
-- [ ] 5.8 Alt+Left-click steps an item through Junk, Mail, Normal, Confirm, Locked, Always on me; Alt+Right-click steps it back down
-- [ ] 5.9 Confirm item sold: it's bought back and the hold window asks; Allow once, sell it again: it stays sold; close and reopen the vendor and it's held again
-- [ ] 5.10 Confirm item disenchanted: the click is caught and the window asks; Allow once, Disenchant again: it works once, the next try is caught
-- [ ] 5.11 Confirm item put in a trade or mail: taken back out; Allow once, put it in again: it stays until the window closes
-- [ ] 5.12 "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
+- [ ] 5.8 Alt+Left-click steps an item through Junk, Mail, Normal, Locked, Always on me (no Confirm: it's held back for a later version); Alt+Right-click steps it back down
+- [ ] 5.9 (Deferred with Confirm, BACKLOG.md) Confirm item sold: it's bought back and the hold window asks; Allow once, sell it again: it stays sold; close and reopen the vendor and it's held again
+- [ ] 5.10 (Deferred with Confirm) Confirm item disenchanted: the click is caught and the window asks; Allow once, Disenchant again: it works once, the next try is caught
+- [ ] 5.11 (Deferred with Confirm) Confirm item put in a trade or mail: taken back out; Allow once, put it in again: it stays until the window closes
+- [ ] 5.12 (Deferred with Confirm) "Keep it" (or Esc) leaves everything blocked; Locked items never show the window
 - [ ] 5.13 Auto-marks: a gray becomes Junk, a white weapon/armor piece becomes Junk, an unbound BoE green or blue becomes Mail
 - [ ] 5.14 Crafting materials: on a character without Tailoring, Linen Cloth becomes Mail "(this character)"; on a tailor it's left alone once the Tailoring window has been opened
 - [ ] 5.15 Opening a profession window takes the **auto-marked** Mail off materials its recipes use (a Mail mark you set yourself stays); /soq status lists professions and which still need their window opened
@@ -78,7 +78,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.30 Bank: an Always on me item right-clicked or dragged into the bank (or a bank bag), or already there when you open it, is moved back to your bags; a Locked item stays banked
 - [ ] 5.31 Bank with full bags: one "bags are full" error, the item stays in the bank
 - [ ] 5.33 Save an equipment set with an item in it: its tooltip says "Standing Orders: Locked (equipment set "<name>")"; selling it is bought back
-- [ ] 5.34 `/soq set <name> confirm`, `onme` or `off` changes that set's items; `/soq sets onme` changes the default for sets
+- [ ] 5.34 `/soq set <name> lock`, `onme` or `off` changes that set's items; `/soq sets onme` changes the default for sets
 - [ ] 5.35 Save the set again without the item: it goes back to its own mark
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
 - [ ] 5.37 `/soq settings`, Equipment sets: each row is a dropdown: pick a level and the row shows it (a set also offers "default"); the default row changes every set left on "default"

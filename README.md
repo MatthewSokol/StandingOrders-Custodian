@@ -8,7 +8,7 @@ Part of **Standing Orders**, three addons that deal with the items you've alread
 
 | Addon | Command | Does |
 |---|---|---|
-| **Standing Orders: Quartermaster** (this one) | `/soq` | Marks items Junk, Mail, Confirm, Locked or Always on me, and guards the protected ones |
+| **Standing Orders: Quartermaster** (this one) | `/soq` | Marks items Junk, Mail, Locked or Always on me, and guards the protected ones |
 | [Standing Orders: Vendor](https://github.com/MatthewSokol/StandingOrders-Vendor) | `/sov` | Sells your junk at any vendor in one click, skipping what Quartermaster protects |
 | [Standing Orders: Mail](https://github.com/MatthewSokol/StandingOrders-Mail) | `/som` | Mails items marked Mail to your bank alt in one click |
 
@@ -28,11 +28,10 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Junk | coin | Safe to lose. Standing Orders: Vendor sells these automatically when a vendor opens |
 | Mail | letter | To send to your bank character (for a mailing addon). Standing Orders: Vendor never sells these |
 | Normal | none | The default |
-| Confirm | star | Temp hold. The action is stopped like Locked, then a window asks whether to **allow it once**: do it again within 2 minutes (selling, trading or mailing: until you close that window) |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soq junk|mail|normal|confirm|lock|onme <shift-clicked item or ID> [char|account]`. `/soq list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soq junk|mail|normal|lock|onme <shift-clicked item or ID> [char|account]`. `/soq list` shows every marked item. Item tooltips show the level.
 
 The icons sit in the bottom left of the item button, 40% of its width across (so they cover about a sixth of it), at 75% opacity, so stack counts stay readable. Change their size (10% to 100% of the button's width), corner (or center) and opacity in `/soq settings` under Mark icons, or with `/soq icon size 50`, `/soq icon position center`, `/soq icon opacity 60` and `/soq icon reset`.
 
@@ -72,7 +71,7 @@ Every action that would lose an item goes through one check, `StandingOrdersQuar
 
 ## Equipment sets
 
-Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Confirm, Always on me or not at all, for every set or one set: in `/soq settings` (click a set's button to change its level), or `/soq sets onme` and `/soq set <name> confirm`. `/soq sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
+Items in your equipment sets (the game's equipment manager) are protected automatically: **Locked** by default, or Always on me or not at all, for every set or one set: in `/soq settings` (click a set's button to change its level), or `/soq sets onme` and `/soq set <name> confirm`. `/soq sets` lists them. It works on top of your marks: an item keeps the higher of its own mark and its set's level, and goes back to its own mark when you take it out of the set. Sets belong to one character, so do their choices; the default is for all characters.
 
 ## Bag addons
 
