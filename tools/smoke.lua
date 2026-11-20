@@ -57,7 +57,12 @@ local BBEvents = { RegisterMessage = function(_, msg, fn) BB_MSG[msg] = fn end }
 local BB = { GetModule = function(_, name) return name == "Events" and BBEvents end }
 local ABEvent = { Embed = function(_, obj) obj.RegisterMessage = function(_, msg, fn) ADI_MSG[msg] = fn end end }
 local AceAddon = { GetAddon = function(_, name) return (name == "AdiBags" and Adi) or (name == "BetterBags" and BB) or nil end }
-Baganator = {}
+-- Baganator's skin API: listeners get every item button as Baganator makes it ({ regionType, region }).
+BAGANATOR_LISTENERS, BAGANATOR_FRAMES = {}, {}
+Baganator = { API = { Skins = {
+  RegisterListener = function(fn) BAGANATOR_LISTENERS[#BAGANATOR_LISTENERS + 1] = fn end,
+  GetAllFrames = function() return BAGANATOR_FRAMES end,
+} } }
 Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
 -- An older build's per-character Mail auto-mark on a reagent (seen in game on Light Feathers).
@@ -330,7 +335,11 @@ CALL("BetterBags item/Updated (stale)", BB_MSG["item/Updated"], {}, bbStale, {})
 altClick("BetterBags showing another item", bbStale.button, 7003, L.CONFIRM)
 local function parentWithID(id) return { GetID = function() return id end } end
 local bag8r = plain({ BGR = { itemLocation = {}, itemID = 7001 }, GetParent = function() return parentWithID(2) end, GetID = function() return 1 end })
-CALL("Baganator SetItemDetails", BaganatorClassicLiveContainerItemButtonMixin.SetItemDetails, bag8r, {})
+bag8r.SetItemDetails = BaganatorClassicLiveContainerItemButtonMixin.SetItemDetails -- Mixin() copies it onto the button
+CHECK("Baganator's mixin is frozen (hooking it fails)", not pcall(hooksecurefunc, BaganatorClassicLiveContainerItemButtonMixin, "SetItemDetails", function() end))
+CHECK("Quartermaster listens to Baganator's skin API", #BAGANATOR_LISTENERS == 1, #BAGANATOR_LISTENERS)
+for _, fn in ipairs(BAGANATOR_LISTENERS) do CALL("Baganator hands over a button", fn, { regionType = "ItemButton", region = bag8r }) end
+CALL("Baganator SetItemDetails", bag8r.SetItemDetails, bag8r, {})
 altClick("Baganator", bag8r, 7001, L.LOCK)
 local bagnon = plain({ GetBag = function() return 2 end, GetID = function() return 2 end, IsCached = function() return false end })
 CALL("Bagnon Item:Update", Bagnon.Item.Update, bagnon)

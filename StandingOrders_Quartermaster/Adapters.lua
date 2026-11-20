@@ -147,30 +147,33 @@ KS.AddBagAddon({
 })
 
 ---------------------------------------------------------------------------------------------------
--- Baganator: live bag and bank buttons get BaganatorClassic/RetailLiveContainerItemButtonMixin, copied
--- onto each button when it's created, and every draw calls :SetItemDetails. So the mixins are hooked
--- now, while Quartermaster loads (before Baganator builds its buttons), and buttons wait until login. Cached
--- views (other characters, the closed bank) use other templates and never reach Quartermaster. The parent's ID
--- is the bag, the button's the slot, and the shown item (BGR.itemID) must match that slot.
+-- Baganator: every draw of an item button calls :SetItemDetails, which the button got from a mixin copied
+-- onto it. Baganator freezes those mixins (table.freeze), so hooking them fails ("indexed assignment on a
+-- frozen table"). Instead its skin API (the one Masque uses) hands over every item button as it's made, and
+-- each button's own SetItemDetails is hooked. Cached buttons (other characters, the closed bank) come too,
+-- but have no live item location, so slot() skips them. The parent's ID is the bag, the button's the slot,
+-- and the shown item (BGR.itemID) must match that slot.
 
-local baganatorAdd, baganatorWaiting, baganatorHooked = nil, {}, false
-for _, name in ipairs({ "BaganatorClassicLiveContainerItemButtonMixin", "BaganatorRetailLiveContainerItemButtonMixin" }) do
-  local mixin = _G[name]
-  if type(mixin) == "table" and mixin.SetItemDetails then
-    hooksecurefunc(mixin, "SetItemDetails", function(btn)
-      if baganatorAdd then baganatorAdd(btn) else baganatorWaiting[btn] = true end
-    end)
-    baganatorHooked = true
-  end
+local function SkinsAPI()
+  local api = _G.Baganator and Baganator.API and Baganator.API.Skins
+  return api and type(api.RegisterListener) == "function" and api or nil
 end
+local baganatorButtons = setmetatable({}, { __mode = "k" })
 
 KS.AddBagAddon({
   name = "Baganator",
-  loaded = function() return _G.Baganator and baganatorHooked end,
+  loaded = function() return SkinsAPI() ~= nil end,
   hook = function(add)
-    baganatorAdd = add
-    for btn in pairs(baganatorWaiting) do add(btn) end
-    wipe(baganatorWaiting)
+    local function Watch(details)
+      local btn = type(details) == "table" and details.regionType == "ItemButton" and details.region
+      if not btn or baganatorButtons[btn] or type(btn.SetItemDetails) ~= "function" then return end
+      baganatorButtons[btn] = true
+      hooksecurefunc(btn, "SetItemDetails", function(b) add(b) end)
+      add(btn)
+    end
+    local api = SkinsAPI()
+    api.RegisterListener(Watch)
+    for _, details in ipairs(api.GetAllFrames and api.GetAllFrames() or {}) do Watch(details) end -- made before login
   end,
   slot = function(btn)
     local parent = btn.GetParent and btn:GetParent()

@@ -217,15 +217,20 @@ C_EquipmentSet = {
   GetIgnoredSlots = function(id) return STUB_SETS[id] and STUB_SETS[id].ignored or {} end,
 }
 
--- Baganator copies this mixin onto each live bag button; Quartermaster hooks it while loading, so it must exist first.
-BaganatorClassicLiveContainerItemButtonMixin = { SetItemDetails = function() end }
+-- Baganator freezes the mixin it copies onto each live bag button, so hooking the mixin itself must fail here
+-- too; Quartermaster gets the buttons from Baganator's skin API (smoke.lua's Baganator stub) instead.
+BaganatorClassicLiveContainerItemButtonMixin = setmetatable({}, {
+  __index = { SetItemDetails = function() end },
+  __newindex = function() error("attempted to perform indexed assignment on a frozen table", 2) end,
+})
 
 -- Everything else Quartermaster calls
 hooksecurefunc = function(t, name, fn)
   if type(t) == "string" then t, name, fn = _G, t, name end
   local orig = t[name]
   if type(orig) ~= "function" then error("hooksecurefunc(): " .. tostring(name) .. " is not a function", 2) end
-  rawset(t, name, function(...) local r = { orig(...) }; fn(...); return (table.unpack or unpack)(r) end)
+  -- A plain assignment, not rawset, so a frozen table (see Baganator's mixin above) errors like the game does.
+  t[name] = function(...) local r = { orig(...) }; fn(...); return (table.unpack or unpack)(r) end
 end
 CastSpellByName = function() end
 UseAction = function() end
