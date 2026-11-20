@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 12 changes, 78 rows.**
+**Waiting since the last release (none yet): 13 changes, 79 rows.**
 
 To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 78</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 79</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
@@ -178,6 +178,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.12 The intro button fits its label</b> (#28) · open · 0 / 1</summary>
 
 - [ ] 2.2.12.1 `/soq settings`: the "What Standing Orders protects" button shows its whole label (try a larger UI scale too), and clicking it opens the intro
+
+</details>
+
+<details open>
+<summary><b>2.2.13 The settings panel scrolls</b> (#30) · open · 0 / 1</summary>
+
+- [ ] 2.2.13.1 `/soq settings`: nothing spills past the bottom of the settings window; scroll down to reach the equipment set rows; the opacity text (e.g. "70% opaque (30% see-through)") fits on one line
 
 </details>
 
