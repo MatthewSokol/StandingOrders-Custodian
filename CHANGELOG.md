@@ -8,6 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Fixed
 
+- **Settings panel:** the "What Standing Orders protects" button is now wide enough for its label.
 - **Old auto-marks on reagents:** a Mail mark an earlier test build put on a reagent (such as Light Feather) for one character now comes off at login, like the account-wide ones already did.
 - **Disenchant guard error:** clicking a protected item while Disenchant targeting was up gave an "AddOn tried to call the protected function SpellStopTargeting()" error. The click is still blocked and the item kept; press Esc or right-click to end targeting.
 

@@ -20,6 +20,10 @@ local function stub(name)
       if k == "GetStringHeight" then return 100 end
       if k == "GetText" then return rawget(t, "__text") or "" end
       if k == "SetText" then rawset(t, "__text", a[1]); return end
+      if k == "GetTextWidth" or k == "GetStringWidth" then return 7 * #(rawget(t, "__text") or "") end -- ~7px a letter
+      if k == "SetSize" then rawset(t, "__w", a[1]); return end
+      if k == "SetWidth" then rawset(t, "__w", a[1]); return end
+      if k == "GetWidth" then return rawget(t, "__w") end
       if k == "IsShown" or k == "IsVisible" then return rawget(t, "__shown") or false end
       if k == "Show" then rawset(t, "__shown", true); return end
       if k == "Hide" then rawset(t, "__shown", false); return end

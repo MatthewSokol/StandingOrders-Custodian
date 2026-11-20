@@ -1576,6 +1576,10 @@ local function CreatePanel()
   intro:SetSize(170, 24)
   intro:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
   intro:SetText("What Standing Orders protects")
+  -- Fit the label (fonts and UI scale differ): its text width plus the button's end caps.
+  local textW = intro.GetTextWidth and intro:GetTextWidth()
+  if type(textW) == "number" and textW > 0 then intro:SetWidth(math.max(170, math.ceil(textW) + 32)) end
+  panel.introButton = intro
   intro:SetScript("OnClick", function() KS:ShowIntro() end)
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the

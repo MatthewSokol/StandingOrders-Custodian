@@ -274,6 +274,8 @@ CALL("/soq icon position middle", SlashCmdList.SOQ, "icon position middle")
 CHECK("an unknown position is refused and kept", style() == "10 CENTER 60" and CHAT_HAS("/soq icon"), style())
 local st = panel and panel.iconStyle
 CHECK("settings panel has the mark icon controls", st ~= nil and panel.iconSample ~= nil)
+local ib = panel and panel.introButton
+CHECK("intro button is wide enough for its label", ib and ib:GetWidth() >= ib:GetTextWidth() + 24, ib and ib:GetWidth())
 if st then
   CALL("panel: Size +", rawget(st.sizePlus, "__s_OnClick"), st.sizePlus)
   CALL("panel: Position click", rawget(st.pos, "__s_OnClick"), st.pos, "LeftButton")
