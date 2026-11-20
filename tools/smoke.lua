@@ -276,6 +276,8 @@ local st = panel and panel.iconStyle
 CHECK("settings panel has the mark icon controls", st ~= nil and panel.iconSample ~= nil)
 local ib = panel and panel.introButton
 CHECK("intro button is wide enough for its label", ib and ib:GetWidth() >= ib:GetTextWidth() + 24, ib and ib:GetWidth())
+CHECK("settings content scrolls inside the page", panel and panel.scroll ~= nil and panel.content ~= nil and type(panel.FitPanel) == "function")
+CALL("settings panel fits its content", function() panel.FitPanel() end)
 if st then
   CALL("panel: Size +", rawget(st.sizePlus, "__s_OnClick"), st.sizePlus)
   CALL("panel: Position click", rawget(st.pos, "__s_OnClick"), st.pos, "LeftButton")

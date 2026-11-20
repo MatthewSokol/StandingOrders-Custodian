@@ -1533,8 +1533,17 @@ local AUTO_TEXT = {
 }
 
 local function CreatePanel()
-  local panel = CreateFrame("Frame", "SOQuartermasterSettings")
-  panel.name = "Standing Orders: Quartermaster"
+  -- The settings page is a fixed-size canvas, so everything sits in a scroll frame: `outer` is what
+  -- the game shows, `panel` is the scrolling content (sized to fit by FitPanel below).
+  local outer = CreateFrame("Frame", "SOQuartermasterSettings")
+  outer.name = "Standing Orders: Quartermaster"
+  local scroll = CreateFrame("ScrollFrame", nil, outer, "UIPanelScrollFrameTemplate")
+  scroll:SetPoint("TOPLEFT", 0, -4)
+  scroll:SetPoint("BOTTOMRIGHT", -28, 4)
+  local panel = CreateFrame("Frame", nil, scroll)
+  panel:SetSize(600, 600)
+  scroll:SetScrollChild(panel)
+  outer.scroll, outer.content = scroll, panel
 
   panel.icon = panel:CreateTexture(nil, "ARTWORK")
   panel.icon:SetSize(32, 32)
@@ -1606,7 +1615,7 @@ local function CreatePanel()
     minus:SetText("-")
     local value = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     value:SetPoint("LEFT", minus, "RIGHT", 6, 0)
-    value:SetWidth(160)
+    value:SetWidth(230) -- "70% opaque (30% see-through)" on one line
     local plus = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     plus:SetSize(24, 22)
     plus:SetPoint("LEFT", value, "RIGHT", 6, 0)
@@ -1623,7 +1632,7 @@ local function CreatePanel()
   local sizeText, sizeMinus, sizePlus = Stepper(1, "Size", "size")
   local posLabel = IconRow(2, "Position")
   local pos = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-  pos:SetSize(220, 22)
+  pos:SetSize(290, 22) -- as wide as a stepper row: - (24), gap, value (230), gap, + (24)
   pos:SetPoint("LEFT", posLabel, "RIGHT", 10, 0)
   pos:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   pos:SetScript("OnClick", function(_, mouse)
@@ -1705,13 +1714,28 @@ local function CreatePanel()
     end
   end
 
-  panel:SetScript("OnShow", RefreshPanel)
+  -- Content height: from its top to the lowest shown control, so the scroll bar reaches the last set row.
+  local function FitPanel()
+    local w = scroll:GetWidth()
+    if type(w) == "number" and w > 0 then panel:SetWidth(w) end
+    local top, last = panel:GetTop(), setsNote
+    for _, row in ipairs(rows) do if row.button:IsShown() then last = row.button end end
+    local bottom = last:GetBottom()
+    if type(top) == "number" and type(bottom) == "number" then panel:SetHeight(math.max(1, top - bottom + 24)) end
+  end
+  outer.FitPanel = FitPanel
+  outer:SetScript("OnShow", function()
+    RefreshPanel()
+    FitPanel()
+    C_Timer.After(0, FitPanel) -- positions settle after the first frame
+  end)
+  outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   if Settings and Settings.RegisterCanvasLayoutCategory then
-    category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
     Settings.RegisterAddOnCategory(category)
   elseif InterfaceOptions_AddCategory then
-    InterfaceOptions_AddCategory(panel)
-    category = panel
+    InterfaceOptions_AddCategory(outer)
+    category = outer
   end
 end
 
