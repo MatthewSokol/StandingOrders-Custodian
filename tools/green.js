@@ -6,7 +6,7 @@
 // Exit code 0 = green. FAIL lines block a release; WARN lines need a look but don't block.
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const root = path.resolve(__dirname, "..");
-const ADDON = "StandingOrders_Quartermaster";
+const ADDON = "StandingOrders_Custodian";
 const args = process.argv.slice(2);
 const game = args.includes("--game");
 const wtfArg = args.includes("--wtf") ? args[args.indexOf("--wtf") + 1] : null;
@@ -119,7 +119,7 @@ if (game) {
   const acctDir = wtfArg || (fs.existsSync(accounts) && fs.readdirSync(accounts)
     .map(a => path.join(accounts, a)).find(a => fs.existsSync(path.join(a, "SavedVariables", ADDON + ".lua"))));
   const svDir = acctDir && path.join(acctDir, "SavedVariables");
-  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Quartermaster SavedVariables found: log in, /soq selftest, /reload");
+  if (!svDir || !fs.existsSync(path.join(svDir, ADDON + ".lua"))) say("FAIL", "game", "no Custodian SavedVariables found: log in, /soc selftest, /reload");
   else {
     const { lua, lauxlib, lualib, to_luastring } = require("fengari");
     const read = (file, expr) => {
@@ -138,14 +138,14 @@ if (game) {
       lua.lua_getglobal(L, to_luastring("RESULT"));
       try { return JSON.parse(lua.lua_tojsstring(L, -1)); } catch (e) { return { error: String(e) }; }
     };
-    const st = read(path.join(svDir, ADDON + ".lua"), "StandingOrdersQuartermasterDB and StandingOrdersQuartermasterDB.selfTest");
-    if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /soq selftest, then /reload");
+    const st = read(path.join(svDir, ADDON + ".lua"), "StandingOrdersCustodianDB and StandingOrdersCustodianDB.selfTest");
+    if (!st || st.error) say("FAIL", "self-test", st && st.error ? st.error : "no results saved: run /soc selftest, then /reload");
     else {
       // The build under test is the installed one: install.ps1 wrote its git describe into the installed .toc.
       const installedToc = path.join(accounts, "..", "..", "Interface", "AddOns", ADDON, ADDON + ".toc");
       const installed = fs.existsSync(installedToc) && (fs.readFileSync(installedToc, "utf8").match(/^## Version:\s*(.+)$/m) || [])[1];
       const stale = installed && st.version !== installed.trim();
-      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on build ${st.version}${stale ? ` (installed is ${installed.trim()}: /reload, /soq selftest, /reload)` : ""}`);
+      say(stale ? "FAIL" : "PASS", "self-test", `ran ${st.at} on build ${st.version}${stale ? ` (installed is ${installed.trim()}: /reload, /soc selftest, /reload)` : ""}`);
       for (const [id, r] of Object.entries(st.tests || {})) {
         say(r.passed ? (r.warnings ? "WARN" : "PASS") : "FAIL", "self-test " + id, r.message);
         for (const d of r.details || []) if (d.status !== "pass") console.log(`       ${d.status} ${d.label}: ${d.value}`);
@@ -155,16 +155,16 @@ if (game) {
     if (!fs.existsSync(bgFile)) say("WARN", "lua errors", "BugGrabber isn't installed: can't check for errors");
     else {
       const errs = read(bgFile, "BugGrabberDB and BugGrabberDB.errors");
-      const mine = (Array.isArray(errs) ? errs : []).filter(e => /StandingOrders_Quartermaster[\\/]/.test(String(e.message) + String(e.stack)));
+      const mine = (Array.isArray(errs) ? errs : []).filter(e => /StandingOrders_Custodian[\\/]/.test(String(e.message) + String(e.stack)));
       if (mine.length) {
-        say("FAIL", "lua errors", `${mine.length} error(s) from Quartermaster`);
+        say("FAIL", "lua errors", `${mine.length} error(s) from Custodian`);
         mine.slice(0, 5).forEach(e => console.log("       " + String(e.message).split("\n")[0].slice(0, 200)));
-      } else say("PASS", "lua errors", "none from Quartermaster in BugGrabber");
+      } else say("PASS", "lua errors", "none from Custodian in BugGrabber");
     }
     const mech = path.join(svDir, "!Mechanic.lua");
     if (fs.existsSync(mech)) {
       const text = fs.readFileSync(mech, "utf8");
-      say("PASS", "mechanic", `MechanicDB saved (${Math.round(text.length / 1024)} KB); Quartermaster ${text.includes('"StandingOrders_Quartermaster"') ? "appears in it" : "isn't in it yet"}`);
+      say("PASS", "mechanic", `MechanicDB saved (${Math.round(text.length / 1024)} KB); Custodian ${text.includes('"StandingOrders_Custodian"') ? "appears in it" : "isn't in it yet"}`);
     } else say("WARN", "mechanic", "no MechanicDB saved yet (enable !Mechanic and Mechanic, then /reload); the self-test above covers the same checks");
   }
 }

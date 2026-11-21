@@ -1,5 +1,5 @@
-# Builds the CurseForge upload: dist\StandingOrders_Quartermaster-<version>.zip with one top-level StandingOrders_Quartermaster\ folder (the addon files,
-# which include LICENSE.txt), and dist\StandingOrders_Quartermaster-<version>-changelog.md, the release notes to paste.
+# Builds the CurseForge upload: dist\StandingOrders_Custodian-<version>.zip with one top-level StandingOrders_Custodian\ folder (the addon files,
+# which include LICENSE.txt), and dist\StandingOrders_Custodian-<version>-changelog.md, the release notes to paste.
 # The version comes from the vX.Y.Z release tag on HEAD and fills the .toc's @project-version@, as the BigWigs
 # packager does. Test build from an untagged commit: -Version 1.2.3-test
 # Zip entries use forward slashes, which Compress-Archive on Windows PowerShell 5.1 doesn't (CurseForge and
@@ -9,7 +9,7 @@ param([string]$Version)
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 
-$name = "StandingOrders_Quartermaster"
+$name = "StandingOrders_Custodian"
 $root = $PSScriptRoot
 $src = Join-Path $root $name
 

@@ -1,6 +1,6 @@
 // Lists Lua string literals with a bare "|" that isn't a WoW escape. In chat text "|" starts an escape
 // (|cAARRGGBB color, |r reset, |T texture, |H link, |n newline...), so "a|rare" shows as "aare".
-// Write a literal pipe as "||". Usage: node tools/pipes.js StandingOrders_Quartermaster/*.lua  (exit 1 if any are found)
+// Write a literal pipe as "||". Usage: node tools/pipes.js StandingOrders_Custodian/*.lua  (exit 1 if any are found)
 const fs = require("fs");
 let found = 0;
 for (const f of process.argv.slice(2)) {

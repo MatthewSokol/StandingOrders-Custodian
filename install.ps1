@@ -1,16 +1,16 @@
-# Copies the Quartermaster addon into the WoW Forever AddOns folder (overwriting the installed copy).
+# Copies the Custodian addon into the WoW Forever AddOns folder (overwriting the installed copy).
 param(
     [string]$WowRoot = "C:\Program Files (x86)\World of Warcraft"
 )
 
-$src = Join-Path $PSScriptRoot "StandingOrders_Quartermaster"
+$src = Join-Path $PSScriptRoot "StandingOrders_Custodian"
 $addons = Join-Path $WowRoot "_forever_\Interface\AddOns"
 if (-not (Test-Path $addons)) {
     Write-Error "AddOns folder not found: $addons  (pass -WowRoot to point at your install)"
     exit 1
 }
 
-$dst = Join-Path $addons "StandingOrders_Quartermaster"
+$dst = Join-Path $addons "StandingOrders_Custodian"
 New-Item -ItemType Directory -Force $dst | Out-Null
 Copy-Item -Path (Join-Path $src "*") -Destination $dst -Recurse -Force
 
@@ -21,4 +21,4 @@ Get-ChildItem $dst -Filter *.toc | ForEach-Object {
     $text = [IO.File]::ReadAllText($_.FullName)
     [IO.File]::WriteAllText($_.FullName, $text.Replace("@project-version@", $version))
 }
-Write-Host "Installed Quartermaster ($version) to $dst"
+Write-Host "Installed Custodian ($version) to $dst"

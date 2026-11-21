@@ -1,4 +1,4 @@
-<title>Quartermaster Release Checklist</title>
+<title>Custodian Release Checklist</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans+SC:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -119,8 +119,8 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
 
 <main id="app">
   <header>
-    <h1>Quartermaster Release Checklist</h1>
-    <p class="sub">Standing Orders: Quartermaster, the first release.</p>
+    <h1>Custodian Release Checklist</h1>
+    <p class="sub">Standing Orders: Custodian, the first release.</p>
   </header>
   <p class="sub" id="loading">Loading the checklist…</p>
 </main>
@@ -134,7 +134,7 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
   var SECTIONS = __SECTIONS__;
   var WAITING = __WAITING__;
 
-  var STASH = "soq-checklist-pending";
+  var STASH = "soc-checklist-pending";
   var stateEl = document.getElementById("state");
   var state;
   try { state = JSON.parse(stateEl.textContent) } catch (e) { state = {} }
@@ -147,9 +147,9 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
 
   var artifact = null, mode = "connecting", saveTimer = null, dirty = false, openBox = null;
   // Open sections and the filter are this viewer's own choice, kept in browser storage, never in the saved page.
-  var OPEN_KEY = "soq-checklist-open", openMap = {}, toggled = {}, filter = "all";
+  var OPEN_KEY = "soc-checklist-open", openMap = {}, toggled = {}, filter = "all";
   try { openMap = JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {} } catch (e) { openMap = {} }
-  try { filter = localStorage.getItem("soq-filter") || "all" } catch (e) {}
+  try { filter = localStorage.getItem("soc-filter") || "all" } catch (e) {}
   function saveOpen() { try { localStorage.setItem(OPEN_KEY, JSON.stringify(openMap)) } catch (e) {} }
   function isOpen(s, finished, needsYou) {
     if (toggled[s.id] !== undefined) return toggled[s.id];
@@ -294,8 +294,8 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
     var rows = allRows(), done = rows.filter(isDone).length, np = nProblems();
     var header = el("header");
     header.appendChild(el("span", "build", "Build under test: " + esc(state.build || "not stamped")));
-    header.appendChild(el("h1", null, "Quartermaster Release Checklist"));
-    header.appendChild(el("p", "sub", "Standing Orders: Quartermaster, the first release. Tick your rows as you go; press Problem on any row that doesn't do what it says. A fix restamps the build and unticks the smoke rows and every row it touches. Click a grey command to copy it."));
+    header.appendChild(el("h1", null, "Custodian Release Checklist"));
+    header.appendChild(el("p", "sub", "Standing Orders: Custodian, the first release. Tick your rows as you go; press Problem on any row that doesn't do what it says. A fix restamps the build and unticks the smoke rows and every row it touches. Click a grey command to copy it."));
     header.appendChild(el("p", "waiting", esc(WAITING)));
     var bar = el("div", "bar");
     var meter = el("div", "meter"); meter.setAttribute("role", "progressbar");
@@ -330,7 +330,7 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
     var grp = el("div", "grp");
     [["all", "All"], ["todo", "To do"], ["flagged", "Problems"]].forEach(function (f) {
       var b = btn("", f[1], "filter-" + f[0]); b.setAttribute("aria-pressed", String(filter === f[0]));
-      b.addEventListener("click", function () { filter = f[0]; try { localStorage.setItem("soq-filter", filter) } catch (e) {} render() });
+      b.addEventListener("click", function () { filter = f[0]; try { localStorage.setItem("soc-filter", filter) } catch (e) {} render() });
       grp.appendChild(b);
     });
     tools.appendChild(grp);
@@ -420,11 +420,11 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
     var S = "script", fonts = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis"]');
     var json = JSON.stringify(state).replace(/</g, "\\u003c");
     return "<!doctype html><html><head><meta charset=utf8><meta name=viewport content=\"width=device-width,initial-scale=1,viewport-fit=cover\"><style>" + RESET_CSS + "</style></head><body>" +
-      "<title>Quartermaster Release Checklist</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n" +
+      "<title>Custodian Release Checklist</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n" +
       "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
       "<link rel=\"stylesheet\" href=\"" + (fonts ? fonts.getAttribute("href") : "") + "\">\n" +
       "<style id=\"app-style\">" + document.getElementById("app-style").textContent + "</style>\n\n" +
-      "<main id=\"app\">\n  <header>\n    <h1>Quartermaster Release Checklist</h1>\n    <p class=\"sub\">Standing Orders: Quartermaster, the first release.</p>\n  </header>\n  <p class=\"sub\" id=\"loading\">Loading the checklist…</p>\n</main>\n\n" +
+      "<main id=\"app\">\n  <header>\n    <h1>Custodian Release Checklist</h1>\n    <p class=\"sub\">Standing Orders: Custodian, the first release.</p>\n  </header>\n  <p class=\"sub\" id=\"loading\">Loading the checklist…</p>\n</main>\n\n" +
       "<" + S + " type=\"application/json\" id=\"state\">" + json + "</" + S + ">\n" +
       "<" + S + " id=\"app-script\">" + document.getElementById("app-script").textContent + "</" + S + ">\n" +
       "</body></html>";

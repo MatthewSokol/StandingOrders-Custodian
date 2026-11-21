@@ -1,7 +1,7 @@
 // Lua 5.1 limits the test VM (Lua 5.3) doesn't enforce: at most 200 locals in one scope and 60
 // upvalues per function. WoW refuses to load a file that breaks either. This is an estimate from the
 // source text: it counts the file-level locals each function uses (nested functions included).
-// Usage: node tools/limits.js StandingOrders_Quartermaster/Quartermaster.lua
+// Usage: node tools/limits.js StandingOrders_Custodian/Custodian.lua
 const fs = require("fs");
 const file = process.argv[2];
 let src = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
