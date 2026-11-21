@@ -1,4 +1,4 @@
-# Releasing Quartermaster
+# Releasing Custodian
 
 The release pipeline, start to finish. Claude runs it when you say you're ready to release.
 
@@ -15,24 +15,24 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 |---|---|
 | No character, player or account names in anything public: code, docs, examples, commit messages, screenshots, the CurseForge description. The repo is under your real name. | `green.js` privacy check (it reads the names from your WTF folder, so they're never written down). Screenshots and store text: check by hand. |
 | Commit and zip times are 00:00 UTC. Never merge with GitHub's button; fast-forward locally. | Post-commit hook; `green.js` checks unmerged commits; `release.ps1` dates zip entries. |
-| The zip needs forward-slash paths and one top-level `StandingOrders_Quartermaster/` folder (PowerShell 5.1's `Compress-Archive` writes backslashes). | `release.ps1` |
+| The zip needs forward-slash paths and one top-level `StandingOrders_Custodian/` folder (PowerShell 5.1's `Compress-Archive` writes backslashes). | `release.ps1` |
 | The version lives only in git tags (dev-routine: a `candidate/vX.Y.Z` per merged change, kept local; one pushed `vX.Y.Z` per release). The `.toc` says `@project-version@`; changes go under `## [Unreleased]` in `CHANGELOG.md`. | `green.js` version check; `install.ps1` and `release.ps1` fill the token |
 | Tags are lightweight (`git tag vX.Y.Z`): an annotated tag, including the one `mech release` makes, records the real time. Push only the release tag, by name. | `pipeline.js released` |
 | Add `## X-Curse-Project-ID` once the CurseForge project exists. | `green.js` warns until it's there |
 | Only register events that exist on Forever; an unknown one stops the file loading. Use `pcall` for events that may not exist. | `tools/wowstub.lua` `KNOWN_EVENTS` (the smoke test fails on unknown ones) |
-| WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Quartermaster is at about 160 file-level locals. | `tools/limits.js` |
+| WoW runs Lua 5.1: at most 60 upvalues per function and 200 locals per scope. The test VM is 5.3 and doesn't catch this. Custodian is at about 160 file-level locals. | `tools/limits.js` |
 | Read BugGrabber after a real play session. That's how the nil bag-slot error (123 hits) was found. | `green.js --game` |
 | Mechanic is for development only: `OptionalDeps`, never `Dependencies`. Players won't have it. | `green.js` TOC check; the "Without dev addons" pass |
 | A bare `\|` in chat text is a WoW escape (`\|n` newline, `\|c` color): write `\|\|`. | `tools/pipes.js` in `green.js` |
 | Every addon page and the README show the main features in screenshots, with every character, player, guild and realm name blurred, blacked out or made up. | By hand: `docs/screenshots/README.md` has the shot list |
-| Nothing crosses the game's terms or the botting line. Quartermaster' automatic actions (buying back a protected item, moving an Always on me item out of the bank, auto-marks) only run inside a window you opened, and never buy, post or cast. Re-check any new automatic action. | By hand, each release |
+| Nothing crosses the game's terms or the botting line. Custodian' automatic actions (buying back a protected item, moving an Always on me item out of the bank, auto-marks) only run inside a window you opened, and never buy, post or cast. Re-check any new automatic action. | By hand, each release |
 | Test against known states: a clean install, an upgrade from the last release's saved data, the game without Mechanic, and the release zip itself. | `wow-env.js` passes in the checklist |
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 14 changes, 80 rows.**
+**Waiting since the last release (none yet): 15 changes, 84 rows.**
 
-To tick rows off, use the **Quartermaster Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
+To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
 This is a standing checklist: it fills as work happens, so you can cut a release when it gets too long. When a unit of
 work starts, Claude adds its group under 2.2 (`2.2.n <title> (#PR)`) with its rows, keeps them current as the PRs
@@ -71,13 +71,13 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.1 Smoke</b> (standing) · 0 / 8</summary>
 
 - [ ] 2.1.1 `<env> snapshot pre-<version>` `auto executed · game closed` `auto validated · snapshot saved`
-- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Quartermaster --addon !BugGrabber` (no saved data, and BugSack starts with no errors; restore brings the old ones back), then `<env> profile only StandingOrders_Quartermaster !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
-- [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Quartermaster (with its ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
+- [ ] 2.1.2 A new player's setup: `<env> profile clean --addon StandingOrders_Custodian --addon !BugGrabber` (no saved data, and BugSack starts with no errors; restore brings the old ones back), then `<env> profile only StandingOrders_Custodian !BugGrabber BugSack` (every other addon off) `auto executed · game closed` `auto validated · wow-env status`
+- [ ] 2.1.3 Start the game. At character select, open AddOns: only Standing Orders: Custodian (with its ledger icon, not "Out of date"), !BugGrabber and BugSack are ticked
 - [ ] 2.1.4 Log in: no Lua errors; the intro window shows after a few seconds, and "Got it" closes it
-- [ ] 2.1.5 `/soq selftest` passes, then `/reload` so the result is saved `auto validated · saved self-test`
+- [ ] 2.1.5 `/soc selftest` passes, then `/reload` so the result is saved `auto validated · saved self-test`
 - [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
 - [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done` `auto validated · restore verified`
-- [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soq selftest` passes, no Quartermaster errors `auto validated · saved self-test and BugGrabber`
+- [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soc selftest` passes, no Custodian errors `auto validated · saved self-test and BugGrabber`
 
 </details>
 
@@ -85,7 +85,7 @@ problems); finished sections start closed, and a section with an open problem or
 <summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 80</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
-point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Quartermaster row is journal-proven
+point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
 yet (no test journal; see `BACKLOG.md`).
 
 <details open>
@@ -110,14 +110,14 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.3 Checklists: outline ids, folding sections</b> (#14) · open · 0 / 1</summary>
 
-- [ ] 2.2.3.1 On GitHub, [`RELEASING.md`](https://github.com/MatthewSokol/StandingOrders-Quartermaster/blob/fix/intro-button-width/RELEASING.md) and [`TESTING.md`](https://github.com/MatthewSokol/StandingOrders-Quartermaster/blob/fix/intro-button-width/TESTING.md) sections fold open and closed, and every row starts with its id
+- [ ] 2.2.3.1 On GitHub, [`RELEASING.md`](https://github.com/MatthewSokol/StandingOrders-Custodian/blob/fix/intro-button-width/RELEASING.md) and [`TESTING.md`](https://github.com/MatthewSokol/StandingOrders-Custodian/blob/fix/intro-button-width/TESTING.md) sections fold open and closed, and every row starts with its id
 
 </details>
 
 <details open>
 <summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16, #29, #31) · open · 0 / 5</summary>
 
-- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/soq settings`, back to own mark
+- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/soc settings`, back to own mark
 
 </details>
 
@@ -129,26 +129,26 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.6 Renamed to Standing Orders: Quartermaster</b> (#19, #20) · open · 0 / 3</summary>
+<summary><b>2.2.6 Renamed from Faves</b> (#19, #20) · open · 0 / 3</summary>
 
-- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Quartermaster"); none say "Faves"
-- [ ] 2.2.6.2 `/soq` and `/soq help` work; `/faves` is gone (the game answers with its unknown-command line)
-- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Quartermaster once, with the ledger icon, and no Faves (the old folder is in `_forever_\AddOns-backup`)
+- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Custodian"); none say "Faves"
+- [ ] 2.2.6.2 `/soc` and `/soc help` work; `/faves` is gone (the game answers with its unknown-command line)
+- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, and no Faves (the old folder is in `_forever_\AddOns-backup`)
 
 </details>
 
 <details open>
-<summary><b>2.2.7 Quartermaster icon</b> (#21) · open · 0 / 1</summary>
+<summary><b>2.2.7 Custodian icon</b> (#21) · open · 0 / 1</summary>
 
 - [ ] 2.2.7.1 Covered by 2.1.3 and 2.2.6.4 (the ledger icon in the AddOn List) `auto validated · same rows`
 
 </details>
 
 <details open>
-<summary><b>2.2.8 The icon on Quartermaster's windows</b> (#22) · open · 0 / 3</summary>
+<summary><b>2.2.8 The icon on Custodian's windows</b> (#22) · open · 0 / 3</summary>
 
-- [ ] 2.2.8.1 `/soq settings`: the ledger icon sits left of the "Standing Orders: Quartermaster" title
-- [ ] 2.2.8.2 `/soq intro`: a small ledger icon sits left of the window title
+- [ ] 2.2.8.1 `/soc settings`: the ledger icon sits left of the "Standing Orders: Custodian" title
+- [ ] 2.2.8.2 `/soc intro`: a small ledger icon sits left of the window title
 - [ ] 2.2.8.3 (Deferred with Confirm) Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
 
 </details>
@@ -163,7 +163,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.10 Disenchant guard without protected calls</b> (#25) · open · 0 / 1</summary>
 
-- [ ] 2.2.10.1 After `TESTING.md` 4.1–4.6 pass again on this build, `/soq selftest` passes and BugSack has no `ADDON_ACTION_FORBIDDEN` from Quartermaster; `/soq log` names spells and says just "item" for item uses `auto validated · green.js --game`
+- [ ] 2.2.10.1 After `TESTING.md` 4.1–4.6 pass again on this build, `/soc selftest` passes and BugSack has no `ADDON_ACTION_FORBIDDEN` from Custodian; `/soc log` names spells and says just "item" for item uses `auto validated · green.js --game`
 
 </details>
 
@@ -177,21 +177,31 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.12 The intro button fits its label</b> (#28) · open · 0 / 1</summary>
 
-- [ ] 2.2.12.1 `/soq settings`: the "What Standing Orders protects" button shows its whole label (try a larger UI scale too), and clicking it opens the intro
+- [ ] 2.2.12.1 `/soc settings`: the "What Standing Orders protects" button shows its whole label (try a larger UI scale too), and clicking it opens the intro
 
 </details>
 
 <details open>
 <summary><b>2.2.13 The settings panel scrolls</b> (#30) · open · 0 / 1</summary>
 
-- [ ] 2.2.13.1 `/soq settings`: nothing spills past the bottom of the settings window; scroll down to reach the equipment set rows; the opacity text (e.g. "70% opaque (30% see-through)") fits on one line
+- [ ] 2.2.13.1 `/soc settings`: nothing spills past the bottom of the settings window; scroll down to reach the equipment set rows; the opacity text (e.g. "70% opaque (30% see-through)") fits on one line
 
 </details>
 
 <details open>
 <summary><b>2.2.14 Confirm held back for a later version</b> (#35) · open · 0 / 1</summary>
 
-- [ ] 2.2.14.1 Confirm is nowhere: Alt+Click steps Normal > Locked, `/soq confirm <item>` and `/soq set <name> confirm` say it's coming later, the settings dropdowns have no Confirm, and `/soq help` doesn't list it; an item you marked Confirm before shows Locked (tooltip and key icon) and is blocked like Locked
+- [ ] 2.2.14.1 Confirm is nowhere: Alt+Click steps Normal > Locked, `/soc confirm <item>` and `/soc set <name> confirm` say it's coming later, the settings dropdowns have no Confirm, and `/soc help` doesn't list it; an item you marked Confirm before shows Locked (tooltip and key icon) and is blocked like Locked
+
+</details>
+
+<details open>
+<summary><b>2.2.15 Renamed to Standing Orders: Custodian</b> (#37) · open · 0 / 4</summary>
+
+- [ ] 2.2.15.1 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, and no Quartermaster (the old folder is in `_forever_\AddOns-backup`)
+- [ ] 2.2.15.2 `/soc` and `/soc help` work and `/soq` is gone (the game answers with its unknown-command line); the settings panel, Esc > Options > AddOns and the intro say "Standing Orders: Custodian" or "Standing Orders", never "Quartermaster"
+- [ ] 2.2.15.3 Your marks, mark icon settings and equipment set choices are all still there (`/soc list`, `/soc sets`, the icons in your bags): Claude moved the saved data over from Quartermaster's files
+- [ ] 2.2.15.4 `/soc selftest` passes and BugSack has no errors from `StandingOrders_Custodian` `auto validated · green.js --game`
 
 </details>
 
@@ -206,20 +216,20 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>3 Deploy</b> · 0 / 29</summary>
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
-- [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
+- [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Custodian/StandingOrders_Custodian.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
 - [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond)
 - [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel)
 - [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags
-- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soq settings` scrolled to the top
-- [ ] 3.3.5 Shot `equipment-sets`: `/soq settings` scrolled to Equipment sets, with a set's dropdown open
+- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soc settings` scrolled to the top
+- [ ] 3.3.5 Shot `equipment-sets`: `/soc settings` scrolled to Equipment sets, with a set's dropdown open
 - [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart)
-- [ ] 3.3.7 Shot `intro`: `/soq intro`
+- [ ] 3.3.7 Shot `intro`: `/soc intro`
 - [ ] 3.3.8 Claude takes the new files from `_forever_\Screenshots`, crops them, hides every name, saves them as `docs/screenshots/<shot>.png` and adds them to `docs/listing.md`; you check each picture `auto executed · when you say the shots are done`
 - [ ] 3.3 You review the listing: name, summary, first lines of the description, categories and screenshots, side by side with two or three similar addons, with every character name hidden, and say it's good
 - [ ] 3.4 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated · prep`
 - [ ] 3.5 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after prep passes` `auto validated · git tag`
-- [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
-- [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
+- [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Custodian-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
+- [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Custodian-<version>.zip`; log in once; the addon list shows the version; `/soc selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
@@ -231,7 +241,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9.2.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
 - [ ] 3.9.2.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
 - [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
-- [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Quartermaster-0.2.1.zip`; display name `Standing Orders: Quartermaster 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
+- [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Custodian-0.2.1.zip`; display name `Standing Orders: Custodian 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
 - [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-0.2.1.md`
 - [ ] 3.9.5 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 0.2.1
 
@@ -253,8 +263,8 @@ The gate needs zero open problems.
 
 ## What "Mechanic output" means here
 
-- **In-game (installed):** `!Mechanic`/`Mechanic` show Quartermaster under Tests (the self-test checks), Console (the guard log) and Errors (BugGrabber). Quartermaster registers only when Mechanic is loaded; without it nothing changes for players.
-- **Saved to disk:** `/soq selftest` saves its results in `StandingOrdersQuartermasterDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
+- **In-game (installed):** `!Mechanic`/`Mechanic` show Custodian under Tests (the self-test checks), Console (the guard log) and Errors (BugGrabber). Custodian registers only when Mechanic is loaded; without it nothing changes for players.
+- **Saved to disk:** `/soc selftest` saves its results in `StandingOrdersCustodianDB.selfTest`. `green.js --game` reads that, `!BugGrabber.lua` and `!Mechanic.lua` from `WTF\Account\<account>\SavedVariables` after a `/reload`.
 - **Mechanic's desktop CLI and MCP (`mech`)** aren't installed on this PC (they need Python 3.10+). If you add them, its `addon.validate`, `addon.lint` (uses `.luacheckrc`) and `addon.output` steps slot into checklist steps 2 and 4.
 
 ## Deploy (step 6)
@@ -262,28 +272,28 @@ The gate needs zero open problems.
 Check before uploading: the TOC's `## Interface:` matches the current Forever build (`/dump (select(4, GetBuildInfo()))`), and the screenshots are current and name-free.
 
 ### CurseForge
-First release only (done for Quartermaster: project 1806484 exists):
+First release only (done for Custodian: project 1806484 exists):
 1. Go to authors.curseforge.com → Create Project → World of Warcraft → Addon.
 2. Fill it in:
-   - **Name:** Standing Orders: Quartermaster (slug `standing-orders-quartermaster`: Standing Orders: Vendor and Mail link to it).
+   - **Name:** Standing Orders: Custodian (renamed from Quartermaster; the slug is still `standing-orders-quartermaster` unless CurseForge lets you change it, and Standing Orders: Vendor and Mail link to that slug).
    - **Summary:** the `.toc` Notes line.
    - **Description:** `docs/curseforge/description.md` (made from `README.md` by `node tools/curseforge-text.js`; rerun it after README changes).
    - **Category:** Bags & Inventory.
    - **License:** MIT.
    - **Logo:** 400×400.
-   - **Source:** `https://github.com/MatthewSokol/StandingOrders-Quartermaster` (only if the repo is public).
-3. Copy the project ID into `StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc` as `## X-Curse-Project-ID: <id>`. Commit that, then rebuild the zip.
+   - **Source:** `https://github.com/MatthewSokol/StandingOrders-Custodian` (only if the repo is public).
+3. Copy the project ID into `StandingOrders_Custodian/StandingOrders_Custodian.toc` as `## X-Curse-Project-ID: <id>`. Commit that, then rebuild the zip.
 
 Every release:
-1. Project → Files → Upload File → `dist/StandingOrders_Quartermaster-<version>.zip`.
+1. Project → Files → Upload File → `dist/StandingOrders_Custodian-<version>.zip`.
 2. Set the details:
-   - **Display name:** `Standing Orders: Quartermaster <version>`.
+   - **Display name:** `Standing Orders: Custodian <version>`.
    - **Release type:** Release (or Beta).
    - **Game version:** the WoW Forever / Interface 16001 entry.
    - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release uses `docs/curseforge/changelog-0.2.1.md`).
 3. Wait for approval (usually minutes to hours), then install it from the CurseForge app on a clean profile and `/reload` once.
 
 ### Other sites (if you choose them)
-- **GitHub release:** `gh release create v<version> dist/StandingOrders_Quartermaster-<version>.zip --notes-file <changelog entry>`. Only if the repo is public.
+- **GitHub release:** `gh release create v<version> dist/StandingOrders_Custodian-<version>.zip --notes-file <changelog entry>`. Only if the repo is public.
 - **Wago Addons** (addons.wago.io → Developer): create the project, then add `## X-Wago-ID: <id>` to the `.toc` and upload the same zip.
 - **WoWInterface:** Upload → new addon. Uses the same zip and changelog.

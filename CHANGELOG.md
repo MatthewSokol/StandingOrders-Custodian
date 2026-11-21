@@ -1,10 +1,14 @@
 # Changelog
 
-All notable changes to Quartermaster. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
+All notable changes to Custodian (Quartermaster before 0.2.1). The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
 follow [Semantic Versioning](https://semver.org/) and come from git tags: each merged change
 gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
+
+### Changed
+
+- **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now).
 
 ### Fixed
 
