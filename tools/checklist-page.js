@@ -32,6 +32,12 @@ function ids(ranges) {
   const list = [];
   for (const r of ranges.split(/,\s*/)) {
     const [a, b = a] = r.split(/[–-]/).map(s => s.trim());
+    // A single sub-row id such as 8.3.1 names just that row (ranges are by whole rows: 8.1–8.8).
+    if (a === b && a.split(".").length > 2) {
+      if (!testing[a]) throw new Error("no TESTING.md row " + a);
+      list.push(a);
+      continue;
+    }
     const sec = a.split(".")[0], from = Number(a.split(".")[1]), to = Number(b.split(".")[1]);
     const before = list.length;
     // Rows dropped from TESTING.md leave gaps in a range; skip them, but a range must name at least one row.
