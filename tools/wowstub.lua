@@ -1,5 +1,5 @@
--- Minimal WoW API stubs to load Quartermaster and drive it from tools/smoke.lua. Only what Quartermaster touches.
--- Events Quartermaster registers without pcall must be listed here: an unknown event throws in the real game
+-- Minimal WoW API stubs to load Custodian and drive it from tools/smoke.lua. Only what Custodian touches.
+-- Events Custodian registers without pcall must be listed here: an unknown event throws in the real game
 -- and stops the file loading, so add one only after checking it exists on Forever.
 KNOWN_EVENTS = {
   ADDON_LOADED = true, PLAYER_LOGIN = true, MERCHANT_SHOW = true, MERCHANT_CLOSED = true, MERCHANT_UPDATE = true,
@@ -218,13 +218,13 @@ C_EquipmentSet = {
 }
 
 -- Baganator freezes the mixin it copies onto each live bag button, so hooking the mixin itself must fail here
--- too; Quartermaster gets the buttons from Baganator's skin API (smoke.lua's Baganator stub) instead.
+-- too; Custodian gets the buttons from Baganator's skin API (smoke.lua's Baganator stub) instead.
 BaganatorClassicLiveContainerItemButtonMixin = setmetatable({}, {
   __index = { SetItemDetails = function() end },
   __newindex = function() error("attempted to perform indexed assignment on a frozen table", 2) end,
 })
 
--- Everything else Quartermaster calls
+-- Everything else Custodian calls
 hooksecurefunc = function(t, name, fn)
   if type(t) == "string" then t, name, fn = _G, t, name end
   local orig = t[name]
@@ -255,7 +255,7 @@ SlashCmdList = {}
 date = os.date
 C_AddOns = { GetAddOnMetadata = function(_, key) return key == "Version" and "test" or nil end, IsAddOnLoaded = function() return false end }
 
--- Reads of globals the game doesn't have are fine (Quartermaster checks for them); remember them for the report.
+-- Reads of globals the game doesn't have are fine (Custodian checks for them); remember them for the report.
 UNDEFINED = {}
 setmetatable(_G, { __index = function(_, k) UNDEFINED[k] = true end })
 function LOADFILE(src, name, addon)

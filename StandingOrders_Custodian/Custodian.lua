@@ -1,21 +1,24 @@
--- Quartermaster: per-item protection levels that every item-losing action (selling, disenchanting,
+-- Custodian: per-item protection levels that every item-losing action (selling, disenchanting,
 -- destroying, trading, mailing) honors.
 --
 -- Levels (stored per item ID, account wide):
 --   Junk     safe to get rid of (Standing Orders: Vendor sells these automatically when a vendor opens)
 --   Mail     to be mailed to a bank character (for a mailing addon; Standing Orders: Vendor never sells these).
---   Auto-marks (on by default, /soq settings): grays and useless whites become Junk, crafting
+--   Auto-marks (on by default, /soc settings): grays and useless whites become Junk, crafting
 --   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
 --   Normal   the default, stored as nil
 --   Confirm  "temp hold": stopped like Locked, then a window asks whether to allow the action once
 --   Locked   never sold, disenchanted, destroyed, traded or mailed until you lower it
 --   On me    "Always on me": Locked, and also kept out of the bank (moved straight back to your bags)
 --
--- Other addons: StandingOrdersQuartermaster.GetLevel(itemID), StandingOrdersQuartermaster.IsLocked(itemID), StandingOrdersQuartermaster.LEVELS, and
--- StandingOrdersQuartermaster.Guard(itemID, link, action), which shows the error and returns true when the action must stop.
+-- Other addons: StandingOrdersCustodian.GetLevel(itemID), StandingOrdersCustodian.IsLocked(itemID), StandingOrdersCustodian.LEVELS, and
+-- StandingOrdersCustodian.Guard(itemID, link, action), which shows the error and returns true when the action must stop.
 
 local ADDON = ...
 local KS = {}
+_G.StandingOrdersCustodian = KS
+-- Its name before 0.2.1 (Standing Orders: Quartermaster). Standing Orders: Vendor, Mail and the Standing Orders
+-- config addon still look for this one until they're updated; drop it once none of them do.
 _G.StandingOrdersQuartermaster = KS
 -- The addon icon (Icon.tga, the ledger): the AddOn List, the settings panel, the intro and the hold window.
 KS.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Icon"
@@ -74,8 +77,8 @@ local function Debug(msg, ...)
   if db and db.debug then Print("|cff888888[debug]|r " .. msg, ...) end
 end
 
--- Always-on log of guard decisions, kept in SavedVariables (StandingOrdersQuartermasterDB.log) so a miss can be
--- diagnosed after /reload. Also echoed to chat with /soq debug.
+-- Always-on log of guard decisions, kept in SavedVariables (StandingOrdersCustodianDB.log) so a miss can be
+-- diagnosed after /reload. Also echoed to chat with /soc debug.
 local function Log(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
   if db then
@@ -105,9 +108,9 @@ KS.LevelText = LevelText
 ---------------------------------------------------------------------------------------------------
 -- Levels and the guard every action goes through
 
--- Marks are account wide (StandingOrdersQuartermasterDB.items) or for one character (StandingOrdersQuartermasterCharDB.items). A character mark
+-- Marks are account wide (StandingOrdersCustodianDB.items) or for one character (StandingOrdersCustodianCharDB.items). A character mark
 -- wins, so a character can also override an account-wide mark (stored as Normal to clear it there).
-local cdb -- StandingOrdersQuartermasterCharDB
+local cdb -- StandingOrdersCustodianCharDB
 local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set name (see Equipment sets)
 
 function KS.GetLevel(id)
@@ -123,7 +126,7 @@ function KS.GetItemScope(id)
   if id and db and db.items[id] then return "account" end
 end
 
--- Where new marks go (Alt+Click, /soq <level> <item>): "account" (default) or "char".
+-- Where new marks go (Alt+Click, /soc <level> <item>): "account" (default) or "char".
 function KS.GetScope() return (db and db.scope) or "account" end
 function KS.SetScope(scope)
   db.scope = (scope == "char") and "char" or "account"
@@ -141,12 +144,12 @@ local RefreshBags -- defined with the bag hooks below
 -- Per-character items: consumables, spell reagents (ankhs, feathers, powders...) and trade goods that
 -- vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of
 -- these, so they're never auto-marked, and a mark on one stays on that character unless you ask for
--- all characters (/soq <level> <item> account, or Alt+Shift+Left-click).
+-- all characters (/soc <level> <item> account, or Alt+Shift+Left-click).
 local ITEM_CLASS = (Enum and Enum.ItemClass) or {}
 local CLASS_CONSUMABLE = ITEM_CLASS.Consumable or 0
 local CLASS_REAGENT = ITEM_CLASS.Reagent or 5
 local CLASS_TRADEGOODS = ITEM_CLASS.Tradegoods or 7
--- Vendor trade goods known up front; the rest are learned from every vendor you open (StandingOrdersQuartermasterDB.vendorMats).
+-- Vendor trade goods known up front; the rest are learned from every vendor you open (StandingOrdersCustodianDB.vendorMats).
 local VENDOR_MATS = {}
 for _, id in ipairs({
   2320, 2321, 4291, 8343, 14341,             -- Coarse, Fine, Silken, Heavy Silken, Rune Thread
@@ -191,7 +194,7 @@ function KS.SetLevel(id, level, link, opts)
   if not opts.quiet then
     Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
     if KS.GetLevel(id) > level and setNameOf[id] then
-      Print("It stays %s while it's in the equipment set \"%s\" (/soq sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
+      Print("It stays %s while it's in the equipment set \"%s\" (/soc sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
     end
   end
   RefreshBags()
@@ -217,7 +220,7 @@ function KS.ToggleItemScope(id, link)
 end
 
 -- The one check for any action that would lose an item. Returns true (and shows the error) when the
--- item is locked, so callers just do: if StandingOrdersQuartermaster.Guard(id, link, "sell") then <undo or block> end
+-- item is locked, so callers just do: if StandingOrdersCustodian.Guard(id, link, "sell") then <undo or block> end
 -- Some actions are only blocked at higher levels (banking: Always on me only).
 -- Confirm ("temp hold") items: the action is still stopped first, then a window asks whether to allow
 -- it once. "Allow once" gives the item a pass and you do the action again. A pass is used up by one
@@ -248,7 +251,7 @@ end
 
 local function AskToAllow(id, link, action)
   if not (StaticPopupDialogs and StaticPopup_Show) then return end
-  StaticPopupDialogs.SOQ_CONFIRM = StaticPopupDialogs.SOQ_CONFIRM or {
+  StaticPopupDialogs.SOC_CONFIRM = StaticPopupDialogs.SOC_CONFIRM or {
     text = "|T" .. KS.ICON .. ":32:32|t\n%s is on hold.\n\nAllow it to be %s once? Then do it again.", -- pipes:ok (an inline texture)
     button1 = "Allow once", button2 = "Keep it",
     OnAccept = function(_, data)
@@ -258,7 +261,7 @@ local function AskToAllow(id, link, action)
     end,
     timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
   }
-  StaticPopup_Show("SOQ_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
+  StaticPopup_Show("SOC_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
 end
 
 function KS.Guard(id, link, action)
@@ -271,7 +274,7 @@ function KS.Guard(id, link, action)
     AskToAllow(id, link, action)
   else
     local how = (action == "bank") and "Lower it to Locked to bank it (Alt+Right-click it in your bags)"
-      or ("Lower it to Normal to %s it (Alt+Right-click it in your bags, or /soq normal <item>)"):format(action)
+      or ("Lower it to Normal to %s it (Alt+Right-click it in your bags, or /soc normal <item>)"):format(action)
     Err(("%s is %s. %s."):format(link, NAMES[level], how))
   end
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
@@ -279,7 +282,7 @@ function KS.Guard(id, link, action)
 end
 KS.HasPass = function(id) return UsePass(id, nil, true) end
 
--- One-time move of levels kept by SellAll 1.0 betas (SellAllDB.items). Existing Quartermaster levels win.
+-- One-time move of levels kept by SellAll 1.0 betas (SellAllDB.items). Existing Custodian levels win.
 -- Returns how many items were brought over.
 function KS.ImportLevels(items)
   if type(items) ~= "table" or not db then return 0 end
@@ -300,7 +303,7 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Equipment sets: every item in one of this character's equipment sets (the game's equipment manager)
 -- is protected at that set's level: Confirm, Locked or Always on me. Each set uses its own choice
--- (StandingOrdersQuartermasterCharDB.sets[setID]) or the default for sets (StandingOrdersQuartermasterDB.setDefault, Locked unless changed); "off"
+-- (StandingOrdersCustodianCharDB.sets[setID]) or the default for sets (StandingOrdersCustodianDB.setDefault, Locked unless changed); "off"
 -- turns it off. It's a layer on top of marks: an item's level is the higher of its mark and its sets',
 -- and an item taken out of a set loses that protection by itself. Marks are never written.
 
@@ -368,7 +371,7 @@ local function ListSets()
   for _, set in ipairs(sets) do print(("  %s: %s"):format(set.name, KS.SetChoiceText(KS.GetSetChoice(set.id)))) end
 end
 
--- /soq sets [default] <confirm||lock||onme||off> or /soq set <name> <default||confirm||lock||onme||off>
+-- /soc sets [default] <confirm||lock||onme||off> or /soc set <name> <default||confirm||lock||onme||off>
 local function SetsCommand(rest)
   local target, word = rest:match("^(.-)%s*(%a+)$")
   local w = word and word:lower()
@@ -388,7 +391,7 @@ local function SetsCommand(rest)
       return Print("Equipment set \"%s\": %s.", set.name, KS.SetChoiceText(choice))
     end
   end
-  Err(("No equipment set called \"%s\" on this character (/soq sets lists them)."):format(target))
+  Err(("No equipment set called \"%s\" on this character (/soc sets lists them)."):format(target))
 end
 KS.SetsCommand = SetsCommand
 
@@ -717,7 +720,7 @@ end
 local hooked = setmetatable({}, { __mode = "k" })
 local hookedCount = 0
 
--- Bag addons (Adapters.lua): each adapter hands Quartermaster another bag addon's item buttons and answers, per
+-- Bag addons (Adapters.lua): each adapter hands Custodian another bag addon's item buttons and answers, per
 -- button, which real bag and slot it shows, or nil when that view isn't live or can't be trusted.
 -- An adapter is { name, loaded = fn() -> bool, hook = fn(add), slot = fn(btn) -> bag, slot }.
 local bagAddons = {}
@@ -731,7 +734,7 @@ local function ButtonSlot(btn)
 end
 
 -- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
--- they don't hide counts and other addons' text. Account-wide (StandingOrdersQuartermasterDB.icon).
+-- they don't hide counts and other addons' text. Account-wide (StandingOrdersCustodianDB.icon).
 -- size: the icon's side as a % of the item button's width (40% of the width covers 16% of the area).
 local ICON_DEFAULTS = { size = 40, anchor = "BOTTOMLEFT", alpha = 75 }
 local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENTER" }
@@ -1049,7 +1052,7 @@ local function OnSpellcastSent(target, spellID)
         Log("MISSED: %s is %s but the cast went through. targeting kind %s, blockers %s, record %s",
           info.hyperlink, NAMES[KS.GetLevel(info.itemID)], (TargetingKind()), tostring(anyBlocker),
           castRecord and (castRecord.kind .. " " .. tostring(castRecord.name or castRecord.id)) or "none")
-        Err(("Standing Orders couldn't stop this cast on %s. Details are in /soq log.")
+        Err(("Standing Orders couldn't stop this cast on %s. Details are in /soc log.")
           :format(info.hyperlink))
         return
       end
@@ -1059,7 +1062,7 @@ end
 
 ---------------------------------------------------------------------------------------------------
 -- Auto-marks. Unmarked items in your bags get a level by these rules (each can be turned off in
--- /soq settings):
+-- /soc settings):
 --   gray                                        -> Junk
 --   white with no profession or quest use        -> Junk  (gear, weapons, gray-ish junk)
 --   crafting materials (white and up, unbound)   -> Mail on this character, when none of its
@@ -1068,9 +1071,9 @@ end
 -- Quest items, consumables, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
 -- anything VendorFlip is holding to flip. Items you got on purpose (traded to you, bought on the AH or
 -- from a vendor, or mailed to you by a player) are left alone on the character that got them.
--- Each item ID is only decided once (StandingOrdersQuartermasterDB.autoSeen), so a level you change by hand stays.
+-- Each item ID is only decided once (StandingOrdersCustodianDB.autoSeen), so a level you change by hand stays.
 
-KS.AUTO_MARKS = true -- Standing Orders: Vendor checks this and leaves auto-marking to Quartermaster
+KS.AUTO_MARKS = true -- Standing Orders: Vendor checks this and leaves auto-marking to Custodian
 
 local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, boeMail = true, matsMail = true, keepReceived = true }
 local AUTO_KEYS = { "grayJunk", "whiteJunk", "boeMail", "matsMail", "keepReceived" }
@@ -1103,7 +1106,7 @@ end
 
 ---------------------------------------------------------------------------------------------------
 -- Professions: which crafting materials this character uses. The reliable answer is the reagents of
--- the recipes it knows, read whenever one of its profession windows opens (StandingOrdersQuartermasterCharDB.recipeMats).
+-- the recipes it knows, read whenever one of its profession windows opens (StandingOrdersCustodianCharDB.recipeMats).
 -- For a profession whose window hasn't been opened yet, the item's kind is used as a guess; when the
 -- kind can't tell, the item waits. Enchanting materials are never auto-marked.
 
@@ -1464,10 +1467,10 @@ local function AutoMark()
       local shown = table.concat(list, ", ", 1, math.min(#list, 5))
       if #list > 5 then shown = shown .. (" and %d more"):format(#list - 5) end
       if key == "here" then
-        Print("Marked as %s on this character (none of your professions use them): %s. (/soq settings)",
+        Print("Marked as %s on this character (none of your professions use them): %s. (/soc settings)",
           LevelText(MAIL), shown)
       else
-        Print("Marked as %s: %s. (/soq settings to change this)", LevelText(key), shown)
+        Print("Marked as %s: %s. (/soc settings to change this)", LevelText(key), shown)
       end
       Log("auto-marked %d items as %s", #list, key == "here" and "Mail (this character)" or NAMES[key])
     end
@@ -1525,7 +1528,7 @@ local function HookReceipts()
 end
 
 ---------------------------------------------------------------------------------------------------
--- Settings panel (/soq settings, or Esc > Options > AddOns > Quartermaster)
+-- Settings panel (/soc settings, or Esc > Options > AddOns > Custodian)
 
 local category
 local refreshers = {}
@@ -1594,8 +1597,8 @@ local AUTO_TEXT = {
 local function CreatePanel()
   -- The settings page is a fixed-size canvas, so everything sits in a scroll frame: `outer` is what
   -- the game shows, `panel` is the scrolling content (sized to fit by FitPanel below).
-  local outer = CreateFrame("Frame", "SOQuartermasterSettings")
-  outer.name = "Standing Orders: Quartermaster"
+  local outer = CreateFrame("Frame", "SOCustodianSettings")
+  outer.name = "Standing Orders: Custodian"
   local scroll = CreateFrame("ScrollFrame", nil, outer, "UIPanelScrollFrameTemplate")
   scroll:SetPoint("TOPLEFT", 0, -4)
   scroll:SetPoint("BOTTOMRIGHT", -28, 4)
@@ -1611,7 +1614,7 @@ local function CreatePanel()
 
   local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   title:SetPoint("LEFT", panel.icon, "RIGHT", 8, 0)
-  title:SetText("Standing Orders: Quartermaster")
+  title:SetText("Standing Orders: Custodian")
 
   local prev = Header(panel, "Auto-mark items in your bags", title, -16)
   local first = true
@@ -1623,9 +1626,9 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Quartermaster knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
-  prev = Header(panel, "New marks (Alt+Click, /soq <level>)", prev)
+  prev = Header(panel, "New marks (Alt+Click, /soc <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
     KS.SetScope("account")
     RefreshPanel()
@@ -1818,9 +1821,9 @@ local INTRO_TEXT = table.concat({
   "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
   "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor).",
   "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character (Standing Orders: Mail, coming soon, will mail them).",
-  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /soq settings.",
+  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /soc settings.",
   "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
-  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soq scope char makes that the default.",
+  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.",
   "",
   "|cff33ff99Protected against|r",
   "- Selling it: it's bought straight back while the vendor is open",
@@ -1843,7 +1846,7 @@ local intro
 
 function KS:ShowIntro()
   if not intro then
-    intro = CreateFrame("Frame", "SOQuartermasterIntro", UIParent, "BasicFrameTemplateWithInset")
+    intro = CreateFrame("Frame", "SOCustodianIntro", UIParent, "BasicFrameTemplateWithInset")
     intro:SetPoint("CENTER")
     intro:SetFrameStrata("DIALOG")
     intro:SetClampedToScreen(true)
@@ -1875,19 +1878,19 @@ function KS:ShowIntro()
     ok:SetScript("OnClick", function()
       db.introSeen = INTRO_VERSION
       intro:Hide()
-      Print("You can reopen this with /soq intro.")
+      Print("You can reopen this with /soc intro.")
     end)
 
     intro:SetSize(480, body:GetStringHeight() + 38 + 54)
-    tinsert(UISpecialFrames, "SOQuartermasterIntro") -- Esc closes it (it shows again next login until "Got it")
+    tinsert(UISpecialFrames, "SOCustodianIntro") -- Esc closes it (it shows again next login until "Got it")
   end
   intro:Show()
 end
 
 ---------------------------------------------------------------------------------------------------
--- Self-tests and Mechanic. /soq selftest runs read-only checks of this install and saves them in
--- StandingOrdersQuartermasterDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
--- is installed (optional, never required: !Mechanic), Quartermaster also registers with it, so the checks show
+-- Self-tests and Mechanic. /soc selftest runs read-only checks of this install and saves them in
+-- StandingOrdersCustodianDB.selfTest (readable from the SavedVariables file after /reload). When the Mechanic dev tool
+-- is installed (optional, never required: !Mechanic), Custodian also registers with it, so the checks show
 -- in its Tests tab and the guard log in its Console. Nothing here changes marks or moves items.
 
 local VERSION = (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version"))
@@ -1988,7 +1991,7 @@ local TESTS = {
     end
     return Result(d)
   end },
-  { id = "errors", name = "No Standing Orders: Quartermaster Lua errors", run = function()
+  { id = "errors", name = "No Standing Orders: Custodian Lua errors", run = function()
     local d = {}
     local bg = _G.BugGrabber
     if not (bg and bg.GetDB) then
@@ -1998,12 +2001,12 @@ local TESTS = {
     local n, first = 0, nil
     for _, err in ipairs(bg:GetDB() or {}) do
       local text = tostring(err.message) .. tostring(err.stack)
-      if text:find("StandingOrders_Quartermaster[/\\]") then
+      if text:find("StandingOrders_Custodian[/\\]") then
         n = n + 1
         first = first or tostring(err.message)
       end
     end
-    d[#d + 1] = Detail("errors from Quartermaster files", n, n == 0 and "pass" or "fail")
+    d[#d + 1] = Detail("errors from Custodian files", n, n == 0 and "pass" or "fail")
     if first then d[#d + 1] = Detail("first", first:sub(1, 200), "fail") end
     return Result(d)
   end },
@@ -2053,14 +2056,14 @@ local function RegisterMechanic()
   if not (ML and ML.Register) then return end
   mechanic = ML
   local defs = {}
-  for _, t in ipairs(TESTS) do defs[#defs + 1] = { id = t.id, name = t.name, category = "Standing Orders: Quartermaster" } end
+  for _, t in ipairs(TESTS) do defs[#defs + 1] = { id = t.id, name = t.name, category = "Standing Orders: Custodian" } end
   ML:Register(ADDON, {
     version = VERSION,
     getDebugBuffer = function() return db and db.log or {} end,
     clearDebugBuffer = function() if db then db.log = {} end end,
     tests = {
       getAll = function() return defs end,
-      getCategories = function() return { "Standing Orders: Quartermaster" } end,
+      getCategories = function() return { "Standing Orders: Custodian" } end,
       run = RunTest,
       -- MechanicLib expects runAll to return passed, total.
       runAll = function()
@@ -2081,7 +2084,7 @@ local function RegisterMechanic()
     },
   })
   Log("registered with Mechanic")
-  -- With Mechanic there, every session's self-test results are saved (StandingOrdersQuartermasterDB.selfTest) for the gate.
+  -- With Mechanic there, every session's self-test results are saved (StandingOrdersCustodianDB.selfTest) for the gate.
   KS.SelfTest(true)
 end
 
@@ -2105,7 +2108,7 @@ end
 
 local ANCHOR_WORDS = { bottomleft = "BOTTOMLEFT", topleft = "TOPLEFT", topright = "TOPRIGHT", bottomright = "BOTTOMRIGHT", center = "CENTER" }
 
--- /soq icon [size <percent> | position <corner or center> | opacity <percent> | reset]
+-- /soc icon [size <percent> | position <corner or center> | opacity <percent> | reset]
 local function IconCommand(rest)
   local key, value = rest:lower():match("^(%a*)%s*(%S*)$")
   local ok = key ~= nil
@@ -2115,24 +2118,24 @@ local function IconCommand(rest)
   elseif key == "reset" then
     for k, v in pairs(ICON_DEFAULTS) do KS.SetIconStyle(k, v) end
   elseif key ~= "" then ok = false end
-  if not ok then return Err("Use /soq icon size 10-100, /soq icon position bottomleft||topleft||topright||bottomright||center, /soq icon opacity 10-100 or /soq icon reset.") end
+  if not ok then return Err("Use /soc icon size 10-100, /soc icon position bottomleft||topleft||topright||bottomright||center, /soc icon opacity 10-100 or /soc icon reset.") end
   local size, anchor, alpha = KS.GetIconStyle()
   Print("Mark icons: %d%% of the button's width, %s, %d%% opaque.", size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
 end
 
 local function Help()
   Print("Commands:")
-  print("  /soq junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
-  print("  /soq list - show marked items")
-  print("  /soq sets - equipment sets and how they protect their items; /soq set <name> default||lock||onme||off")
-  print("  /soq scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
-  print("  /soq settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
-  print("  /soq icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
-  print("  /soq status - check which guards are active")
-  print("  /soq intro - what Locked protects (and what it doesn't yet)")
-  print("  /soq log [n] - show the last n guard log lines (default 25)")
-  print("  /soq debug - toggle debug messages")
-  print("  /soq selftest - check this install (results are saved for bug reports)")
+  print("  /soc junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
+  print("  /soc list - show marked items")
+  print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
+  print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
+  print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
+  print("  /soc status - check which guards are active")
+  print("  /soc intro - what Locked protects (and what it doesn't yet)")
+  print("  /soc log [n] - show the last n guard log lines (default 25)")
+  print("  /soc debug - toggle debug messages")
+  print("  /soc selftest - check this install (results are saved for bug reports)")
   print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it,")
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
 end
@@ -2141,7 +2144,7 @@ local function Status()
   Print("Status:")
   local on = {}
   for _, key in ipairs(AUTO_KEYS) do if KS.GetAuto(key) then on[#on + 1] = key end end
-  print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/soq settings)")
+  print("  auto-marks on: " .. (#on > 0 and table.concat(on, ", ") or "none") .. " (/soc settings)")
   local profs, parts = MyProfessions() or {}, {}
   for name in pairs(cdb.scanned) do profs[name] = true end
   for name in pairs(profs) do parts[#parts + 1] = name .. (cdb.scanned[name] and "" or " (open its window once)") end
@@ -2166,8 +2169,8 @@ end
 local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 if CONFIRM_ENABLED then LEVEL_CMDS.confirm = CONFIRM end
 
-SLASH_SOQ1 = "/soq"
-SlashCmdList.SOQ = function(msg)
+SLASH_SOC1 = "/soc"
+SlashCmdList.SOC = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
   if cmd == "confirm" and not CONFIRM_ENABLED then
@@ -2244,11 +2247,11 @@ f:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 
 f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
   if event == "ADDON_LOADED" and arg1 == ADDON then
-    StandingOrdersQuartermasterDB = StandingOrdersQuartermasterDB or {}
-    db = StandingOrdersQuartermasterDB
+    StandingOrdersCustodianDB = StandingOrdersCustodianDB or {}
+    db = StandingOrdersCustodianDB
     db.items = db.items or {}
-    StandingOrdersQuartermasterCharDB = StandingOrdersQuartermasterCharDB or {}
-    cdb = StandingOrdersQuartermasterCharDB
+    StandingOrdersCustodianCharDB = StandingOrdersCustodianCharDB or {}
+    cdb = StandingOrdersCustodianCharDB
     cdb.items = cdb.items or {}
     db.vendorMats = db.vendorMats or {}  -- trade goods seen on a vendor: per-character items
     cdb.autoSeen = cdb.autoSeen or {}     -- item IDs decided for this character only

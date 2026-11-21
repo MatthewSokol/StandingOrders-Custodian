@@ -1,16 +1,16 @@
 ## Interface: 16001
-## Title: Standing Orders: Quartermaster
+## Title: Standing Orders: Custodian
 ## Notes: Mark items Junk, Mail, Locked or Always on me. Locked items can't be sold, disenchanted, destroyed, traded or mailed by accident; Always on me items also stay out of the bank.
 ## Author: MatthewSokol
 ## Version: @project-version@
-## SavedVariables: StandingOrdersQuartermasterDB
-## SavedVariablesPerCharacter: StandingOrdersQuartermasterCharDB
+## SavedVariables: StandingOrdersCustodianDB
+## SavedVariablesPerCharacter: StandingOrdersCustodianCharDB
 ## OptionalDeps: !Mechanic
-## IconTexture: Interface\AddOns\StandingOrders_Quartermaster\Icon
+## IconTexture: Interface\AddOns\StandingOrders_Custodian\Icon
 ## Category: Inventory
-## X-Website: https://github.com/MatthewSokol/StandingOrders-Quartermaster
+## X-Website: https://github.com/MatthewSokol/StandingOrders-Custodian
 ## X-License: MIT
 ## X-Curse-Project-ID: 1806484
 
-Quartermaster.lua
+Custodian.lua
 Adapters.lua

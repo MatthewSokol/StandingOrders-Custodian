@@ -1,5 +1,5 @@
--- Smoke test: loads Quartermaster with the stubbed API, then walks through its main features and checks the
--- results. Run: node tools/harness.js StandingOrders_Quartermaster "" tools/smoke.lua   (green = no ERROR/FAIL lines)
+-- Smoke test: loads Custodian with the stubbed API, then walks through its main features and checks the
+-- results. Run: node tools/harness.js StandingOrders_Custodian "" tools/smoke.lua   (green = no ERROR/FAIL lines)
 -- Item names below are the game's; nothing here is a character or player name.
 
 STUB_ITEMDB = {
@@ -66,14 +66,16 @@ Baganator = { API = { Skins = {
 Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
 -- An older build's per-character Mail auto-mark on a reagent (seen in game on Light Feathers).
-StandingOrdersQuartermasterCharDB = { items = { [17030] = 1.5 }, autoMarked = { [17030] = 1.5 } }
-FIRE("ADDON_LOADED", "StandingOrders_Quartermaster")
+StandingOrdersCustodianCharDB = { items = { [17030] = 1.5 }, autoMarked = { [17030] = 1.5 } }
+FIRE("ADDON_LOADED", "StandingOrders_Custodian")
 FIRE("PLAYER_LOGIN")
-local KS = StandingOrdersQuartermaster
+local KS = StandingOrdersCustodian
 local L = KS.LEVELS
-CHECK("a per-character auto-mark on a reagent comes off at login", KS.GetLevel(17030) == L.NORMAL and next(StandingOrdersQuartermasterCharDB.autoMarked) == nil, KS.GetLevel(17030))
-CHECK("Quartermaster global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
-CHECK("slash command: /soq only (the old /faves is gone)", SLASH_SOQ1 == "/soq" and SLASH_SOQ2 == nil)
+CHECK("a per-character auto-mark on a reagent comes off at login", KS.GetLevel(17030) == L.NORMAL and next(StandingOrdersCustodianCharDB.autoMarked) == nil, KS.GetLevel(17030))
+CHECK("Custodian global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
+CHECK("the old global still works for Vendor, Mail and the config addon", StandingOrdersQuartermaster == KS)
+CHECK("/soc is the command and /soq is gone", SlashCmdList.SOC ~= nil and SLASH_SOC1 == "/soc" and SlashCmdList.SOQ == nil)
+CHECK("slash command: /soc only (the old /faves is gone)", SLASH_SOC1 == "/soc" and SLASH_SOQ2 == nil)
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
 
 -- Auto-marks on what's in the bags at login
@@ -132,12 +134,12 @@ FIRE("BANKFRAME_CLOSED")
 
 -- Slash commands
 for _, cmd in ipairs({ "help", "list", "status", "settings", "scope char", "scope account", "log 5", "debug", "debug", "intro" }) do
-  CALL("/soq " .. cmd, SlashCmdList.SOQ, cmd)
+  CALL("/soc " .. cmd, SlashCmdList.SOC, cmd)
 end
-CALL("/soq lock <item>", SlashCmdList.SOQ, "lock " .. STUB_LINK(25))
-CHECK("/soq lock sets Locked", KS.GetLevel(25) == L.LOCK, KS.GetLevel(25))
-CALL("/soq mail <id> char", SlashCmdList.SOQ, "mail 25 char")
-CHECK("/soq mail ... char marks this character", KS.GetLevel(25) == L.MAIL and KS.GetItemScope(25) == "char")
+CALL("/soc lock <item>", SlashCmdList.SOC, "lock " .. STUB_LINK(25))
+CHECK("/soc lock sets Locked", KS.GetLevel(25) == L.LOCK, KS.GetLevel(25))
+CALL("/soc mail <id> char", SlashCmdList.SOC, "mail 25 char")
+CHECK("/soc mail ... char marks this character", KS.GetLevel(25) == L.MAIL and KS.GetItemScope(25) == "char")
 
 -- Self-test and Mechanic (with a stand-in MechanicLib)
 local registered
@@ -147,9 +149,9 @@ LibStub = function(name) if name == "MechanicLib-1.0" then return {
 } end end
 FIRE("PLAYER_LOGIN") -- registers again now that MechanicLib is here (hooks are idempotent enough for a stub)
 RUN_TIMERS()
-CHECK("registered with Mechanic", registered and registered.addon == "StandingOrders_Quartermaster" and registered.caps.tests ~= nil)
+CHECK("registered with Mechanic", registered and registered.addon == "StandingOrders_Custodian" and registered.caps.tests ~= nil)
 if registered then
-  CHECK("self-test ran when Mechanic registered", StandingOrdersQuartermasterDB.selfTest ~= nil)
+  CHECK("self-test ran when Mechanic registered", StandingOrdersCustodianDB.selfTest ~= nil)
   local passed, total = registered.caps.tests.runAll()
   CHECK("Mechanic runAll returns passed, total", type(passed) == "number" and total and passed == total, tostring(passed) .. "/" .. tostring(total))
   CHECK("Mechanic getResult runs the test", registered.caps.tests.getResult("levels").passed == true)
@@ -161,8 +163,8 @@ if registered then
     CHECK("self-test " .. t.id .. " passes (" .. tostring(r and r.message) .. ")", r and r.passed)
   end
 end
-CALL("/soq selftest", SlashCmdList.SOQ, "selftest")
-CHECK("self-test saved", StandingOrdersQuartermasterDB.selfTest and StandingOrdersQuartermasterDB.selfTest.passed == true)
+CALL("/soc selftest", SlashCmdList.SOC, "selftest")
+CHECK("self-test saved", StandingOrdersCustodianDB.selfTest and StandingOrdersCustodianDB.selfTest.passed == true)
 
 -- ArkInventory: Alt+Click on a live bag button marks the item in that slot; offline views and buttons
 -- whose item doesn't match the slot are left alone.
@@ -202,8 +204,8 @@ if KS.CONFIRM_ENABLED then
   STUB_TRADE_PLAYER[1] = 2770
   FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
   CHECK("held item taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
-  CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "SOQ_CONFIRM" and STUB_POPUP.a2 == "traded")
-  CALL("Allow once", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
+  CHECK("the hold window asks", STUB_POPUP and STUB_POPUP.which == "SOC_CONFIRM" and STUB_POPUP.a2 == "traded")
+  CALL("Allow once", StaticPopupDialogs.SOC_CONFIRM and StaticPopupDialogs.SOC_CONFIRM.OnAccept, nil, STUB_POPUP and STUB_POPUP.data)
   STUB_TRADE_PLAYER[1] = 2770
   FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
   FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
@@ -213,22 +215,22 @@ if KS.CONFIRM_ENABLED then
   CHECK("the pass ends when the trade closes", STUB_TRADE_PLAYER[1] == nil)
   STUB_POPUP = nil
   CHECK("disenchant stopped without a pass", KS.Guard(2770, nil, "disenchant") == true)
-  CALL("Allow once (disenchant)", StaticPopupDialogs.SOQ_CONFIRM.OnAccept, nil, STUB_POPUP.data)
+  CALL("Allow once (disenchant)", StaticPopupDialogs.SOC_CONFIRM.OnAccept, nil, STUB_POPUP.data)
   CHECK("blocker steps aside for the pass", KS.HasPass(2770))
   CHECK("one disenchant allowed", KS.Guard(2770, nil, "disenchant") == false)
   CHECK("the pass is used up", KS.Guard(2770, nil, "disenchant") == true)
 else
   -- Confirm is held back from the first release: a saved Confirm protects as Locked, nothing offers it.
   KS.SetLevel(2770, L.NORMAL, nil, { quiet = true, scope = "account" })
-  StandingOrdersQuartermasterDB.items[2770] = L.CONFIRM
+  StandingOrdersCustodianDB.items[2770] = L.CONFIRM
   CHECK("a saved Confirm mark counts as Locked", KS.GetLevel(2770) == L.LOCK, KS.GetLevel(2770))
   STUB_POPUP = nil
   CHECK("...and is stopped with no hold window", KS.Guard(2770, nil, "sell") == true and STUB_POPUP == nil)
   CHAT = {}
-  CALL("/soq confirm <item>", SlashCmdList.SOQ, "confirm 2770")
-  CHECK("/soq confirm says it's coming later", CHAT_HAS("later version"), CHAT[1])
+  CALL("/soc confirm <item>", SlashCmdList.SOC, "confirm 2770")
+  CHECK("/soc confirm says it's coming later", CHAT_HAS("later version"), CHAT[1])
   KS.SetLevel(2770, L.CONFIRM, nil, { quiet = true, scope = "account" })
-  CHECK("another addon asking for Confirm gets Locked", StandingOrdersQuartermasterDB.items[2770] == L.LOCK, StandingOrdersQuartermasterDB.items[2770])
+  CHECK("another addon asking for Confirm gets Locked", StandingOrdersCustodianDB.items[2770] == L.LOCK, StandingOrdersCustodianDB.items[2770])
   KS.SetLevel(2770, L.NORMAL, nil, { quiet = true, scope = "account" })
 end
 STUB_POPUP = nil
@@ -245,16 +247,16 @@ CHECK("item in a set is Locked by default", KS.GetLevel(9999) == L.LOCK, KS.GetL
 CHECK("a Mail mark under a set is outranked", KS.GetLevel(15210) == L.LOCK, KS.GetLevel(15210))
 CHECK("ignored slot isn't protected", KS.GetLevel(4306) ~= L.LOCK, KS.GetLevel(4306))
 CHECK("the set is named as the reason", KS.GetSetProtection(9999) == "Tank Gear")
-CALL("/soq set Tank Gear onme", SlashCmdList.SOQ, "set Tank Gear onme")
+CALL("/soc set Tank Gear onme", SlashCmdList.SOC, "set Tank Gear onme")
 CHECK("per-set choice applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 if not KS.CONFIRM_ENABLED then
-  CALL("/soq set Tank Gear confirm", SlashCmdList.SOQ, "set Tank Gear confirm")
+  CALL("/soc set Tank Gear confirm", SlashCmdList.SOC, "set Tank Gear confirm")
   CHECK("a set can't be put on Confirm while it's held back", KS.GetSetChoice(1) == L.ONME, KS.GetSetChoice(1))
 end
-CALL("/soq set Tank Gear off", SlashCmdList.SOQ, "set Tank Gear off")
+CALL("/soc set Tank Gear off", SlashCmdList.SOC, "set Tank Gear off")
 CHECK("set turned off: back to the item's own mark", KS.GetLevel(9999) == L.NORMAL and KS.GetLevel(15210) == L.MAIL)
-CALL("/soq set Tank Gear default", SlashCmdList.SOQ, "set Tank Gear default")
-CALL("/soq sets onme", SlashCmdList.SOQ, "sets onme")
+CALL("/soc set Tank Gear default", SlashCmdList.SOC, "set Tank Gear default")
+CALL("/soc sets onme", SlashCmdList.SOC, "sets onme")
 CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 CHAT = {}
 KS.SetLevel(9999, L.JUNK)
@@ -262,17 +264,17 @@ CHECK("lowering a set item explains it stays protected", CHAT_HAS([[equipment se
 STUB_SETS[1].items[16] = nil
 FIRE("EQUIPMENT_SETS_CHANGED")
 CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))
-CALL("/soq sets", SlashCmdList.SOQ, "sets")
-CALL("/soq sets default lock", SlashCmdList.SOQ, "sets default lock")
+CALL("/soc sets", SlashCmdList.SOC, "sets")
+CALL("/soc sets default lock", SlashCmdList.SOC, "sets default lock")
 CHECK("default back to Locked", KS.GetSetDefault() == L.LOCK)
-CALL("/soq set Nope lock", SlashCmdList.SOQ, "set Nope lock")
+CALL("/soc set Nope lock", SlashCmdList.SOC, "set Nope lock")
 -- The settings panel's equipment set rows: the default first, then each set; each picks its level from a dropdown.
-local panel = SOQuartermasterSettings
-CHECK("icon path is the addon's Icon.tga", KS.ICON == "Interface\\AddOns\\StandingOrders_Quartermaster\\Icon", KS.ICON)
+local panel = SOCustodianSettings
+CHECK("icon path is the addon's Icon.tga", KS.ICON == "Interface\\AddOns\\StandingOrders_Custodian\\Icon", KS.ICON)
 CHECK("settings panel shows the icon", panel and panel.icon ~= nil)
-if KS.CONFIRM_ENABLED then CHECK("hold window text shows the icon", StaticPopupDialogs.SOQ_CONFIRM and StaticPopupDialogs.SOQ_CONFIRM.text:find(KS.ICON, 1, true) ~= nil) end -- the hold window is only made for Confirm
+if KS.CONFIRM_ENABLED then CHECK("hold window text shows the icon", StaticPopupDialogs.SOC_CONFIRM and StaticPopupDialogs.SOC_CONFIRM.text:find(KS.ICON, 1, true) ~= nil) end -- the hold window is only made for Confirm
 CALL("intro", KS.ShowIntro, KS)
-CHECK("intro shows the icon", SOQuartermasterIntro and SOQuartermasterIntro.icon ~= nil)
+CHECK("intro shows the icon", SOCustodianIntro and SOCustodianIntro.icon ~= nil)
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
@@ -298,20 +300,20 @@ if rows[2] then
   KS.SetSetChoice(nil, L.LOCK)
 end
 
--- Mark icons: 40% of the button's width, bottom left, 75% opaque by default; /soq icon and the panel change them.
+-- Mark icons: 40% of the button's width, bottom left, 75% opaque by default; /soc icon and the panel change them.
 local function style() return table.concat({ tostring(KS.GetIconStyle()), select(2, KS.GetIconStyle()), tostring(select(3, KS.GetIconStyle())) }, " ") end
 CHECK("icon style defaults", style() == "40 BOTTOMLEFT 75", style())
 local px, point, ix, iy, a = KS.IconLayout(40)
 CHECK("icon layout on a 40px button", px == 16 and point == "BOTTOMLEFT" and ix == 1 and iy == 1 and a == 0.75, px)
-CALL("/soq icon size 50", SlashCmdList.SOQ, "icon size 50")
-CALL("/soq icon position center", SlashCmdList.SOQ, "icon position center")
-CALL("/soq icon opacity 60", SlashCmdList.SOQ, "icon opacity 60")
-CHECK("/soq icon sets size, position and opacity", style() == "50 CENTER 60", style())
-CALL("/soq icon size 3", SlashCmdList.SOQ, "icon size 3")
+CALL("/soc icon size 50", SlashCmdList.SOC, "icon size 50")
+CALL("/soc icon position center", SlashCmdList.SOC, "icon position center")
+CALL("/soc icon opacity 60", SlashCmdList.SOC, "icon opacity 60")
+CHECK("/soc icon sets size, position and opacity", style() == "50 CENTER 60", style())
+CALL("/soc icon size 3", SlashCmdList.SOC, "icon size 3")
 CHECK("size can't go below 10%", style() == "10 CENTER 60", style())
 CHAT = {}
-CALL("/soq icon position middle", SlashCmdList.SOQ, "icon position middle")
-CHECK("an unknown position is refused and kept", style() == "10 CENTER 60" and CHAT_HAS("/soq icon"), style())
+CALL("/soc icon position middle", SlashCmdList.SOC, "icon position middle")
+CHECK("an unknown position is refused and kept", style() == "10 CENTER 60" and CHAT_HAS("/soc icon"), style())
 local st = panel and panel.iconStyle
 CHECK("settings panel has the mark icon controls", st ~= nil and panel.iconSample ~= nil)
 local ib = panel and panel.introButton
@@ -327,8 +329,8 @@ if st then
   CALL("panel: Opacity -", rawget(st.alphaMinus, "__s_OnClick"), st.alphaMinus)
   CHECK("panel: Size +5, Center -> Bottom left, Opacity -5", style() == "15 BOTTOMLEFT 55", style())
 end
-CALL("/soq icon reset", SlashCmdList.SOQ, "icon reset")
-CHECK("/soq icon reset goes back to the defaults", style() == "40 BOTTOMLEFT 75", style())
+CALL("/soc icon reset", SlashCmdList.SOC, "icon reset")
+CHECK("/soc icon reset goes back to the defaults", style() == "40 BOTTOMLEFT 75", style())
 
 -- ElvUI bags, AdiBags and BetterBags: Alt+Click on a live bag button marks the item in that slot; a
 -- closed bank's buttons (and a BetterBags button showing another item) are left alone.
@@ -381,7 +383,7 @@ local function parentWithID(id) return { GetID = function() return id end } end
 local bag8r = plain({ BGR = { itemLocation = {}, itemID = 7001 }, GetParent = function() return parentWithID(2) end, GetID = function() return 1 end })
 bag8r.SetItemDetails = BaganatorClassicLiveContainerItemButtonMixin.SetItemDetails -- Mixin() copies it onto the button
 CHECK("Baganator's mixin is frozen (hooking it fails)", not pcall(hooksecurefunc, BaganatorClassicLiveContainerItemButtonMixin, "SetItemDetails", function() end))
-CHECK("Quartermaster listens to Baganator's skin API", #BAGANATOR_LISTENERS == 1, #BAGANATOR_LISTENERS)
+CHECK("Custodian listens to Baganator's skin API", #BAGANATOR_LISTENERS == 1, #BAGANATOR_LISTENERS)
 for _, fn in ipairs(BAGANATOR_LISTENERS) do CALL("Baganator hands over a button", fn, { regionType = "ItemButton", region = bag8r }) end
 CALL("Baganator SetItemDetails", bag8r.SetItemDetails, bag8r, {})
 altClick("Baganator", bag8r, 7001, KS.CONFIRM_ENABLED and L.LOCK or L.ONME) -- a second step up
@@ -396,4 +398,4 @@ CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAd
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
 table.sort(undefined)
-print("info: globals Quartermaster looked for that the stub doesn't have: " .. table.concat(undefined, ", "))
+print("info: globals Custodian looked for that the stub doesn't have: " .. table.concat(undefined, ", "))
