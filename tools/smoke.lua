@@ -232,7 +232,9 @@ else
   KS.SetLevel(2770, L.NORMAL, nil, { quiet = true, scope = "account" })
 end
 STUB_POPUP = nil
+CHAT = {}
 CHECK("Locked and above still just stop, no window", KS.Guard(6948, nil, "sell") == true and STUB_POPUP == nil)
+CHECK("the guard error says how to sell it", CHAT_HAS("Lower it to Normal to sell it") and not CHAT_HAS("Unfavorite"), CHAT[1])
 
 -- Equipment sets: items in a set are protected at the set's level (default Locked); marks underneath
 -- stay as they are, and taking an item out of the set takes the protection away.

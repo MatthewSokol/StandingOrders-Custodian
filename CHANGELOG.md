@@ -6,6 +6,11 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Guard message:** blocking a Locked item said "Unfavorite it" (a test-build word); it now says to lower it to Normal (or to Locked, to bank an Always on me item).
+- **Intro:** Standing Orders: Vendor and Mail are marked as coming soon.
+
 ## [0.2.0] - 2026-11-20
 
 ### Fixed

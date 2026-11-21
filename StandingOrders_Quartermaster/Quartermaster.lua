@@ -270,8 +270,9 @@ function KS.Guard(id, link, action)
     Err(("%s is on hold (Confirm)."):format(link))
     AskToAllow(id, link, action)
   else
-    local how = (action == "bank") and "Lower it to Locked to bank it" or ("Unfavorite it to %s it"):format(action)
-    Err(("%s is %s. %s (Alt+Right-click it in your bags, or /soq normal <item>)."):format(link, NAMES[level], how))
+    local how = (action == "bank") and "Lower it to Locked to bank it (Alt+Right-click it in your bags)"
+      or ("Lower it to Normal to %s it (Alt+Right-click it in your bags, or /soq normal <item>)"):format(action)
+    Err(("%s is %s. %s."):format(link, NAMES[level], how))
   end
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
   return true
