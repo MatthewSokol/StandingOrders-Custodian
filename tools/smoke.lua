@@ -285,6 +285,7 @@ CHECK("intro: not yet supported bag addons", introText:find("Not yet supported b
 CHECK("intro: lists every supported bag addon", before("Blizzard bags", "ArkInventory") and introText:find("ElvUI bags", 1, true) ~= nil)
 CHECK("intro: one bag line per supported bag", SOCustodianIntro.bags and #SOCustodianIntro.bags == 8)
 CHECK("intro: Bagnonium, with its old name Combuctor", introText:find("Bagnonium", 1, true) ~= nil and introText:find("(was Combuctor)", 1, true) ~= nil)
+CHECK("intro: no \"(in use)\" words; a legend explains the colors", not introText:find("(in use)", 1, true) and introText:find("Green with a check: in use now", 1, true) ~= nil)
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)

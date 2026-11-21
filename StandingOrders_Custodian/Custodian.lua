@@ -1820,8 +1820,13 @@ end
 local INTRO_VERSION = 6
 do -- the intro's helpers stay out of the main chunk's 200-local limit
 local GOLD, GREEN, ORANGE, MUTED = "ffffd100", "ff33ff99", "ffff8040", "ffbbbbbb"
-local READY_ICON = "Interface\\RaidFrame\\ReadyCheck-Ready"
-local BAG_ICON = "Interface\\Icons\\INV_Misc_Bag_08"
+-- One table, not four locals: the main chunk is at Lua's 200-local limit, and locals in this do block count too.
+local PATHS = {
+  ready = "Interface\\RaidFrame\\ReadyCheck-Ready", -- the check after a bag addon in use
+  addon = "Interface\\Icons\\INV_Misc_Bag_10", -- an installed bag addon with no icon of its own
+  missing = "Interface\\COMMON\\Indicator-Gray", -- a supported bag addon that isn't installed
+  bag = "Interface\\Icons\\INV_Misc_Bag_08", -- Blizzard bags
+}
 local function Tex(path) return "|T" .. path .. ":16:16|t" end
 local function Colored(color, text) return "|c" .. color .. text .. "|r" end -- pipes:ok (a color escape built from its parts)
 local function LevelLine(level, text) return Tex(ICONS[level]) .. " " .. Colored(COLORS[level], NAMES[level]) .. ": " .. text end
@@ -1861,6 +1866,7 @@ local INTRO_LINES = {
   { "• Not yet supported bag addons: no Alt+Click, icons or Disenchant block", 10, 2 },
 
   { Colored(GOLD, "Works with these bags"), 0, 12, "GameFontNormalLarge" },
+  { Colored(MUTED, "Green with a check: in use now. White: installed. Gray: not installed."), 10, 2 },
 }
 
 -- The supported bags: { label, addon folder (nil = built in), old name }. The label matches the adapter's name;
@@ -1877,22 +1883,23 @@ local function AddonMeta(folder, key)
   return ok and value or nil
 end
 
--- One bag list entry: green "(in use)" with its own icon when Custodian is hooked into it, white with its own
--- icon when it's installed, gray with a check mark when it isn't.
+-- One bag list entry: green with its own icon and a check at the end when Custodian is hooked into it (no
+-- "(in use)" words, so "Bagnonium (was Combuctor)" stays on one line), white with its own icon when it's
+-- installed, gray with a gray dot when it isn't. Only an addon in use gets a check.
 local function BagEntry(entry)
   local label, folder, old = entry[1], entry[2], entry[3]
-  if not folder then return Tex(BAG_ICON) .. " " .. label .. " " .. Colored(MUTED, "(built in)") end
+  if not folder then return Tex(PATHS.bag) .. " " .. label .. " " .. Colored(MUTED, "(built in)") end
   local was = old and (" " .. Colored(MUTED, "(was " .. old .. ")")) or ""
   for _, adapter in ipairs(bagAddons) do
     if (adapter.name == label or adapter.name == old) and adapter.active then
-      local icon = AddonMeta(folder, "IconTexture") or (old and AddonMeta(old, "IconTexture")) or READY_ICON
-      return Tex(icon) .. " " .. Colored(GREEN, label) .. was .. " " .. Colored(GREEN, "(in use)")
+      local icon = AddonMeta(folder, "IconTexture") or (old and AddonMeta(old, "IconTexture")) or PATHS.addon
+      return Tex(icon) .. " " .. Colored(GREEN, label) .. was .. " " .. Tex(PATHS.ready)
     end
   end
   for _, name in ipairs({ folder, old }) do
-    if AddonMeta(name, "Title") then return Tex(AddonMeta(name, "IconTexture") or READY_ICON) .. " " .. label .. was end
+    if AddonMeta(name, "Title") then return Tex(AddonMeta(name, "IconTexture") or PATHS.addon) .. " " .. label .. was end
   end
-  return Tex(READY_ICON) .. " " .. Colored(MUTED, label) .. was
+  return Tex(PATHS.missing) .. " " .. Colored(MUTED, label) .. was
 end
 
 -- The intro's words, for the self-test and smoke checks.
