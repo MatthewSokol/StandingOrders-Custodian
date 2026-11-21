@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 15 changes, 84 rows.**
+**Waiting since the last release (none yet): 16 changes, 85 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -202,6 +202,13 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 2.2.15.2 `/soc`, `/soc help` and `/custodian` work and `/soq` is gone (the game answers with its unknown-command line); the settings panel, Esc > Options > AddOns and the intro say "Standing Orders: Custodian" or "Standing Orders", never "Quartermaster"
 - [ ] 2.2.15.3 Your marks, mark icon settings and equipment set choices are all still there (`/soc list`, `/soc sets`, the icons in your bags): Claude moved the saved data over from Quartermaster's files
 - [ ] 2.2.15.4 `/soc selftest` passes and BugSack has no errors from `StandingOrders_Custodian` `auto validated · green.js --game`
+
+</details>
+
+<details open>
+<summary><b>2.2.16 The intro in sections</b> (#37) · open · 0 / 1</summary>
+
+- [ ] 2.2.16.1 `/soc intro` (it also shows once at your next login): headings Your marks, Marked for you, Protected against, Still allowed, Not protected yet, Works with these bags; "Marks are for all your characters" comes first, then Junk, Mail, Locked and Always on me each on its own line with its icon; the auto-marks are bullets; Still allowed says "Applying enchants, oils and scrolls"; Not protected yet says "Not yet supported bag addons"; the bags are two columns, and a bag addon you have loaded shows green "(in use)" with its own icon; nothing runs off the window
 
 </details>
 
