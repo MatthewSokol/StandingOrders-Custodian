@@ -1,12 +1,10 @@
 # Changelog
 
-All notable changes to Custodian (Quartermaster before 0.2.1). The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
+All notable changes to Custodian (Quartermaster before 1.0.0). The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
 follow [Semantic Versioning](https://semver.org/) and come from git tags: each merged change
 gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
-
-## [0.2.1] - 2026-11-21
 
 ### Changed
 

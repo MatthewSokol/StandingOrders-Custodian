@@ -17,7 +17,7 @@
 local ADDON = ...
 local KS = {}
 _G.StandingOrdersCustodian = KS
--- Its name before 0.2.1 (Standing Orders: Quartermaster). Standing Orders: Vendor, Mail and the Standing Orders
+-- Its name before 1.0.0 (Standing Orders: Quartermaster). Standing Orders: Vendor, Mail and the Standing Orders
 -- config addon still look for this one until they're updated; drop it once none of them do.
 _G.StandingOrdersQuartermaster = KS
 -- The addon icon (Icon.tga, the ledger): the AddOn List, the settings panel, the intro and the hold window.

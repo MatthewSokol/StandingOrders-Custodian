@@ -247,7 +247,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
-- [ ] 3.9.2 Images → Upload: the seven screenshots, each with its title and description, in this order
+- [ ] 3.9.2 Images → Upload: the seven screenshots, each with its title and description, in this order; star (feature) only the first, `bags-levels`, so it is the project's main image
 - [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
 - [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
@@ -255,9 +255,9 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9.2.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
 - [ ] 3.9.2.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
 - [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
-- [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Custodian-0.2.1.zip`; display name `Standing Orders: Custodian 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
-- [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-0.2.1.md`
-- [ ] 3.9.5 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 0.2.1
+- [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Custodian-1.0.0.zip`; display name `Standing Orders: Custodian 1.0.0`; release type Release; game version WoW Forever (Interface 16001)
+- [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-1.0.0.md`
+- [ ] 3.9.5 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 1.0.0
 
 </details>
 
@@ -304,7 +304,7 @@ Every release:
    - **Display name:** `Standing Orders: Custodian <version>`.
    - **Release type:** Release (or Beta).
    - **Game version:** the WoW Forever / Interface 16001 entry.
-   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release uses `docs/curseforge/changelog-0.2.1.md`).
+   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release uses `docs/curseforge/changelog-1.0.0.md`).
 3. Wait for approval (usually minutes to hours), then install it from the CurseForge app on a clean profile and `/reload` once.
 
 ### Other sites (if you choose them)
