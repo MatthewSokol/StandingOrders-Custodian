@@ -8,6 +8,7 @@
 ## OptionalDeps: !Mechanic
 ## IconTexture: Interface\AddOns\StandingOrders_Custodian\Icon
 ## Category: Inventory
+## Group: StandingOrders
 ## X-Website: https://github.com/MatthewSokol/StandingOrders-Custodian
 ## X-License: MIT
 ## X-Curse-Project-ID: 1806484

@@ -8,7 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
-- **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc`, or `/custodian` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now).
+- **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc`, or `/custodian` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now). It stays under Standing Orders in the AddOn list.
 - **Bagnonium:** Combuctor's new name is supported (Combuctor itself still works).
 - **Intro:** split into sections with headings, each mark level on its own line with its icon, and the auto-marks as bullets; it ends with the bags Custodian works with, and shows which of them you have loaded. It shows once more at your next login.
 

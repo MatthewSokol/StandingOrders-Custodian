@@ -198,7 +198,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.15 Renamed to Standing Orders: Custodian</b> (#37) · open · 0 / 4</summary>
 
-- [ ] 2.2.15.1 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, and no Quartermaster (the old folder is in `_forever_\AddOns-backup`)
+- [ ] 2.2.15.1 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, nested under Standing Orders, and no Quartermaster (the old folder is in `_forever_\AddOns-backup`)
 - [ ] 2.2.15.2 `/soc`, `/soc help` and `/custodian` work and `/soq` is gone (the game answers with its unknown-command line); the settings panel, Esc > Options > AddOns and the intro say "Standing Orders: Custodian" or "Standing Orders", never "Quartermaster"
 - [ ] 2.2.15.3 Your marks, mark icon settings and equipment set choices are all still there (`/soc list`, `/soc sets`, the icons in your bags): Claude moved the saved data over from Quartermaster's files
 - [ ] 2.2.15.4 `/soc selftest` passes and BugSack has no errors from `StandingOrders_Custodian` `auto validated · green.js --game`
