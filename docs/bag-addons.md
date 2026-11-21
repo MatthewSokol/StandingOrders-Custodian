@@ -21,7 +21,9 @@ All of them were checked against the Forever builds (interface 16001) installed 
 (`tools/smoke.lua`) has a stub of each with live, closed-bank and stale cases.
 
 **Alt+Click is shared** with some of them, and both things happen: Bagnon's flash find and Baganator's "highlight
-similar items" also react to Alt+Click, and so does AuctionDB's price graph in any bag.
+similar items" also react to Alt+Click, and so does AuctionDB's price graph in any bag. The exception is the Send Mail page with Postal's (or Posty's) Express
+module on: Express attaches or sends the item on Alt+Left-click, so Custodian leaves that click alone there
+(`KS.MailAddonOwnsAltClick`).
 
 ## Adding another bag addon
 

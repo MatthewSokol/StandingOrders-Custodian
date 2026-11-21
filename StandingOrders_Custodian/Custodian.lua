@@ -797,11 +797,31 @@ local function UpdateButton(btn)
   end
 end
 
+-- True while the Send Mail page is open and Postal's (or its Forever port Posty's) Express module is on: Express
+-- attaches (or, with AutoSend, sends) a bag item on Alt+Left-click there, so Custodian leaves that click alone instead
+-- of also changing the item's mark. A field, not a local: the main chunk is at Lua's 200-local limit.
+function KS.MailAddonOwnsAltClick()
+  if not (SendMailFrame and SendMailFrame:IsVisible()) then return false end
+  local postal = rawget(_G, "Postal")
+  if type(postal) ~= "table" or type(postal.GetModule) ~= "function" then return false end
+  local ok, express = pcall(postal.GetModule, postal, "Express", true)
+  if not ok or type(express) ~= "table" then return false end
+  return type(express.IsEnabled) ~= "function" or express:IsEnabled() == true
+end
+
 local function PreClick(btn, mouse)
   btn.favesHandled = nil
   local bag, slot = ButtonSlot(btn)
   local info = bag and slot and C.GetContainerItemInfo(bag, slot)
   if not info or not info.itemID then return end
+
+  if IsAltKeyDown() and mouse == "LeftButton" and KS.MailAddonOwnsAltClick() then
+    if not KS.mailClickHinted then
+      KS.mailClickHinted = true
+      Print("At the mailbox, Alt+Left-click belongs to Postal's Express (it attaches the item), so Custodian doesn't change marks with it there. Use Alt+Right-click, or /soc lock <item>.")
+    end
+    return
+  end
 
   -- Alt+Shift+Left-click moves the mark between all characters and this character only.
   if IsAltKeyDown() and IsShiftKeyDown() and not IsControlKeyDown() and mouse == "LeftButton" then

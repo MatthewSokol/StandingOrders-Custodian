@@ -366,6 +366,19 @@ altClick("ElvUI bags", elv, 7001, STEP_UP)
 local elvBank = plain({ BagID = -1, SlotID = 1 })
 CALL("ElvUI bank UpdateSlot", ElvB.UpdateSlot, ElvB, { isBank = true, Bags = { [-1] = { [1] = elvBank } } }, -1, 1)
 altClick("ElvUI closed bank", elvBank, 7001, STEP_UP)
+-- At the mailbox with Postal/Posty's Express on, Alt+Left-click is Express's (it attaches the item): no mark change.
+local express = { enabled = true, IsEnabled = function(self) return self.enabled end }
+Postal = { GetModule = function(_, name) return name == "Express" and express or nil end }
+SendMailFrame = { IsVisible = function() return true end }
+CHECK("mailbox: Express owns Alt+Left-click", KS.MailAddonOwnsAltClick() == true)
+altClick("ElvUI bags at the mailbox with Express on", elv, 7001, STEP_UP)
+express.enabled = false
+CHECK("mailbox: Express off, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
+express.enabled = true
+SendMailFrame = { IsVisible = function() return false end }
+CHECK("away from the Send Mail page, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
+Postal, SendMailFrame = nil, nil
+CHECK("without Postal or Posty, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
 -- On Forever, AdiBags' secure overlay takes right-clicks; the item button's PreClick never sees them.
 local adiOverlay = { HookScript = function(self, script, fn) self["__h_" .. script] = fn end }
 local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end, ForeverSecureUse = adiOverlay })

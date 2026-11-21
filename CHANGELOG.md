@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mailbox with Postal or Posty:** on the Send Mail page, Alt+Left-click in your bags is left to Postal's Express module (it attaches the item, or sends it with AutoSend), so Custodian no longer also changes the item's mark with that click. Alt+Right-click and the `/soc` commands still work there, and with Express turned off Custodian keeps Alt+Left-click.
+
 ## [1.0.0] - 2026-11-21
 
 ### Changed
