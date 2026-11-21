@@ -208,14 +208,14 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.16 The intro in sections</b> (#37) · open · 0 / 1</summary>
 
-- [ ] 2.2.16.1 `/soc intro` (it also shows once at your next login): headings Your marks, Marked for you, Protected against, Still allowed, Not protected yet, Works with these bags; "Marks are for all your characters" comes first, then Junk, Mail, Locked and Always on me each on its own line with its icon; the auto-marks are bullets; Still allowed says "Applying enchants, oils and scrolls"; Not protected yet says "Not yet supported bag addons"; the bags are two columns, and a bag addon you have loaded shows green "(in use)" with its own icon; nothing runs off the window
+- [ ] 2.2.16.1 `/soc intro` (it also shows once at your next login): headings Your marks, Marked for you, Protected against, Still allowed, Not protected yet, Works with these bags; "Marks are for all your characters" comes first, then Junk, Mail, Locked and Always on me each on its own line with its icon; the auto-marks are bullets; Still allowed says "Applying enchants, oils and scrolls"; Not protected yet says "Not yet supported bag addons"; the bags are two columns, and a bag addon you have loaded shows in green with its own icon and a check (a legend line says so); nothing runs off the window
 
 </details>
 
 <details open>
 <summary><b>2.2.17 Bagnonium, Combuctor's new name</b> (#37) · open · 0 / 1</summary>
 
-- [ ] 2.2.17.1 `TESTING.md` 8.3.1: Alt+Click, icons and the Disenchant block in Bagnonium's bags, and `/soc intro` shows "Bagnonium (was Combuctor)" green "(in use)" with its own icon
+- [ ] 2.2.17.1 `TESTING.md` 8.3.1: Alt+Click, icons and the Disenchant block in Bagnonium's bags, and `/soc intro` shows "Bagnonium (was Combuctor)" in green with its own icon and a check at the end, on one line
 
 </details>
 
