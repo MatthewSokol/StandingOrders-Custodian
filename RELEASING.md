@@ -203,17 +203,32 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>3 Deploy</b> · 0 / 9</summary>
+<summary><b>3 Deploy</b> · 0 / 24</summary>
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
+- [ ] 3.3.1 Shot `bags-levels`: default bags with one item at each level (coin, letter, key, purple diamond) and a Locked item's tooltip showing its Quartermaster line. CurseForge title `Item levels`, caption `Mark items with Alt+Click; the icon and tooltip show each level.`
+- [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover shows (Esc to cancel). Title `Disenchant blocker`, caption `Disenchant, Prospect and Mill can't touch a Locked item.`
+- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error with the item back in your bags. Title `Sell guard`, caption `Sold by mistake? It's bought straight back.`
+- [ ] 3.3.4 Shot `settings`: `/soq settings` showing the auto-mark switches and the mark icon controls with the sample button. Title `Settings`, caption `Choose what's marked for you and how the icons look.`
+- [ ] 3.3.5 Shot `equipment-sets`: `/soq settings` scrolled to Equipment sets, with a set's dropdown open. Title `Equipment sets`, caption `Items in your equipment sets are Locked automatically.`
+- [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or AdiBags (needs that bag addon's profile and a restart; skip it if that's a hassle). Title `Bag addons`, caption `Works in Blizzard bags and six bag addons.`
+- [ ] 3.3.7 Shot `intro`: `/soq intro`. Title `Intro`, caption `What Locked protects, shown once on first login.`
+- [ ] 3.3.8 Claude takes the new files from `_forever_Screenshots`, crops them, hides every name, saves them as `docs/screenshots/<shot>.png` and adds them to `docs/listing.md`; you check each picture `auto executed · when you say the shots are done`
 - [ ] 3.3 You review the listing: name, summary, first lines of the description, categories and screenshots, side by side with two or three similar addons, with every character name hidden, and say it's good
 - [ ] 3.4 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated · prep`
 - [ ] 3.5 Release PR merged (fast-forward); `pipeline.js released <version>` tags the candidate's commit on `main` (lightweight, local) `auto executed · after prep passes` `auto validated · git tag`
 - [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
-- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the uploads below (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
+- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.7 (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
+- [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select all, and paste `docs/curseforge/description.md`. To copy it, run this in the repo folder: `Get-Content docscurseforgedescription.md -Raw -Encoding UTF8 | Set-Clipboard`
+- [ ] 3.9.2 Summary: `Lock the items you care about so they can't be sold, disenchanted, destroyed, traded or mailed by accident, and mark junk to sell.`
+- [ ] 3.9.3 Main category `Bags & Inventory`; license `MIT`; logo `docs/logo.png` (if it isn't there yet)
+- [ ] 3.9.4 Images: upload the seven `docs/screenshots/*.png`, each with its title and caption from 3.3.1–3.3.7
+- [ ] 3.9.5 Files → Upload File → `dist/StandingOrders_Quartermaster-0.2.1.zip`; display name `Standing Orders: Quartermaster 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
+- [ ] 3.9.6 Changelog: Markdown; paste `docs/curseforge/changelog-0.2.1.md`. To copy it: `Get-Content docscurseforgechangelog-0.2.1.md -Raw -Encoding UTF8 | Set-Clipboard`
+- [ ] 3.9.7 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 0.2.1
 
 </details>
 
@@ -247,7 +262,7 @@ First release only:
 2. Fill it in:
    - **Name:** Standing Orders: Quartermaster (slug `standing-orders-quartermaster`: Standing Orders: Vendor and Mail link to it).
    - **Summary:** the `.toc` Notes line.
-   - **Description:** adapted from `README.md`, with no character names.
+   - **Description:** `docs/curseforge/description.md` (made from `README.md` by `node tools/curseforge-text.js`; rerun it after README changes).
    - **Category:** Bags & Inventory.
    - **License:** MIT.
    - **Logo:** 400×400.
@@ -260,7 +275,7 @@ Every release:
    - **Display name:** `Standing Orders: Quartermaster <version>`.
    - **Release type:** Release (or Beta).
    - **Game version:** the WoW Forever / Interface 16001 entry.
-   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown.
+   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release uses `docs/curseforge/changelog-0.2.1.md`).
 3. Wait for approval (usually minutes to hours), then install it from the CurseForge app on a clean profile and `/reload` once.
 
 ### Other sites (if you choose them)
