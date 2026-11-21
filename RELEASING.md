@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (none yet): 17 changes, 86 rows.**
+**Waiting since the last release (1.0.0): 1 change, 1 row.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,140 +82,16 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 80</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 1</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
 yet (no test journal; see `BACKLOG.md`).
 
 <details open>
-<summary><b>2.2.1 First build: levels, guards, auto-marks, ArkInventory</b> (#1, #3, #4, #11) · 0.1.0 · 0 / 45</summary>
+<summary><b>2.2.1 The mailbox: Alt+Left-click is Postal's</b> (#40) · open · 0 / 1</summary>
 
-- [ ] 2.2.1.1 `TESTING.md` 1.1–1.7: fresh install
-- [ ] 2.2.1.2 `TESTING.md` 2.1–2.9: per-character marks
-- [ ] 2.2.1.3 `TESTING.md` 3.1–3.2: moving from SellAll test builds
-- [ ] 2.2.1.4 `TESTING.md` 4.1–4.9: disenchant guard
-- [ ] 2.2.1.5 `TESTING.md` 5.1–5.8, 5.13–5.32: vendor, destroy, trade, mail and bank guards, Alt+Click, auto-marks, icons
-- [ ] 2.2.1.6 `TESTING.md` 6.1–6.8: combat and blocked actions (ArkInventory is in 2.2.5)
-
-</details>
-
-<details open>
-<summary><b>2.2.2 Confirm is a temp hold: allow once from a window</b> (#13; deferred to a later version with Confirm, #35) · open · 0 / 4</summary>
-
-- [ ] 2.2.2.1 `TESTING.md` 5.9–5.12: sell, disenchant, trade and mail a Confirm item; Allow once; Keep it
-
-</details>
-
-<details open>
-<summary><b>2.2.3 Checklists: outline ids, folding sections</b> (#14) · open · 0 / 1</summary>
-
-- [ ] 2.2.3.1 On GitHub, [`RELEASING.md`](https://github.com/MatthewSokol/StandingOrders-Custodian/blob/fix/intro-button-width/RELEASING.md) and [`TESTING.md`](https://github.com/MatthewSokol/StandingOrders-Custodian/blob/fix/intro-button-width/TESTING.md) sections fold open and closed, and every row starts with its id
-
-</details>
-
-<details open>
-<summary><b>2.2.4 Equipment sets protect their items</b> (#15, #16, #29, #31) · open · 0 / 5</summary>
-
-- [ ] 2.2.4.1 `TESTING.md` 5.33–5.37: set items protected, per-set and default levels by command and in `/soc settings`, back to own mark
-
-</details>
-
-<details open>
-<summary><b>2.2.5 More bag addons</b> (#17, #32, #33) · open · 0 / 8</summary>
-
-- [ ] 2.2.5.1 `TESTING.md` 8.1–8.8: a spot check each for ArkInventory, Bagnon, Baganator, AdiBags, BetterBags and ElvUI bags
-
-</details>
-
-<details open>
-<summary><b>2.2.6 Renamed from Faves</b> (#19, #20) · open · 0 / 3</summary>
-
-- [ ] 2.2.6.1 The AddOn List, Esc > Options > AddOns, the intro, chat lines and item tooltips say "Standing Orders" (the panel: "Standing Orders: Custodian"); none say "Faves"
-- [ ] 2.2.6.2 `/soc` and `/soc help` work; `/faves` is gone (the game answers with its unknown-command line)
-- [ ] 2.2.6.4 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, and no Faves (the old folder is in `_forever_\AddOns-backup`)
-
-</details>
-
-<details open>
-<summary><b>2.2.7 Custodian icon</b> (#21) · open · 0 / 1</summary>
-
-- [ ] 2.2.7.1 Covered by 2.1.3 and 2.2.6.4 (the ledger icon in the AddOn List) `auto validated · same rows`
-
-</details>
-
-<details open>
-<summary><b>2.2.8 The icon on Custodian's windows</b> (#22) · open · 0 / 3</summary>
-
-- [ ] 2.2.8.1 `/soc settings`: the ledger icon sits left of the "Standing Orders: Custodian" title
-- [ ] 2.2.8.2 `/soc intro`: a small ledger icon sits left of the window title
-- [ ] 2.2.8.3 (Deferred with Confirm) Sell a Confirm item: the hold window shows the ledger above "… is on hold"; Allow once and Keep it still work
-
-</details>
-
-<details open>
-<summary><b>2.2.9 Mark icon size, position and opacity</b> (#24, #34) · open · 0 / 5</summary>
-
-- [ ] 2.2.9.1 `TESTING.md` 9.1–9.5: mark icons
-
-</details>
-
-<details open>
-<summary><b>2.2.10 Disenchant guard without protected calls</b> (#25) · open · 0 / 1</summary>
-
-- [ ] 2.2.10.1 After `TESTING.md` 4.1–4.6 pass again on this build, `/soc selftest` passes and BugSack has no `ADDON_ACTION_FORBIDDEN` from Custodian; `/soc log` names spells and says just "item" for item uses `auto validated · green.js --game`
-
-</details>
-
-<details open>
-<summary><b>2.2.11 Old per-character auto-marks on reagents come off</b> (#27) · open · 0 / 1</summary>
-
-- [ ] 2.2.11.1 `TESTING.md` 5.19: consumables, reagents and vendor trade goods
-
-</details>
-
-<details open>
-<summary><b>2.2.12 The intro button fits its label</b> (#28) · open · 0 / 1</summary>
-
-- [ ] 2.2.12.1 `/soc settings`: the "What Standing Orders protects" button shows its whole label (try a larger UI scale too), and clicking it opens the intro
-
-</details>
-
-<details open>
-<summary><b>2.2.13 The settings panel scrolls</b> (#30) · open · 0 / 1</summary>
-
-- [ ] 2.2.13.1 `/soc settings`: nothing spills past the bottom of the settings window; scroll down to reach the equipment set rows; the opacity text (e.g. "70% opaque (30% see-through)") fits on one line
-
-</details>
-
-<details open>
-<summary><b>2.2.14 Confirm held back for a later version</b> (#35) · open · 0 / 1</summary>
-
-- [ ] 2.2.14.1 Confirm is nowhere: Alt+Click steps Normal > Locked, `/soc confirm <item>` and `/soc set <name> confirm` say it's coming later, the settings dropdowns have no Confirm, and `/soc help` doesn't list it; an item you marked Confirm before shows Locked (tooltip and key icon) and is blocked like Locked
-
-</details>
-
-<details open>
-<summary><b>2.2.15 Renamed to Standing Orders: Custodian</b> (#37) · open · 0 / 4</summary>
-
-- [ ] 2.2.15.1 Character select > AddOns lists Standing Orders: Custodian once, with the ledger icon, nested under Standing Orders, and no Quartermaster (the old folder is in `_forever_\AddOns-backup`)
-- [ ] 2.2.15.2 `/soc`, `/soc help` and `/custodian` work and `/soq` is gone (the game answers with its unknown-command line); the settings panel, Esc > Options > AddOns and the intro say "Standing Orders: Custodian" or "Standing Orders", never "Quartermaster"
-- [ ] 2.2.15.3 Your marks, mark icon settings and equipment set choices are all still there (`/soc list`, `/soc sets`, the icons in your bags): Claude moved the saved data over from Quartermaster's files
-- [ ] 2.2.15.4 `/soc selftest` passes and BugSack has no errors from `StandingOrders_Custodian` `auto validated · green.js --game`
-
-</details>
-
-<details open>
-<summary><b>2.2.16 The intro in sections</b> (#37) · open · 0 / 1</summary>
-
-- [ ] 2.2.16.1 `/soc intro` (it also shows once at your next login): headings Your marks, Marked for you, Protected against, Still allowed, Not protected yet, Works with these bags; "Marks are for all your characters" comes first, then Junk, Mail, Locked and Always on me each on its own line with its icon; the auto-marks are bullets; Still allowed says "Applying enchants, oils and scrolls"; Not protected yet says "Not yet supported bag addons"; the bags are two columns, and a bag addon you have loaded shows in green with its own icon and a check (a legend line says so); nothing runs off the window
-
-</details>
-
-<details open>
-<summary><b>2.2.17 Bagnonium, Combuctor's new name</b> (#37) · open · 0 / 1</summary>
-
-- [ ] 2.2.17.1 `TESTING.md` 8.3.1: Alt+Click, icons and the Disenchant block in Bagnonium's bags, and `/soc intro` shows "Bagnonium (was Combuctor)" in green with its own icon and a check at the end, on one line
+- [ ] 2.2.1.1 `TESTING.md` 5.38: with Posty Forever's Express on, Alt+Left-click at the Send Mail page attaches the item and leaves its mark alone; elsewhere, and with Express off, Alt+Left-click still raises marks
 
 </details>
 
