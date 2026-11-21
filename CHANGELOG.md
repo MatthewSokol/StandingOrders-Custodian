@@ -10,6 +10,7 @@ gets its own version, and a release publishes one of them.
 
 - **Guard message:** blocking a Locked item said "Unfavorite it" (a test-build word); it now says to lower it to Normal (or to Locked, to bank an Always on me item).
 - **Intro:** Standing Orders: Vendor and Mail are marked as coming soon.
+- **Settings:** the "Except items you got on purpose" switch label no longer runs past the panel's edge.
 
 ## [0.2.0] - 2026-11-20
 

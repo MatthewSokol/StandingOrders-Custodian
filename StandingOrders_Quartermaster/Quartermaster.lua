@@ -1588,7 +1588,7 @@ local AUTO_TEXT = {
   whiteJunk = "White gear, weapons and junk (no profession or quest use) become |cff9d9d9dJunk|r",
   matsMail = "Crafting materials none of this character's professions use become |cff4fb3ffMail|r (this character only)",
   boeMail = "Bind on Equip items (green and up, not yet bound) become |cff4fb3ffMail|r",
-  keepReceived = "Except items you got on purpose: traded to you, bought on the AH or from a vendor, or mailed by a player",
+  keepReceived = "Except items you got on purpose: traded, bought (AH or vendor) or mailed to you by a player",
 }
 
 local function CreatePanel()
