@@ -1858,7 +1858,7 @@ function KS:ShowIntro()
 
     local title = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 8, -5)
-    title:SetText("Standing Orders: what Locked protects")
+    title:SetText("Standing Orders: Custodian")
     intro.icon = intro:CreateTexture(nil, "OVERLAY")
     intro.icon:SetSize(16, 16)
     intro.icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
