@@ -5,6 +5,6 @@
 - **Auto-marks:** new gray and unneeded white items are marked Junk, and crafting materials your professions don't use, plus unbound BoE gear, are marked Mail. Each one can be switched off in `/soc settings`.
 - **Equipment sets:** items in your equipment sets are Locked automatically, per set or for all of them.
 - **Mark icons:** pick their size, corner and opacity in `/soc settings`.
-- **Bag addons:** works in the default bags, ArkInventory, Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI bags.
+- **Bag addons:** works in the default bags, ArkInventory, Bagnon, Bagnonium (was Combuctor), Baganator, AdiBags, BetterBags and ElvUI bags.
 
 **Known issue:** a few reagents the game doesn't label as reagents (such as Light Feather) can still be auto-marked Mail. Alt+Click one to change its mark, and it stays changed.

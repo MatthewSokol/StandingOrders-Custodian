@@ -11,7 +11,7 @@ protected slots). `/soc status` lists the bag addons Custodian has hooked.
 |---|---|---|
 | Blizzard bags (combined or separate) | `ContainerFrame*` item buttons | (none: always live) |
 | ArkInventory | Its public API: `ArkInventory.API.ItemFrameLoaded` / `ItemFrameUpdated` (bag and bank windows) | Offline views (another character, the bank away from a banker); a button whose item doesn't match its slot |
-| Bagnon, Combuctor | `Item:Update` on its BagBrother item class; `GetBag()` / `GetID()` | `IsCached()` views (another character, the bank away from a banker) |
+| Bagnon, Bagnonium (was Combuctor) | `Item:Update` on its BagBrother item class; `GetBag()` / `GetID()` | `IsCached()` views (another character, the bank away from a banker) |
 | Baganator | Its live-button mixins' `SetItemDetails` (hooked while Custodian loads); the parent's ID is the bag | Cached views use other buttons and never reach Custodian; the shown item must match the slot |
 | AdiBags | The `AdiBags_UpdateButton` message on its `ABEvent-1.0` library; `button.bag` / `button.slot` | Bank buttons while the bank is closed |
 | BetterBags | The `item/Updated` message on its Events module; `item.currentData` bag and slot | Bank slots while the bank is closed; a button whose item doesn't match its slot |

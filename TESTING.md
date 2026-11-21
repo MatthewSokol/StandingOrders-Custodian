@@ -95,11 +95,12 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>8 Bag addons</b> · 0 / 8</summary>
+<summary><b>8 Bag addons</b> · 0 / 9</summary>
 
 - [ ] 8.1 `<env> snapshot pre-bag-addons` (`<env>` as in RELEASING.md) `auto executed · game closed` `auto validated · snapshot saved`
 - [ ] 8.2 ArkInventory: `<env> profile only StandingOrders_Custodian ArkInventory !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists ArkInventory as supported, and in another character's bags Alt+Click does nothing; no Custodian errors
 - [ ] 8.3 Bagnon: `<env> profile only StandingOrders_Custodian Bagnon BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists Bagnon as supported, and in another character's bags Alt+Click does nothing; no Custodian errors
+- [ ] 8.3.1 Bagnonium (Combuctor's new name): `<env> profile only StandingOrders_Custodian Bagnonium BagBrother !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists Bagnonium as supported, and `/soc intro` shows Bagnonium (was Combuctor) green "(in use)" with its own icon; no Custodian errors
 - [ ] 8.4 Baganator: `<env> profile only StandingOrders_Custodian Baganator Syndicator !BugGrabber BugSack` `auto executed · game closed` (Baganator needs Syndicator, though its .toc lists it as optional); full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists Baganator as supported, and in another character's bags Alt+Click does nothing; no Custodian errors
 - [ ] 8.5 AdiBags: `<env> profile only StandingOrders_Custodian AdiBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists AdiBags as supported; no Custodian errors
 - [ ] 8.6 BetterBags: `<env> profile only StandingOrders_Custodian BetterBags !BugGrabber BugSack` `auto executed · game closed`; full restart; in its bag window: Alt+Click marks an item and the icon shows, Disenchant targeting turns Locked slots red, `/soc status` lists BetterBags as supported; no Custodian errors

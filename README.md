@@ -81,7 +81,7 @@ Items in your equipment sets (the game's equipment manager) are protected automa
 |---|---|
 | Blizzard bags | Yes |
 | ArkInventory | Yes (bags and bank; not other characters' offline bags) |
-| Bagnon, Combuctor, Baganator, AdiBags, BetterBags, ElvUI bags | Yes (live views; not other characters' bags or a closed bank) |
+| Bagnon, Bagnonium (was Combuctor), Baganator, AdiBags, BetterBags, ElvUI bags | Yes (live views; not other characters' bags or a closed bank) |
 
 Everything else (the vendor, destroy, trade, mail and bank guards, auto-marks, tooltips, `/soc <level> <item>`) works with any bag addon. [docs/bag-addons.md](docs/bag-addons.md) has the details and the plan.
 
