@@ -203,7 +203,7 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>3 Deploy</b> · 0 / 31</summary>
+<summary><b>3 Deploy</b> · 0 / 29</summary>
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
@@ -221,21 +221,19 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.6 `powershell -ExecutionPolicy Bypass -File ./release.ps1` builds `dist/StandingOrders_Quartermaster-<version>.zip` and its notes `auto executed · after the tag` `auto validated · zip listing`
 - [ ] 3.7 Zip under test: `<env> profile zip dist\StandingOrders_Quartermaster-<version>.zip`; log in once; the addon list shows the version; `/soq selftest` passes `auto validated · saved self-test`
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
-- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.7 (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
+- [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
-- [ ] 3.9.2 Summary: `Lock the items you care about so they can't be sold, disenchanted, destroyed, traded or mailed by accident, and mark junk to sell.`
-- [ ] 3.9.3 Main category `Bags & Inventory`; license `MIT`; logo `docs/logo.png` (if it isn't there yet)
-- [ ] 3.9.4 Images → Upload: the seven screenshots, each with its title and description, in this order
-- [ ] 3.9.4.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
-- [ ] 3.9.4.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
-- [ ] 3.9.4.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
-- [ ] 3.9.4.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Choose what's marked for you and how the icons look.`
-- [ ] 3.9.4.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
-- [ ] 3.9.4.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
-- [ ] 3.9.4.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
-- [ ] 3.9.5 Files → Upload File → `dist/StandingOrders_Quartermaster-0.2.1.zip`; display name `Standing Orders: Quartermaster 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
-- [ ] 3.9.6 Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-0.2.1.md`
-- [ ] 3.9.7 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 0.2.1
+- [ ] 3.9.2 Images → Upload: the seven screenshots, each with its title and description, in this order
+- [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
+- [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
+- [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
+- [ ] 3.9.2.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Choose what's marked for you and how the icons look.`
+- [ ] 3.9.2.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
+- [ ] 3.9.2.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
+- [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
+- [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Quartermaster-0.2.1.zip`; display name `Standing Orders: Quartermaster 0.2.1`; release type Release; game version WoW Forever (Interface 16001)
+- [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-0.2.1.md`
+- [ ] 3.9.5 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 0.2.1
 
 </details>
 
@@ -264,7 +262,7 @@ The gate needs zero open problems.
 Check before uploading: the TOC's `## Interface:` matches the current Forever build (`/dump (select(4, GetBuildInfo()))`), and the screenshots are current and name-free.
 
 ### CurseForge
-First release only:
+First release only (done for Quartermaster: project 1806484 exists):
 1. Go to authors.curseforge.com → Create Project → World of Warcraft → Addon.
 2. Fill it in:
    - **Name:** Standing Orders: Quartermaster (slug `standing-orders-quartermaster`: Standing Orders: Vendor and Mail link to it).
