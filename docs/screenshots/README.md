@@ -16,7 +16,7 @@ The README and every addon page show these. Take them on a test character, then 
 | `guard.png` | The red error after trying to sell a Locked item, with the item back in your bags. Caption: "Sold by mistake? It's bought straight back." |
 | `settings.png` | `/soq settings` scrolled to show the auto-mark switches and the mark icon controls with the sample button. Caption: "Choose what's marked for you and how the icons look." |
 | `equipment-sets.png` | `/soq settings`, the Equipment sets rows with a set's dropdown open. Caption: "Items in your equipment sets are Locked automatically." |
-| `bag-addon.png` | The same marks in one bag addon (Baganator or AdiBags). Caption: "Works in Blizzard bags and six bag addons." |
+| `bag-addon.png` | The same marks in one bag addon (Baganator or AdiBags). Caption: "Works in Blizzard bags and seven bag addons (Baganator shown)." |
 | `intro.png` | The intro window. Caption: "What Locked protects, shown once on first login." |
 
 Save them as PNG at the game's resolution (crop to the area that matters), check every name is hidden, then commit them here and add each with its caption under `## Screenshots` in `docs/listing.md`; also upload them to the CurseForge project's Images tab with the same captions.
