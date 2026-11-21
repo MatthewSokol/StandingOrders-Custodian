@@ -20,6 +20,8 @@ function row(line) {
   let text = m[2];
   text = text.replace(/\s*`auto executed · ([^`]+)`/, (_, t) => { r.exec = t; return ""; });
   text = text.replace(/\s*`auto validated(?: · ([^`]+))?`/, (_, proof) => { r.valid = proof || true; return ""; });
+  // `paste · docs/x.md`: the page shows that file in full with a Copy button
+  text = text.replace(/\s*`paste · ([^`]+)`/, (_, file) => { r.paste = { file, text: read(file).trimEnd() }; return ""; });
   r.text = text.trim();
   return r;
 }
@@ -83,7 +85,7 @@ for (const line of rel.slice(start, end).split("\n")) {
   const r = row(line);
   if (r) {
     if (/^2\.[34]$/.test(r.id) && cur.oid !== "2.3") open("2.3", TITLES["2.3"]); // problems and gate get their own section
-    cur.items.push({ id: r.id, oid: r.id, text: r.text, exec: r.exec, valid: r.valid });
+    cur.items.push({ id: r.id, oid: r.id, text: r.text, exec: r.exec, valid: r.valid, paste: r.paste });
   }
 }
 for (const s of sections) if (!s.items.length) throw new Error("empty section " + s.oid);
@@ -100,7 +102,8 @@ if (stateFile) {
   state = Object.assign(state, old);
   if (arg("--build")) state.build = arg("--build");
 }
-const json = v => JSON.stringify(v).replace(/</g, "\\u003c");
+// <repo> in a row becomes this checkout's folder, on the private page only (RELEASING.md stays free of local paths)
+const json = v => JSON.stringify(v).split("<repo>").join(JSON.stringify(path.resolve(root)).slice(1, -1)).replace(/</g, "\\u003c");
 const html = read("tools/checklist-page.template.html")
   .replace("__SECTIONS__", () => json(sections))
   .replace("__WAITING__", () => json(waiting))

@@ -110,6 +110,9 @@ h2 .num { font-size: .8em }
 .saved-note.bad { border-left-color: var(--bad) }
 .saved-note.over { border-left-color: var(--warn) }
 .saved-note.ok { border-left-color: var(--done) }
+.paste-copy { align-self: flex-start; font-weight: 600 }
+details.paste summary { cursor: pointer; color: var(--accent); font-size: .85rem }
+details.paste pre { font: .8rem/1.45 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; max-height: 320px; overflow: auto; margin: 6px 0 0 }
 footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 64ch; margin: 0 auto }
 @media (prefers-reduced-motion: reduce) { .meter > span { transition: none } }
 </style>
@@ -236,6 +239,14 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
     var text = el("div", "text");
     text.appendChild(el("span", "what", '<span class="num">' + esc(r.oid) + "</span> " + fmt(r.text)));
     if (r.hint) text.appendChild(el("span", "sub", fmt(r.hint)));
+    if (r.paste) { // a whole file to paste somewhere: one Copy button, and the text to read first
+      var copy = btn("cmd paste-copy", "Copy all of " + esc(r.paste.file) + " (" + r.paste.text.length + " characters)", "copy-" + r.id);
+      copy.setAttribute("data-copy", r.paste.text);
+      var peek = el("details", "paste"), sum = el("summary", null, "Show the text");
+      var pre = el("pre"); pre.textContent = r.paste.text;
+      peek.appendChild(sum); peek.appendChild(pre);
+      text.appendChild(copy); text.appendChild(peek);
+    }
     var badges = el("div", "badges");
     if (r.fix) badges.appendChild(el("span", "badge fix", "fix"));
     if (r.retest) badges.appendChild(el("span", "badge fix", "re-test"));
