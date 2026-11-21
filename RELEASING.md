@@ -207,10 +207,10 @@ yet (no test journal; see `BACKLOG.md`).
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Quartermaster/StandingOrders_Quartermaster.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
-- [ ] 3.3.1 Shot `bags-levels`: retake: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond), hovering the Locked item so its tooltip shows its Standing Orders line
+- [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond)
 - [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel)
-- [ ] 3.3.3 Shot `guard`: retake on the fixed build (the first one said "Unfavorite it"): at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags
-- [ ] 3.3.4 Shot `settings`: retake in a quiet spot (the window is see-through, and other players' names showed through it): `/soq settings` scrolled to the top
+- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags
+- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soq settings` scrolled to the top
 - [ ] 3.3.5 Shot `equipment-sets`: `/soq settings` scrolled to Equipment sets, with a set's dropdown open
 - [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart)
 - [ ] 3.3.7 Shot `intro`: `/soq intro`
@@ -226,7 +226,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9.2 Summary: `Lock the items you care about so they can't be sold, disenchanted, destroyed, traded or mailed by accident, and mark junk to sell.`
 - [ ] 3.9.3 Main category `Bags & Inventory`; license `MIT`; logo `docs/logo.png` (if it isn't there yet)
 - [ ] 3.9.4 Images → Upload: the seven screenshots, each with its title and description, in this order
-- [ ] 3.9.4.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; the icon and tooltip show each level.`
+- [ ] 3.9.4.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
 - [ ] 3.9.4.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.4.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
 - [ ] 3.9.4.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Choose what's marked for you and how the icons look.`

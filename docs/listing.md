@@ -27,7 +27,10 @@ docs/logo.png
 README.md
 
 ## Screenshots
+- docs/screenshots/bags-levels.png | Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).
+- docs/screenshots/guard.png | Sold by mistake? It's bought straight back.
 - docs/screenshots/disenchant-blocker.png | Disenchant, Prospect and Mill can't touch a Locked item.
+- docs/screenshots/settings.png | Choose what's marked for you and how the icons look.
 - docs/screenshots/equipment-sets.png | Items in your equipment sets are Locked automatically.
 - docs/screenshots/bag-addon.png | Works in Blizzard bags and seven bag addons (Baganator shown).
 - docs/screenshots/intro.png | What Locked protects, shown once on first login.

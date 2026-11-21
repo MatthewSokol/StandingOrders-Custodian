@@ -11,7 +11,7 @@ The README and every addon page show these. Take them on a test character, then 
 
 | File | Shows |
 |---|---|
-| `bags-levels.png` | Default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me diamond) and the tooltip of a Locked item showing its Quartermaster line. Caption: "Mark items with Alt+Click; the icon and tooltip show each level." |
+| `bags-levels.png` | Default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me diamond) and the tooltip of a Locked item showing its Quartermaster line. Caption: "Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond)." |
 | `disenchant-blocker.png` | Disenchant targeting up: Locked slots covered in red, the cursor over one. Caption: "Disenchant, Prospect and Mill can't touch a Locked item." |
 | `guard.png` | The red error after trying to sell a Locked item, with the item back in your bags. Caption: "Sold by mistake? It's bought straight back." |
 | `settings.png` | `/soq settings` scrolled to show the auto-mark switches and the mark icon controls with the sample button. Caption: "Choose what's marked for you and how the icons look." |
