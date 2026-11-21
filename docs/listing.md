@@ -1,7 +1,7 @@
-# Listing: Standing Orders: Quartermaster
+# Listing: Standing Orders: Custodian
 
 ## Name
-Standing Orders: Quartermaster
+Standing Orders: Custodian
 
 ## Summary
 Lock the items you care about so they can't be sold, disenchanted, destroyed, traded or mailed by accident, and mark junk to sell.
