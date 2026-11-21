@@ -26,6 +26,8 @@ Work to pick from. One line per item: `- [ ] **Title:** what and why (source; le
 
 - [ ] **Always on me: a target quantity** (e.g. 20, or 1 stack): keep that many on you and let the rest go to the bank, mail or vendor; set per item (Alt+Click menu or `/soc onme <item> 20`) (user request 2026-11-20, after the first release; level: minor)
 
+- [ ] **Choose which commands Custodian registers:** `/soc` and `/custodian` are both on by default; let each be switched off in `/soc settings` (keeping at least one on), so a player whose other addon wants `/soc` (Pocket Social - Forever uses `/social` or `/soc`) can give it up. A switched-off command must be removed from `SlashCmdList`/`hash_SlashCmdList` on the next login (or `/reload`), not left half registered (user request 2026-11-20, release testing; level: minor)
+
 - [ ] **Test: VendorFlip's Disenchant button skips a Locked item** (TESTING.md 4.9): deferred from the first release on the user's word, 2026-11-20; it needs an EnchantFlip item (bought by hand) to test with. VendorFlip asks Standing Orders: Vendor, which reads Custodian's marks (release testing; level: none)
 
 
