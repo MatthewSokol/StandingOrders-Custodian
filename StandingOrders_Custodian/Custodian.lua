@@ -2124,7 +2124,7 @@ local function IconCommand(rest)
 end
 
 local function Help()
-  Print("Commands:")
+  Print("Commands (/custodian works the same as /soc):")
   print("  /soc junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
   print("  /soc list - show marked items")
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
@@ -2169,7 +2169,9 @@ end
 local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 if CONFIRM_ENABLED then LEVEL_CMDS.confirm = CONFIRM end
 
+-- /custodian always works: another addon (Pocket Social - Forever) also uses /soc, and which one wins is up to load order.
 SLASH_SOC1 = "/soc"
+SLASH_SOC2 = "/custodian"
 SlashCmdList.SOC = function(msg)
   local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()

@@ -8,7 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
-- **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now).
+- **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc`, or `/custodian` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now).
 
 ### Fixed
 

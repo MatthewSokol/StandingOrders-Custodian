@@ -75,6 +75,7 @@ CHECK("a per-character auto-mark on a reagent comes off at login", KS.GetLevel(1
 CHECK("Custodian global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
 CHECK("the old global still works for Vendor, Mail and the config addon", StandingOrdersQuartermaster == KS)
 CHECK("/soc is the command and /soq is gone", SlashCmdList.SOC ~= nil and SLASH_SOC1 == "/soc" and SlashCmdList.SOQ == nil)
+CHECK("/custodian is the backup command", SLASH_SOC2 == "/custodian")
 CHECK("slash command: /soc only (the old /faves is gone)", SLASH_SOC1 == "/soc" and SLASH_SOQ2 == nil)
 CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("matsMail") and KS.GetAuto("keepReceived"))
 
