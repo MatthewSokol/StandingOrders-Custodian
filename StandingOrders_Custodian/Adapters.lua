@@ -188,11 +188,12 @@ KS.AddBagAddon({
 })
 
 ---------------------------------------------------------------------------------------------------
--- Bagnon (and Combuctor, same BagBrother core): Item:Update runs for every item button (ContainerItem
--- calls it through Super). btn:GetBag() and btn:GetID() are the bag and slot; btn:IsCached() is true for
--- other characters and for the bank away from a banker.
+-- Bagnon and Bagnonium (Combuctor's new name; the old one is kept for players who haven't updated), all on
+-- the same BagBrother core: Item:Update runs for every item button (ContainerItem calls it through Super).
+-- btn:GetBag() and btn:GetID() are the bag and slot; btn:IsCached() is true for other characters and for the
+-- bank away from a banker.
 
-for _, addonName in ipairs({ "Bagnon", "Combuctor" }) do
+for _, addonName in ipairs({ "Bagnon", "Bagnonium", "Combuctor" }) do
   KS.AddBagAddon({
     name = addonName,
     loaded = function()

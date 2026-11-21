@@ -1863,9 +1863,10 @@ local INTRO_LINES = {
   { Colored(GOLD, "Works with these bags"), 0, 12, "GameFontNormalLarge" },
 }
 
--- The supported bags: { label, addon folder (nil = built in) }. The label matches the adapter's name.
+-- The supported bags: { label, addon folder (nil = built in), old name }. The label matches the adapter's name;
+-- an old name is the addon's earlier name, still supported (Bagnonium was Combuctor).
 local BAG_LIST = {
-  { "Blizzard bags" }, { "ArkInventory", "ArkInventory" }, { "Bagnon", "Bagnon" }, { "Combuctor", "Combuctor" },
+  { "Blizzard bags" }, { "ArkInventory", "ArkInventory" }, { "Bagnon", "Bagnon" }, { "Bagnonium", "Bagnonium", "Combuctor" },
   { "Baganator", "Baganator" }, { "AdiBags", "AdiBags" }, { "BetterBags", "BetterBags" }, { "ElvUI bags", "ElvUI" },
 }
 
@@ -1879,15 +1880,19 @@ end
 -- One bag list entry: green "(in use)" with its own icon when Custodian is hooked into it, white with its own
 -- icon when it's installed, gray with a check mark when it isn't.
 local function BagEntry(entry)
-  local label, folder = entry[1], entry[2]
+  local label, folder, old = entry[1], entry[2], entry[3]
   if not folder then return Tex(BAG_ICON) .. " " .. label .. " " .. Colored(MUTED, "(built in)") end
+  local was = old and (" " .. Colored(MUTED, "(was " .. old .. ")")) or ""
   for _, adapter in ipairs(bagAddons) do
-    if adapter.name == label and adapter.active then
-      return Tex(AddonMeta(folder, "IconTexture") or READY_ICON) .. " " .. Colored(GREEN, label .. " (in use)")
+    if (adapter.name == label or adapter.name == old) and adapter.active then
+      local icon = AddonMeta(folder, "IconTexture") or (old and AddonMeta(old, "IconTexture")) or READY_ICON
+      return Tex(icon) .. " " .. Colored(GREEN, label) .. was .. " " .. Colored(GREEN, "(in use)")
     end
   end
-  if AddonMeta(folder, "Title") then return Tex(AddonMeta(folder, "IconTexture") or READY_ICON) .. " " .. label end
-  return Tex(READY_ICON) .. " " .. Colored(MUTED, label)
+  for _, name in ipairs({ folder, old }) do
+    if AddonMeta(name, "Title") then return Tex(AddonMeta(name, "IconTexture") or READY_ICON) .. " " .. label .. was end
+  end
+  return Tex(READY_ICON) .. " " .. Colored(MUTED, label) .. was
 end
 
 -- The intro's words, for the self-test and smoke checks.
