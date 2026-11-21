@@ -97,7 +97,9 @@ for (const line of rel.slice(start, end).split("\n")) {
 for (const s of sections) if (!s.items.length) throw new Error("empty section " + s.oid);
 const units = sections.filter(s => s.oid.startsWith("2.2."));
 const urows = units.reduce((n, s) => n + s.items.length, 0);
-const waiting = `Waiting since the last release (none yet): ${units.length} ${units.length === 1 ? "change" : "changes"}, ${urows} ${urows === 1 ? "row" : "rows"}`;
+// The last release comes from RELEASING.md's own Waiting line, e.g. "(1.0.0)".
+const lastRel = (rel.match(/Waiting since the last release (([^)]+))/) || [])[1] || "none yet";
+const waiting = `Waiting since the last release (${lastRel}): ${units.length} ${units.length === 1 ? "change" : "changes"}, ${urows} ${urows === 1 ? "row" : "rows"}`;
 
 let state = { build: arg("--build") || "not stamped", checked: {}, flags: {}, overrides: {}, triage: {} };
 const stateFile = arg("--state");
