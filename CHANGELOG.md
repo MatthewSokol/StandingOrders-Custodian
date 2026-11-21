@@ -6,6 +6,8 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-21
+
 ### Changed
 
 - **New name: Standing Orders: Custodian.** Quartermaster made players think of reputation vendors. The command is `/soc`, or `/custodian` (`/soq` is gone), the folder is `StandingOrders_Custodian` and the API global is `StandingOrdersCustodian` (`StandingOrdersQuartermaster` still works for now). It stays under Standing Orders in the AddOn list.
