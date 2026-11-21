@@ -276,6 +276,14 @@ CHECK("settings panel shows the icon", panel and panel.icon ~= nil)
 if KS.CONFIRM_ENABLED then CHECK("hold window text shows the icon", StaticPopupDialogs.SOC_CONFIRM and StaticPopupDialogs.SOC_CONFIRM.text:find(KS.ICON, 1, true) ~= nil) end -- the hold window is only made for Confirm
 CALL("intro", KS.ShowIntro, KS)
 CHECK("intro shows the icon", SOCustodianIntro and SOCustodianIntro.icon ~= nil)
+local introText = KS.IntroText()
+local function before(a, b) local i, j = introText:find(a, 1, true), introText:find(b, 1, true); return i and j and i < j end
+CHECK("intro: marks are for all characters comes first in Your marks", before("Your marks", "Marks are for all your characters") and before("Marks are for all your characters", "happy to lose"))
+CHECK("intro: auto-marks are bullets under their own heading", before("Marked for you", "• Grays") and before("• Grays", "Protected against"))
+CHECK("intro: still allowed says applying enchants", introText:find("Applying enchants, oils and scrolls", 1, true) ~= nil)
+CHECK("intro: not yet supported bag addons", introText:find("Not yet supported bag addons", 1, true) ~= nil and not introText:find("doesn't know", 1, true))
+CHECK("intro: lists every supported bag addon", before("Blizzard bags", "ArkInventory") and introText:find("ElvUI bags", 1, true) ~= nil)
+CHECK("intro: one bag line per supported bag", SOCustodianIntro.bags and #SOCustodianIntro.bags == 8)
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)

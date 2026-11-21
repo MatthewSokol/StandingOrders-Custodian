@@ -1812,35 +1812,91 @@ local function HookTooltip()
 end
 
 ---------------------------------------------------------------------------------------------------
--- One-time intro: what Confirm/Locked protect, and what they don't yet. Shown until "Got it" is
--- clicked; bump INTRO_VERSION when the list changes so everyone sees the new one once.
+-- One-time intro: what the marks mean, what's marked for you, what Locked protects and what it doesn't yet,
+-- and which bags it works with. Shown until "Got it" is clicked; bump INTRO_VERSION when it changes so
+-- everyone sees the new one once. Built from separate lines (headings, indented bullets, small gaps)
+-- so it reads as sections, not one block of text.
 
-local INTRO_VERSION = 5
-local INTRO_TEXT = table.concat({
-  "|cffff4040Locked|r (key icon) items are protected. Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less.",
-  "|cffc069ffAlways on me|r (purple diamond, one step above Locked) is Locked and also stays out of the bank.",
-  "|cff9d9d9dJunk|r (coin icon) marks items you're happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor).",
-  "|cff4fb3ffMail|r (letter icon, between Junk and Normal) marks items to send to your bank character (Standing Orders: Mail, coming soon, will mail them).",
-  "New items are marked for you: grays and white gear with no use become Junk, unbound BoE items become Mail, and so do crafting materials none of this character's professions use (for this character only; enchanting materials are left alone). Not items traded to you, bought (AH or vendor) or mailed to you by a player. Change this in /soc settings.",
-  "Consumables, reagents and vendor trade goods (thread, vials...) are never auto-marked, and when you mark them the mark is for this character only.",
-  "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.",
-  "",
-  "|cff33ff99Protected against|r",
-  "- Selling it: it's bought straight back while the vendor is open",
-  "- Disenchant, Prospecting, Milling: the click is blocked",
-  "- Destroying: the delete popup closes",
-  "- Trade and mail: the item is taken back out",
-  "- Bank (Always on me only): it's moved straight back to your bags",
-  "",
-  "|cff33ff99Still allowed|r",
-  "- Enchants, oils and scrolls",
-  "",
-  "|cffff8040Not protected yet|r",
-  "- Auction house posting",
-  "- Using or eating the item, or handing it to an NPC",
-  "- Closing the vendor right after a sale, before it can be bought back",
-  "- Bag addons Standing Orders doesn't know (it supports Blizzard bags, ArkInventory, Bagnon, Combuctor, Baganator, AdiBags, BetterBags and ElvUI): no Alt+Click, icons or Disenchant block",
-}, "\n")
+local INTRO_VERSION = 6
+do -- the intro's helpers stay out of the main chunk's 200-local limit
+local GOLD, GREEN, ORANGE, MUTED = "ffffd100", "ff33ff99", "ffff8040", "ffbbbbbb"
+local READY_ICON = "Interface\\RaidFrame\\ReadyCheck-Ready"
+local BAG_ICON = "Interface\\Icons\\INV_Misc_Bag_08"
+local function Tex(path) return "|T" .. path .. ":16:16|t" end
+local function Colored(color, text) return "|c" .. color .. text .. "|r" end -- pipes:ok (a color escape built from its parts)
+local function LevelLine(level, text) return Tex(ICONS[level]) .. " " .. Colored(COLORS[level], NAMES[level]) .. ": " .. text end
+
+-- { text, indent, gap before (pixels), font }
+local INTRO_LINES = {
+  { Colored(GOLD, "Your marks"), 0, 0, "GameFontNormalLarge" },
+  { "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.", 0, 4 },
+  { "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less:", 0, 6 },
+  { LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)"), 10, 4 },
+  { LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)"), 10, 3 },
+  { LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident"), 10, 3 },
+  { LevelLine(ONME, "Locked, and also kept out of the bank"), 10, 3 },
+
+  { Colored(GOLD, "Marked for you"), 0, 12, "GameFontNormalLarge" },
+  { "• Grays, and white gear with no profession or quest use: " .. Colored(COLORS[JUNK], "Junk"), 10, 4 },
+  { "• Unbound Bind on Equip items, green and up: " .. Colored(COLORS[MAIL], "Mail"), 10, 2 },
+  { "• Crafting materials none of this character's professions use: " .. Colored(COLORS[MAIL], "Mail") .. ", for this character only (enchanting materials are left alone)", 10, 2 },
+  { "• Never items traded to you, bought (AH or vendor) or mailed to you by a player", 10, 2 },
+  { "• Never consumables, reagents or vendor trade goods (thread, vials...); when you mark one, the mark is for this character only", 10, 2 },
+  { Colored(MUTED, "Change any of this in /soc settings."), 10, 4 },
+
+  { Colored(GREEN, "Protected against"), 0, 12, "GameFontNormalLarge" },
+  { "• Selling it: it's bought straight back while the vendor is open", 10, 4 },
+  { "• Disenchant, Prospecting, Milling: the click is blocked", 10, 2 },
+  { "• Destroying: the delete popup closes", 10, 2 },
+  { "• Trade and mail: the item is taken back out", 10, 2 },
+  { "• Bank (Always on me only): it's moved straight back to your bags", 10, 2 },
+
+  { Colored(GREEN, "Still allowed"), 0, 12, "GameFontNormalLarge" },
+  { "• Applying enchants, oils and scrolls", 10, 4 },
+
+  { Colored(ORANGE, "Not protected yet"), 0, 12, "GameFontNormalLarge" },
+  { "• Auction house posting", 10, 4 },
+  { "• Using or eating the item, or handing it to an NPC", 10, 2 },
+  { "• Closing the vendor right after a sale, before it can be bought back", 10, 2 },
+  { "• Not yet supported bag addons: no Alt+Click, icons or Disenchant block", 10, 2 },
+
+  { Colored(GOLD, "Works with these bags"), 0, 12, "GameFontNormalLarge" },
+}
+
+-- The supported bags: { label, addon folder (nil = built in) }. The label matches the adapter's name.
+local BAG_LIST = {
+  { "Blizzard bags" }, { "ArkInventory", "ArkInventory" }, { "Bagnon", "Bagnon" }, { "Combuctor", "Combuctor" },
+  { "Baganator", "Baganator" }, { "AdiBags", "AdiBags" }, { "BetterBags", "BetterBags" }, { "ElvUI bags", "ElvUI" },
+}
+
+local function AddonMeta(folder, key)
+  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  if not get then return nil end
+  local ok, value = pcall(get, folder, key)
+  return ok and value or nil
+end
+
+-- One bag list entry: green "(in use)" with its own icon when Custodian is hooked into it, white with its own
+-- icon when it's installed, gray with a check mark when it isn't.
+local function BagEntry(entry)
+  local label, folder = entry[1], entry[2]
+  if not folder then return Tex(BAG_ICON) .. " " .. label .. " " .. Colored(MUTED, "(built in)") end
+  for _, adapter in ipairs(bagAddons) do
+    if adapter.name == label and adapter.active then
+      return Tex(AddonMeta(folder, "IconTexture") or READY_ICON) .. " " .. Colored(GREEN, label .. " (in use)")
+    end
+  end
+  if AddonMeta(folder, "Title") then return Tex(AddonMeta(folder, "IconTexture") or READY_ICON) .. " " .. label end
+  return Tex(READY_ICON) .. " " .. Colored(MUTED, label)
+end
+
+-- The intro's words, for the self-test and smoke checks.
+function KS.IntroText()
+  local out = {}
+  for _, line in ipairs(INTRO_LINES) do out[#out + 1] = line[1] end
+  for _, entry in ipairs(BAG_LIST) do out[#out + 1] = BagEntry(entry) end
+  return table.concat(out, "\n")
+end
 
 local intro
 
@@ -1864,12 +1920,30 @@ function KS:ShowIntro()
     intro.icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
     intro.icon:SetTexture(KS.ICON)
 
-    local body = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 18, -38)
-    body:SetWidth(444)
-    body:SetJustifyH("LEFT")
-    body:SetSpacing(2)
-    body:SetText(INTRO_TEXT)
+    local y = -36
+    for _, line in ipairs(INTRO_LINES) do
+      local text, indent, gap, font = line[1], line[2] or 0, line[3] or 0, line[4]
+      y = y - gap
+      local fs = intro:CreateFontString(nil, "OVERLAY", font or "GameFontHighlight")
+      fs:SetPoint("TOPLEFT", 18 + indent, y)
+      fs:SetWidth(444 - indent)
+      fs:SetJustifyH("LEFT")
+      fs:SetSpacing(2)
+      fs:SetText(text)
+      y = y - fs:GetStringHeight()
+    end
+    -- The bag list: two columns, refreshed every time the window opens (bag addons hook in after login).
+    intro.bags = {}
+    y = y - 6
+    for i = 1, #BAG_LIST do
+      local fs = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+      local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
+      fs:SetPoint("TOPLEFT", 28 + col * 222, y - row * 22)
+      fs:SetWidth(212)
+      fs:SetJustifyH("LEFT")
+      intro.bags[i] = fs
+    end
+    y = y - math.ceil(#BAG_LIST / 2) * 22
 
     local ok = CreateFrame("Button", nil, intro, "UIPanelButtonTemplate")
     ok:SetSize(110, 24)
@@ -1881,10 +1955,12 @@ function KS:ShowIntro()
       Print("You can reopen this with /soc intro.")
     end)
 
-    intro:SetSize(480, body:GetStringHeight() + 38 + 54)
+    intro:SetSize(480, -y + 54)
     tinsert(UISpecialFrames, "SOCustodianIntro") -- Esc closes it (it shows again next login until "Got it")
   end
+  for i, entry in ipairs(BAG_LIST) do intro.bags[i]:SetText(BagEntry(entry)) end
   intro:Show()
+end
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -2132,7 +2208,7 @@ local function Help()
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
   print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
-  print("  /soc intro - what Locked protects (and what it doesn't yet)")
+  print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
   print("  /soc log [n] - show the last n guard log lines (default 25)")
   print("  /soc debug - toggle debug messages")
   print("  /soc selftest - check this install (results are saved for bug reports)")
