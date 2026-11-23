@@ -141,6 +141,25 @@ for bag = 0, 4 do for _, id in pairs(STUB_BAGS[bag] or {}) do if id == 6948 then
 CHECK("Always on me item moved back out of the bank", inBags and not STUB_BAGS[6][1])
 FIRE("BANKFRAME_CLOSED")
 
+-- Custodian's own messages (auto-marks, items moved back...): the log only, unless chat is turned on
+local function logHas(text)
+  for _, line in ipairs(StandingOrdersCustodianDB.log or {}) do if line:find(text, 1, true) then return true end end
+  return false
+end
+CHECK("chat messages are off by default", KS.GetChat() == false and StandingOrdersCustodianDB.chat == false)
+CHECK("auto-mark and moved-back messages stay out of chat by default", not CHAT_HAS("Marked as") and not CHAT_HAS("back to your bags"))
+CHECK("...and are kept in the log", logHas("Marked as") and logHas("back to your bags"))
+CALL("/soc chat on", SlashCmdList.SOC, "chat on")
+CHECK("/soc chat on turns them on", KS.GetChat() == true)
+STUB_ITEMDB[4877] = { name = "Test Gray Bone", quality = 0, sellPrice = 3, classID = 15, subclassID = 0 }
+STUB_BAGS[3] = { 4877 }
+FIRE("BAG_UPDATE_DELAYED")
+RUN_TIMERS()
+CHECK("with chat on, an auto-mark shows in chat", CHAT_HAS("Marked as") and KS.GetLevel(4877) == L.JUNK)
+CALL("/soc chat off", SlashCmdList.SOC, "chat off")
+STUB_BAGS[3] = nil
+CHECK("/soc chat off turns them off", KS.GetChat() == false)
+
 -- Slash commands
 for _, cmd in ipairs({ "help", "list", "status", "settings", "scope char", "scope account", "log 5", "debug", "debug", "intro" }) do
   CALL("/soc " .. cmd, SlashCmdList.SOC, cmd)
@@ -246,6 +265,7 @@ STUB_POPUP = nil
 CHAT = {}
 CHECK("Locked and above still just stop, no window", KS.Guard(6948, nil, "sell") == true and STUB_POPUP == nil)
 CHECK("the guard error says how to sell it", CHAT_HAS("Lower it to Normal to sell it") and not CHAT_HAS("Unfavorite"), CHAT[1])
+CHECK("the guard error shows on screen; its chat copy is off by default", CHAT_HAS("ERRFRAME ") and #CHAT == 1, #CHAT)
 
 -- Equipment sets: items in a set are protected at the set's level (default Locked); marks underneath
 -- stay as they are, and taking an item out of the set takes the protection away.

@@ -90,6 +90,17 @@ local function Log(msg, ...)
   if mechanic then mechanic:Log(ADDON, msg, mechanic.Categories and mechanic.Categories.CORE) end
 end
 
+-- Messages about what Custodian did on its own (auto-marks, buybacks, items moved back, blocked actions): always
+-- kept in the log (/soc log), and shown in chat too only with "Show Custodian's own messages in chat" on
+-- (StandingOrdersCustodianDB.chat, off by default). Replies to your own clicks and commands use Print.
+function KS.Notify(msg, ...)
+  if select("#", ...) > 0 then msg = msg:format(...) end
+  Log(msg)
+  if db and db.chat then Print(msg) end
+end
+function KS.GetChat() return (db and db.chat) and true or false end
+function KS.SetChat(on) if db then db.chat = on and true or false end end
+
 local function Err(msg)
   UIErrorsFrame:AddMessage(msg, 1, 0.2, 0.2)
   Print("|cffff4040%s|r", msg)
@@ -292,14 +303,18 @@ function KS.Guard(id, link, action)
   if level < (GUARD_FROM[action] or CONFIRM) then return false end
   link = link or ItemLink(id)
   if level == CONFIRM and UsePass(id, action) then return false end
+  local msg
   if level == CONFIRM then
-    Err(("%s is on hold (Confirm)."):format(link))
-    AskToAllow(id, link, action)
+    msg = ("%s is on hold (Confirm)."):format(link)
   else
     local how = (action == "bank") and "Lower it to Locked to bank it (Alt+Right-click it in your bags)"
       or ("Lower it to Normal to %s it (Alt+Right-click it in your bags, or /soc normal <item>)"):format(action)
-    Err(("%s is %s. %s."):format(link, NAMES[level], how))
+    msg = ("%s is %s. %s."):format(link, NAMES[level], how)
   end
+  -- The red error on screen always shows; its copy in chat is one of Custodian's own messages.
+  UIErrorsFrame:AddMessage(msg, 1, 0.2, 0.2)
+  KS.Notify("|cffff4040%s|r", msg)
+  if level == CONFIRM then AskToAllow(id, link, action) end
   Log("blocked %s of item %d (level %s)", action, id, NAMES[level])
   return true
 end
@@ -434,7 +449,7 @@ local function RescueBuyback()
     if id and KS.IsLocked(id) then
       rescuing = true
       KS.Guard(id, link, "sell")
-      Print("Bought %s back.", link)
+      KS.Notify("Bought %s back.", link)
       BuybackItem(i)
       C_Timer.After(0.7, function()
         rescuing = false
@@ -541,7 +556,7 @@ local function RescueBank()
         end
         warnedFull[info.itemID] = nil
         KS.Guard(info.itemID, info.hyperlink, "bank")
-        Print("Moved %s back to your bags.", info.hyperlink)
+        KS.Notify("Moved %s back to your bags.", info.hyperlink)
         bankRescuing = true
         C_Timer.After(0.5, function()
           bankRescuing = false
@@ -1278,7 +1293,7 @@ local function RecordRecipes(prof, mats)
     KS.QueueAutoMark()
   end
   if #freed > 0 then
-    Print("Your %s uses %s, so %s no longer Mail.", prof, table.concat(freed, ", "), #freed > 1 and "they're" or "it's")
+    KS.Notify("Your %s uses %s, so %s no longer Mail.", prof, table.concat(freed, ", "), #freed > 1 and "they're" or "it's")
     RefreshBags()
   end
 end
@@ -1401,13 +1416,13 @@ local function OverrideHere(id, link, how)
   if mine and cdb.items[id] == mine then
     cdb.items[id] = nil
     cdb.autoMarked[id] = nil
-    Print("%s is no longer %s: you %s.", link or ItemLink(id), LevelText(mine), how)
+    KS.Notify("%s is no longer %s: you %s.", link or ItemLink(id), LevelText(mine), how)
     RefreshBags()
   end
   local auto = db.autoMarked[id]
   if auto and db.items[id] == auto and not cdb.items[id] then
     KS.SetLevel(id, NORMAL, link, { scope = "char", quiet = true })
-    Print("%s was %s; you %s, so it's Normal on this character.", link or ItemLink(id), LevelText(auto), how)
+    KS.Notify("%s was %s; you %s, so it's Normal on this character.", link or ItemLink(id), LevelText(auto), how)
   end
 end
 
@@ -1435,12 +1450,10 @@ local function DropPersonalAutoMarks()
     end
   end
   if n > 0 then
-    Print("Took auto-marks off %d consumables, reagents and vendor trade goods: mark those yourself, per character.", n)
-    Log("dropped %d auto-marks on per-character items", n)
+    KS.Notify("Took auto-marks off %d consumables, reagents and vendor trade goods: mark those yourself, per character.", n)
   end
   if tools > 0 then
-    Print("Took the auto-mark off %d profession tools (fishing poles, mining picks, hammers...): auto-marks leave tools alone now.", tools)
-    Log("dropped %d auto-marks on profession tools", tools)
+    KS.Notify("Took the auto-mark off %d profession tools (fishing poles, mining picks, hammers...): auto-marks leave tools alone now.", tools)
   end
   if n + tools > 0 then RefreshBags() end
 end
@@ -1479,8 +1492,7 @@ local function MigrateAutoMarks()
   end
   db.autoVersion = 2
   if n > 0 then
-    Print("Crafting materials are now Mail per character, and only when none of that character's professions use them. Took the old Mail mark off %d of them.", n)
-    Log("migrated auto-marks: %d account-wide crafting Mail marks removed", n)
+    KS.Notify("Crafting materials are now Mail per character, and only when none of that character's professions use them. Took the old Mail mark off %d of them.", n)
     RefreshBags()
   end
 end
@@ -1516,12 +1528,11 @@ local function AutoMark()
       local shown = table.concat(list, ", ", 1, math.min(#list, 5))
       if #list > 5 then shown = shown .. (" and %d more"):format(#list - 5) end
       if key == "here" then
-        Print("Marked as %s on this character (none of your professions use them): %s. (/soc settings)",
+        KS.Notify("Marked as %s on this character (none of your professions use them): %s. (/soc settings)",
           LevelText(MAIL), shown)
       else
-        Print("Marked as %s: %s. (/soc settings to change this)", LevelText(key), shown)
+        KS.Notify("Marked as %s: %s. (/soc settings to change this)", LevelText(key), shown)
       end
-      Log("auto-marked %d items as %s", #list, key == "here" and "Mail (this character)" or NAMES[key])
     end
   end
 end
@@ -1692,6 +1703,13 @@ local function CreatePanel()
   end
   prev = Note(panel, "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less, Alt+Shift+Left-click to move its mark between all characters and this one.", char, 26, -2)
 
+  local chatHeader = Header(panel, "Chat", prev)
+  chatHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
+  local chat = Check(panel, "Show Custodian's own messages in chat", chatHeader, -6, function(self) KS.SetChat(self:GetChecked()) end)
+  refreshers[#refreshers + 1] = function() chat:SetChecked(KS.GetChat()) end
+  panel.chatCheck = chat
+  prev = Note(panel, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Replies to your own clicks and commands always show.", chat, 26, -2)
+
   local intro = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
   intro:SetSize(170, 24)
   intro:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
@@ -1828,6 +1846,7 @@ local function CreatePanel()
     C_Timer.After(0, FitPanel) -- positions settle after the first frame
   end)
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
+  outer.chatCheck = panel.chatCheck
   if Settings and Settings.RegisterCanvasLayoutCategory then
     category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
     Settings.RegisterAddOnCategory(category)
@@ -2272,7 +2291,8 @@ local function Help()
   print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
   print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
-  print("  /soc log [n] - show the last n guard log lines (default 25)")
+  print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
+  print("  /soc log [n] - show the last n log lines (default 25)")
   print("  /soc debug - toggle debug messages")
   print("  /soc selftest - check this install (results are saved for bug reports)")
   print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it,")
@@ -2344,10 +2364,13 @@ SlashCmdList.SOC = function(msg)
     Status()
   elseif cmd == "intro" or cmd == "protect" then
     KS:ShowIntro()
+  elseif cmd == "chat" then
+    if rest == "on" or rest == "off" then KS.SetChat(rest == "on") else KS.SetChat(not KS.GetChat()) end
+    Print("Custodian's own messages now show %s.", KS.GetChat() and "in chat and the log" or "only in the log (/soc log)")
   elseif cmd == "log" then
     local log = db.log or {}
     local n = tonumber(rest) or 25
-    Print("Last %d guard log lines (of %d):", math.min(n, #log), #log)
+    Print("Last %d log lines (of %d):", math.min(n, #log), #log)
     for i = math.max(1, #log - n + 1), #log do print("  " .. log[i]) end
   elseif cmd == "selftest" or cmd == "test" then
     KS.SelfTest()
@@ -2404,6 +2427,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
     for id in pairs(db.autoMailed or {}) do db.autoMarked[id] = db.autoMarked[id] or MAIL end
+    if db.chat == nil then db.chat = false end -- Custodian's own messages: the log only, unless turned on
     db.auto = db.auto or {}
     if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
     for key, on in pairs(AUTO_DEFAULTS) do
