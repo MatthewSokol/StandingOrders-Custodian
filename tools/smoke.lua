@@ -15,6 +15,8 @@ STUB_ITEMDB = {
   [15210] = { name = "Raider Shortsword", quality = 2, sellPrice = 900, classID = 2, subclassID = 7, bindType = 2, equipLoc = "INVTYPE_WEAPON" },
   [9999] = { name = "Gifted Blade", quality = 2, sellPrice = 900, classID = 2, subclassID = 7, bindType = 2, equipLoc = "INVTYPE_WEAPON" },
   [4306] = { name = "Silk Cloth", quality = 1, sellPrice = 38, classID = 7, subclassID = 5, isCrafting = true },
+  [6256] = { name = "Fishing Pole", quality = 1, sellPrice = 23, classID = 2, subclassID = 20, equipLoc = "INVTYPE_2HWEAPON" },
+  [2901] = { name = "Mining Pick", quality = 1, sellPrice = 16, classID = 2, subclassID = 0, equipLoc = "INVTYPE_WEAPON" },
 }
 STUB_PROFESSIONS = { { "Tailoring", 197 } }
 
@@ -67,10 +69,13 @@ Bagnon = { Item = { Update = function() end } }
 LibStub = function(name) return (name == "AceAddon-3.0" and AceAddon) or (name == "ABEvent-1.0" and ABEvent) or nil end
 -- An older build's per-character Mail auto-mark on a reagent (seen in game on Light Feathers).
 StandingOrdersCustodianCharDB = { items = { [17030] = 1.5 }, autoMarked = { [17030] = 1.5 } }
+-- 1.0.0 auto-marked white fishing poles Junk for all characters.
+StandingOrdersCustodianDB = { items = { [6256] = 1 }, autoMarked = { [6256] = 1 }, autoSeen = { [6256] = true } }
 FIRE("ADDON_LOADED", "StandingOrders_Custodian")
 FIRE("PLAYER_LOGIN")
 local KS = StandingOrdersCustodian
 local L = KS.LEVELS
+CHECK("1.0.0's Junk auto-mark on a fishing pole comes off at login", KS.GetLevel(6256) == L.NORMAL and next(StandingOrdersCustodianDB.autoMarked) == nil, KS.GetLevel(6256))
 CHECK("a per-character auto-mark on a reagent comes off at login", KS.GetLevel(17030) == L.NORMAL and next(StandingOrdersCustodianCharDB.autoMarked) == nil, KS.GetLevel(17030))
 CHECK("Custodian global and levels", KS and L and L.MAIL == 1.5 and L.ONME == 5)
 CHECK("the old global still works for Vendor, Mail and the config addon", StandingOrdersQuartermaster == KS)
@@ -81,12 +86,15 @@ CHECK("auto-mark settings default on", KS.GetAuto("grayJunk") and KS.GetAuto("ma
 
 -- Auto-marks on what's in the bags at login
 KS.SetLevel(6948, L.ONME, nil, { quiet = true })
-STUB_BAGS[0] = { 6948, 4865, 25, 2589, 2770, 10940, 2320, 4540, 17030, 15210 }
+STUB_BAGS[0] = { 6948, 4865, 25, 2589, 2770, 10940, 2320, 4540, 17030, 15210, 6256, 2901 }
 RUN_TIMERS()
 CALL("bag refresh with an empty slot", function() FIRE("BAG_UPDATE_DELAYED"); RUN_TIMERS() end)
 CHECK("bag buttons after the empty slot still get hooked", rawget(bagButtons[3], "__h_PreClick") ~= nil)
 CHECK("gray becomes Junk", KS.GetLevel(4865) == L.JUNK, KS.GetLevel(4865))
 CHECK("white weapon becomes Junk", KS.GetLevel(25) == L.JUNK, KS.GetLevel(25))
+CHECK("a fishing pole (a white weapon, but a profession tool) is left alone", KS.GetLevel(6256) == L.NORMAL, KS.GetLevel(6256))
+CHECK("a mining pick (a profession tool by ID) is left alone", KS.GetLevel(2901) == L.NORMAL, KS.GetLevel(2901))
+CHECK("profession tools: by ID and by the Fishing Pole subclass", KS.IsProfessionTool(2901) and KS.IsProfessionTool(6256) and not KS.IsProfessionTool(25))
 CHECK("Hearthstone keeps its own mark", KS.GetLevel(6948) == L.ONME, KS.GetLevel(6948))
 CHECK("BoE green becomes Mail (all characters)", KS.GetLevel(15210) == L.MAIL and KS.GetItemScope(15210) == "account")
 CHECK("enchanting material left alone", KS.GetLevel(10940) == L.NORMAL, KS.GetLevel(10940))

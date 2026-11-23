@@ -178,6 +178,29 @@ function KS.IsPersonal(id)
   return class == CLASS_TRADEGOODS and KS.IsVendorMat(id)
 end
 
+-- Profession tools are never auto-marked: fishing poles, mining picks, blacksmith hammers, spanners,
+-- skinning knives, enchanting rods and the like look like plain white weapons or trade goods, but the
+-- character whose profession needs one has to keep it. A do block: the main chunk is at Lua's 200-local limit.
+do
+  local TOOLS = {}
+  for _, id in ipairs({
+    2901, 5956, 7005, 6219, 10498,      -- Mining Pick, Blacksmith Hammer, Skinning Knife, Arclight Spanner, Gyromatic Micro-Adjustor
+    4471, 9149, 15846,                  -- Flint and Tinder, Philosopher's Stone, Salt Shaker
+    6218, 6339, 11130, 11145, 16207,    -- Runed Copper, Silver, Golden, Truesilver and Arcanite Rods
+    6256, 6365, 6366, 6367, 12225, 19022, 19970, 25978, -- fishing poles (any Fishing Pole weapon counts anyway)
+    20815, 39505, 40772,                -- Jeweler's Kit, Virtuoso Inking Set, Gnomish Army Knife
+  }) do TOOLS[id] = true end
+  local FISHING_POLE = (Enum and Enum.ItemWeaponSubclass and Enum.ItemWeaponSubclass.Fishingpole) or 20
+  local WEAPON = ITEM_CLASS.Weapon or 2
+  function KS.IsProfessionTool(id)
+    if not id then return false end
+    if TOOLS[id] then return true end
+    if not GetInstant then return false end
+    local _, _, _, _, _, class, subclass = GetInstant(id)
+    return class == WEAPON and subclass == FISHING_POLE
+  end
+end
+
 -- opts (optional): { scope = "account"|"char", quiet = true }. The old third-argument link still works.
 function KS.SetLevel(id, level, link, opts)
   if not id then return end
@@ -1088,7 +1111,7 @@ end
 --   crafting materials (white and up, unbound)   -> Mail on this character, when none of its
 --                                                   professions use them (see Professions)
 --   unbound Bind on Equip (green and up)         -> Mail
--- Quest items, consumables, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
+-- Quest items, consumables, profession tools, bags, ammo, recipes, keys, shirts and tabards are left alone, and so is
 -- anything VendorFlip is holding to flip. Items you got on purpose (traded to you, bought on the AH or
 -- from a vendor, or mailed to you by a player) are left alone on the character that got them.
 -- Each item ID is only decided once (StandingOrdersCustodianDB.autoSeen), so a level you change by hand stays.
@@ -1328,6 +1351,7 @@ local function AutoLevel(info, bag, slot)
   local name, _, _, _, _, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
   if not name then return nil end
   if KS.IsPersonal(id) then return false end -- consumables, reagents, vendor trade goods
+  if KS.IsProfessionTool(id) then return false end -- fishing poles, mining picks, hammers...
   if not classID and GetItemInfoInstant then
     local _, _, _, loc, _, cls, sub = GetItemInfoInstant(id)
     equipLoc, classID, subclassID = equipLoc or loc, cls, sub
@@ -1397,23 +1421,28 @@ end
 -- Auto-marks on per-character items (from before they were left alone, or before a vendor showed
 -- that an item is sold there) are taken off again.
 local function DropPersonalAutoMarks()
-  local n = 0
+  local n, tools = 0, 0
   -- Both account-wide and this character's own auto-marks (older builds marked crafting materials,
-  -- Light Feathers among them, Mail per character).
+  -- Light Feathers among them, Mail per character). Profession tools too: 1.0.0 marked white ones Junk.
   for _, store in ipairs({ db, cdb }) do
     for id, level in pairs(store.autoMarked) do
-      if KS.IsPersonal(id) then
+      local tool = KS.IsProfessionTool(id)
+      if tool or KS.IsPersonal(id) then
         if store.items[id] == level then store.items[id] = nil end
         store.autoMarked[id] = nil
-        n = n + 1
+        if tool then tools = tools + 1 else n = n + 1 end
       end
     end
   end
   if n > 0 then
     Print("Took auto-marks off %d consumables, reagents and vendor trade goods: mark those yourself, per character.", n)
     Log("dropped %d auto-marks on per-character items", n)
-    RefreshBags()
   end
+  if tools > 0 then
+    Print("Took the auto-mark off %d profession tools (fishing poles, mining picks, hammers...): auto-marks leave tools alone now.", tools)
+    Log("dropped %d auto-marks on profession tools", tools)
+  end
+  if n + tools > 0 then RefreshBags() end
 end
 
 -- Trade goods this vendor sells become per-character items.
@@ -1646,7 +1675,7 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
   prev = Header(panel, "New marks (Alt+Click, /soc <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()
@@ -2013,6 +2042,8 @@ local SAMPLES = {
   { id = 17030, want = false, why = "reagent" },                    -- Ankh
   { id = 4865, want = JUNK, rule = "grayJunk", why = "gray" },       -- Ruined Pelt
   { id = 25, want = JUNK, rule = "whiteJunk", why = "white weapon" }, -- Worn Shortsword
+  { id = 6256, want = false, why = "profession tool" },               -- Fishing Pole
+  { id = 2901, want = false, why = "profession tool" },               -- Mining Pick
 }
 
 local function Detail(label, value, status) return { label = label, value = tostring(value), status = status } end
