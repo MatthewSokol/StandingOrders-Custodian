@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.0.0): 10 changes, 13 rows.**
+**Waiting since the last release (1.0.0): 11 changes, 14 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 13</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 14</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
@@ -158,6 +158,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.10 Mark icon styles: game icons (trimmed) or addon icons, with a compare window</b> (#50) · open · 0 / 1</summary>
 
 - [ ] 2.2.10.1 `TESTING.md` 5.49: `/soc icon compare` shows every mark in both styles over your bag items; game icons are trimmed; Use and Style change the bags, menu and intro at once; `/soc icon reset` goes back to game icons
+
+</details>
+
+<details open>
+<summary><b>2.2.11 Marked items: columns for this character, all characters, and the mark that counts</b> (#51) · open · 0 / 1</summary>
+
+- [ ] 2.2.11.1 `TESTING.md` 5.44 again: the This character and All characters dropdowns and the Mark column (Account default, a character mark winning, back to Account default)
 
 </details>
 
