@@ -710,6 +710,16 @@ search("locked")
 local found = false
 for _, e in ipairs(marks.entries) do if e.id == 4306 then found = true end end
 CHECK("the search finds the account-wide Locked", found)
+-- Shift-click an item, or drop one on the search box: it searches for that item.
+search("")
+CALL("shift-click Silk Cloth", ChatEdit_InsertLink, select(2, GetItemInfo(4306)))
+CHECK("a shift-clicked item fills the search", marks.search:GetText() == "Silk Cloth" and #marks.entries == 1 and marks.entries[1].id == 4306, marks.search:GetText())
+search("")
+STUB_CURSOR = { id = 4306 }
+CALL("drop Silk Cloth on the search box", marks.search:GetScript("OnReceiveDrag"), marks.search)
+CHECK("a dropped item fills the search and goes back to the bags", marks.search:GetText() == "Silk Cloth" and STUB_CURSOR == nil, marks.search:GetText())
+CALL("click the search box with nothing held", marks.search:GetScript("OnReceiveDrag"), marks.search)
+CHECK("nothing held: the search is left alone", marks.search:GetText() == "Silk Cloth")
 marks.bags:SetChecked(false)
 search("")
 local onlyMarked = true

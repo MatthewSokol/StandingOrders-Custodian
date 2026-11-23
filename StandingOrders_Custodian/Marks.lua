@@ -326,6 +326,16 @@ local function BuildWindow()
   win.search:SetAutoFocus(false)
   win.search:SetScript("OnTextChanged", function() Refresh() end)
   win.search:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+  -- Drop an item on the search box (drag it there, or click the box while holding it): search for that item. The
+  -- item goes back where it was.
+  local function TakeCursorItem()
+    local kind, id, link = GetCursorInfo()
+    if kind ~= "item" then return end
+    ClearCursor()
+    KS.SearchMarkList(link or id)
+  end
+  win.search:SetScript("OnReceiveDrag", TakeCursorItem)
+  win.search:HookScript("OnMouseDown", TakeCursorItem)
   win.hint = win.search:CreateFontString(nil, "OVERLAY", "GameFontDisable")
   win.hint:SetPoint("LEFT", 2, 0)
   win.hint:SetText("Search: item or mark")
@@ -368,6 +378,26 @@ local function BuildWindow()
     if not win:IsShown() or win.pending then return end
     win.pending = true
     C_Timer.After(0.3, function() win.pending = nil; Refresh() end)
+  end)
+end
+
+-- Searches the Marked items window for an item (a link or an item ID), as a shift-click or a drag does.
+function KS.SearchMarkList(item)
+  if not item then return end
+  local name = GetItemInfo(item) or (type(item) == "string" and item:match("%[(.-)%]"))
+  if not name then return end
+  if not (win and win:IsShown()) then KS.ShowMarkList() end
+  win.search:SetText(name)
+  Refresh()
+end
+
+-- Shift-click an item (bags, chat, a vendor...) while the window is open and no chat box is being typed in, or
+-- while the search box has focus: it searches for that item. A hook, so chat links work as before.
+if ChatEdit_InsertLink then
+  hooksecurefunc("ChatEdit_InsertLink", function(link)
+    if not (win and win:IsShown() and type(link) == "string" and link:find("item:", 1, true)) then return end
+    local chat = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
+    if win.search:HasFocus() or not chat then KS.SearchMarkList(link) end
   end)
 end
 

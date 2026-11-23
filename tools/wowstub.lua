@@ -239,6 +239,7 @@ hooksecurefunc = function(t, name, fn)
   t[name] = function(...) local r = { orig(...) }; fn(...); return (table.unpack or unpack)(r) end
 end
 CastSpellByName = function() end
+ChatEdit_InsertLink = function() return false end -- no chat box open
 UseAction = function() end
 GetActionInfo = function() return nil end
 StaticPopupDialogs = {}
