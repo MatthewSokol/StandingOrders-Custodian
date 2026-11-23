@@ -39,6 +39,7 @@ KS.LEVELS.DISENCHANT = 1.25
 local CONFIRM_ENABLED = false
 KS.CONFIRM_ENABLED = CONFIRM_ENABLED
 local function Effective(level) return (level == CONFIRM and not CONFIRM_ENABLED) and LOCK or level end
+KS.Effective = Effective -- for Copies.lua
 local ORDER = CONFIRM_ENABLED and { JUNK, KS.LEVELS.DISENCHANT, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
   or { JUNK, KS.LEVELS.DISENCHANT, MAIL, NORMAL, LOCK, ONME }
 local CONFIRM_LATER = "Confirm is coming in a later version; use Locked (lock) for now."
@@ -355,8 +356,9 @@ local function AskToAllow(id, link, action)
   StaticPopup_Show("SOC_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
 end
 
-function KS.Guard(id, link, action)
-  local level = KS.GetLevel(id)
+-- bound (optional): whether the copy being acted on is bound, for per-copy marks (Copies.lua).
+function KS.Guard(id, link, action, bound)
+  local level = KS.GetCopyLevel and KS.GetCopyLevel(id, link, bound) or KS.GetLevel(id)
   local keepFromVendor = level == KS.LEVELS.DISENCHANT and action == "sell" -- Disenchant: only selling stops
   if not keepFromVendor and level < (GUARD_FROM[action] or CONFIRM) then return false end
   link = link or ItemLink(id)
@@ -506,9 +508,11 @@ local function RescueBuyback()
   for i = GetNumBuybackItems(), 1, -1 do
     local link = GetBuybackItemLink(i)
     local id = LinkID(link)
-    if id and (KS.IsLocked(id) or KS.GetLevel(id) == KS.LEVELS.DISENCHANT) then
+    local bound = id and KS.HasCopyMarks(id) and KS.BuybackBound(i)
+    local level = id and KS.GetCopyLevel(id, link, bound)
+    if id and (level >= CONFIRM or level == KS.LEVELS.DISENCHANT) then
       rescuing = true
-      KS.Guard(id, link, "sell")
+      KS.Guard(id, link, "sell", bound)
       KS.Notify("Bought %s back.", link)
       BuybackItem(i)
       C_Timer.After(0.7, function()
@@ -600,9 +604,9 @@ local function RescueBank()
     for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
       slots = slots + 1
       local info = C.GetContainerItemInfo(bag, slot)
-      if info and info.itemID and info.isLocked and KS.GetLevel(info.itemID) >= ONME then
+      if info and info.itemID and info.isLocked and KS.GetSlotLevel(bag, slot) >= ONME then
         busy = true -- still moving into the bank: look again shortly
-      elseif info and info.itemID and KS.GetLevel(info.itemID) >= ONME then
+      elseif info and info.itemID and KS.GetSlotLevel(bag, slot) >= ONME then
         C.PickupContainerItem(bag, slot)
         if not PutInBags() then
           ClearCursor() -- puts it back where it was
@@ -784,7 +788,7 @@ local function HookDestroy()
   hooksecurefunc("StaticPopup_Show", function(which)
     if not DELETE_POPUPS[which] then return end
     local kind, id, link = GetCursorInfo()
-    if kind == "item" and KS.Guard(id, link, "destroy") then
+    if kind == "item" and KS.Guard(id, link, "destroy", KS.CursorBound(id)) then
       StaticPopup_Hide(which)
       ClearCursor()
     end
@@ -884,7 +888,7 @@ end
 local function UpdateButton(btn)
   local bag, slot = ButtonSlot(btn)
   local info = bag and slot and C.GetContainerItemInfo(bag, slot)
-  local level = info and KS.GetLevel(info.itemID) or NORMAL
+  local level = info and KS.GetSlotLevel(bag, slot) or NORMAL -- this copy's mark (Copies.lua)
   local tex = btn.favesIcon
   if ICONS[level] then
     if not tex then
@@ -978,7 +982,7 @@ local function PreClick(btn, mouse)
     elseif spellID == 51005 then action = "mill" end
     -- No SpellStopTargeting(): it's protected on this client (ADDON_ACTION_FORBIDDEN). The click is
     -- still eaten; Esc or right-click ends the targeting cursor.
-    if KS.Guard(info.itemID, info.hyperlink, action) then
+    if KS.Guard(info.itemID, info.hyperlink, action, KS.IsSlotBound(bag, slot)) then
       btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     end
   end
@@ -1078,6 +1082,7 @@ function RefreshBags()
     if btn.favesAdapter then UpdateButton(btn) end
   end
 end
+KS.RefreshBagIcons = RefreshBags -- for Copies.lua
 
 local function HookBags()
   HookBagAddons()
@@ -1120,7 +1125,7 @@ local function GetBlocker(btn)
     local info = bag and slot and C.GetContainerItemInfo(bag, slot)
     -- The blocker takes the click; it can't cancel the cursor (SpellStopTargeting is protected here).
     Log("blocker caught click on %s", info and info.hyperlink or "?")
-    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction()) end
+    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction(), KS.IsSlotBound(bag, slot)) end
   end)
   b:SetScript("OnEnter", function(self)
     local bag, slot = ButtonSlot(btn)
@@ -1162,7 +1167,7 @@ local function UpdateBlockers()
     if on and btn:IsVisible() then
       local bag, slot = ButtonSlot(btn)
       local info = bag and slot and C.GetContainerItemInfo(bag, slot)
-      want = (info and info.itemID and KS.IsLocked(info.itemID) and not KS.HasPass(info.itemID)) and true or false
+      want = (info and info.itemID and KS.GetSlotLevel(bag, slot) >= CONFIRM and not KS.HasPass(info.itemID)) and true or false
     end
     if want then
       GetBlocker(btn):Show()

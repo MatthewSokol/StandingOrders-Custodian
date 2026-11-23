@@ -650,6 +650,35 @@ CHECK("Disenchant is an advanced mark: offered once the advanced options are sho
   KS.SetShowAdvanced(was); return hidden and shown end)())
 KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 
+-- Per-copy marks (Copies.lua, 1.2.0): a mark for an item's bound copies and for copies with an enchant.
+local ENCHANTED = "|cffffffff|Hitem:7001:1897::::::::60:::::|h[Test]|h|r"
+local PLAIN = "|cffffffff|Hitem:7001::::::::60:::::|h[Test]|h|r"
+CHECK("the enchant comes from the link", KS.LinkEnchant(ENCHANTED) == 1897 and KS.LinkEnchant(PLAIN) == nil, KS.LinkEnchant(ENCHANTED))
+CHECK("no copy marks: a copy has the item's mark", KS.GetCopyLevel(7001, ENCHANTED, true) == KS.GetLevel(7001) and not KS.HasCopyMarks(7001))
+KS.SetCopyMark(7001, 1897, "account", L.LOCK)
+CHECK("an enchant mark applies to copies with that enchant", KS.GetCopyLevel(7001, ENCHANTED, false) == L.LOCK, KS.GetCopyLevel(7001, ENCHANTED, false))
+CHECK("...and not to copies without it", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL, KS.GetCopyLevel(7001, PLAIN, false))
+CHAT = {}
+CHECK("selling the enchanted copy is stopped", KS.Guard(7001, ENCHANTED, "sell") == true)
+CHECK("selling a plain copy isn't", KS.Guard(7001, PLAIN, "sell") == false)
+KS.SetCopyMark(7001, 1897, "account", nil)
+KS.SetCopyMark(7001, "bound", "account", L.LOCK)
+CHECK("a bound-copies mark applies to bound copies", KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
+CHECK("...and not to unbound ones", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL)
+CHECK("disenchanting a bound copy is stopped, an unbound one isn't", KS.Guard(7001, PLAIN, "disenchant", true) == true and KS.Guard(7001, PLAIN, "disenchant", false) == false)
+KS.SetCopyMark(7001, "bound", "char", L.NORMAL)
+CHECK("this character's copy mark comes first (Normal here frees them)", KS.GetCopyLevel(7001, PLAIN, true) == L.NORMAL)
+KS.SetCopyMark(7001, "bound", "char", nil)
+KS.SetCopyMark(7001, 1897, "account", L.JUNK)
+CHECK("an enchant mark comes before the bound one", KS.GetCopyLevel(7001, ENCHANTED, true) == L.JUNK and KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
+STUB_BOUND[7001] = true
+CHECK("a bag slot's level uses that copy's bound status", KS.GetSlotLevel(2, 1) == L.LOCK, KS.GetSlotLevel(2, 1))
+STUB_BOUND[7001] = nil
+CHECK("...an unbound copy in the slot keeps the item's mark", KS.GetSlotLevel(2, 1) == L.NORMAL, KS.GetSlotLevel(2, 1))
+KS.SetCopyMark(7001, 1897, "account", nil)
+KS.SetCopyMark(7001, "bound", "account", nil)
+CHECK("clearing every copy mark leaves no copies entry", not KS.HasCopyMarks(7001) and StandingOrdersCustodianDB.copies[7001] == nil)
+
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
 CALL("/soc altclick menu", SlashCmdList.SOC, "altclick menu")
