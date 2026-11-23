@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.1.0): 0 changes, 0 rows.**
+**Waiting since the last release (1.1.0): 1 change, 1 row.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -65,6 +65,13 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
+<summary><b>2.2.1 The Disenchant mark: kept from vendors, free to disenchant</b> (#52) · open · 0 / 1</summary>
+
+- [ ] 2.2.1.1 `TESTING.md` 5.50: Disenchant in the menu and list, /soc disenchant, the sell guard and buyback, disenchanting allowed, the badge
+
+</details>
+
+<details open>
 <summary><b>2 Smoke, then acceptance</b> · 0 / 2 sections</summary>
 
 <details open>
@@ -82,7 +89,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 0</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 1</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
