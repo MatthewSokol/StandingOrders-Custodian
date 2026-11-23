@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Added
+
+- **Disenchant mark:** a second kind of junk, for gear you mean to disenchant. A Disenchant item is never sold (if you sell one by mistake it's bought straight back, and Standing Orders: Vendor never sells it), but disenchanting, trading and mailing it are fine. Mark it with `/soc disenchant <item>` (or `/soc de`), the mark menu, the Marked items window or your Alt+Click sequence; it's offered once **Show advanced options** is ticked. Its icon is the Disenchant spell's, or a teal sparkle badge in the Addon icons style.
+
 ## [1.1.0] - 2026-11-23
 
 ### Added
