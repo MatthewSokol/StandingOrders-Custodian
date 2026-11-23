@@ -1,9 +1,12 @@
 -- Smoke test for a new install (no saved data at all): the defaults a new player starts with. tools/smoke.lua
 -- starts from 1.0.0's saved data instead. Run: node tools/harness.js StandingOrders_Custodian "" tools/smoke-fresh.lua
--- (tools/green.js runs both). Item names are made up; nothing here is a character or player name.
+-- (tools/green.js runs both). Item names are the game's or made up; nothing here is a character or player name.
 
--- An epic ring no auto-mark touches, in the first slot of the default bags.
+-- An epic ring no auto-mark touches, in the first slot of the default bags, and two of the self-test's sample items
+-- (a gray and a white weapon), known but not in the bags.
 STUB_ITEMDB = { [7001] = { name = "Test Ring", quality = 4, sellPrice = 0, classID = 4, subclassID = 0, bindType = 1, equipLoc = "INVTYPE_FINGER" } }
+STUB_ITEMDB[4865] = { name = "Ruined Pelt", quality = 0, sellPrice = 5, classID = 15, subclassID = 0 }
+STUB_ITEMDB[25] = { name = "Worn Shortsword", quality = 1, sellPrice = 7, classID = 2, subclassID = 7, equipLoc = "INVTYPE_WEAPON" }
 local slot = {
   GetBagID = function() return 0 end,
   GetID = function() return 1 end,
@@ -63,3 +66,7 @@ KS.SetShowAdvanced(true)
 CALL("/soc mark 7001 again", SlashCmdList.SOC, "mark 7001")
 CHECK("...and shows it with the advanced options", onme and onme:IsShown())
 KS.SetShowAdvanced(false)
+
+-- The self-test on a new install (white gear off): the white weapon must be left alone and the gray marked Junk.
+local res = KS.SelfTest(true)
+CHECK("the self-test's auto-mark samples pass with only grays on", res.tests.automarks.passed, res.tests.automarks.message)

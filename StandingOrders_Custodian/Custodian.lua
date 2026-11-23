@@ -2435,8 +2435,10 @@ local TESTS = {
         if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(s.id) end
         d[#d + 1] = Detail("item " .. s.id, "not loaded yet: run again", "warn")
       else
-        -- With its rule off (white gear is an advanced option), the item must be left alone.
-        local want = (s.rule and not db.auto[s.rule]) and false or s.want
+        -- With its rule off (white gear is an advanced option), the item must be left alone. (Not "x and false
+        -- or y": that always gives y.)
+        local want = s.want
+        if s.rule and not db.auto[s.rule] then want = false end
         local info = { itemID = s.id, quality = quality, hasNoValue = (sellPrice or 0) == 0, isBound = false }
         local got = AutoLevel(info)
         local ok = (got or false) == want
