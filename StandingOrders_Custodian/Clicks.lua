@@ -247,3 +247,76 @@ function KS.ClickCommand(rest)
   local w = KS.WrapWarning()
   if w then KS.Print("|cffff8040%s|r", w) end
 end
+
+-- The sequence editor on the settings page (advanced options): one row per mark, the ones in the sequence first, in
+-- order, then the ones left out. Each row: a box to put the mark in or take it out (Normal always stays in), its
+-- icon and name, and Up and Down to move it. changed() runs after each change. Returns the editor's frame.
+function KS.ClickEditor(parent, changed)
+  local box = CreateFrame("Frame", nil, parent)
+  box:SetSize(330, #KS.ORDER * 24)
+  box.rows = {}
+  local function Move(level, by)
+    local cfg = KS.GetClick()
+    for i, l in ipairs(cfg.order) do
+      if l == level and cfg.order[i + by] then
+        cfg.order[i], cfg.order[i + by] = cfg.order[i + by], cfg.order[i]
+        KS.SetClick(cfg)
+        break
+      end
+    end
+    changed()
+  end
+  local function Include(level, on)
+    local cfg, at = KS.GetClick(), nil
+    for i, l in ipairs(cfg.order) do if l == level then at = i end end
+    if on and not at then cfg.order[#cfg.order + 1] = level
+    elseif not on and at and level ~= NORMAL and #cfg.order > 2 then table.remove(cfg.order, at) end
+    KS.SetClick(cfg)
+    changed()
+  end
+  for i = 1, #KS.ORDER do
+    local r = CreateFrame("Frame", nil, box)
+    r:SetSize(330, 22)
+    r:SetPoint("TOPLEFT", 0, -(i - 1) * 24)
+    r.check = CreateFrame("CheckButton", nil, r, "UICheckButtonTemplate")
+    r.check:SetSize(22, 22)
+    r.check:SetPoint("LEFT")
+    r.check:SetScript("OnClick", function(self) Include(r.level, self:GetChecked()) end)
+    r.num = r:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    r.num:SetPoint("LEFT", r.check, "RIGHT", 2, 0)
+    r.num:SetWidth(16)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetSize(16, 16)
+    r.icon:SetPoint("LEFT", r.num, "RIGHT", 2, 0)
+    r.text = r:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    r.text:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
+    r.up = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
+    r.up:SetSize(54, 20)
+    r.up:SetPoint("LEFT", 200, 0)
+    r.up:SetText("Up")
+    r.up:SetScript("OnClick", function() Move(r.level, -1) end)
+    r.down = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
+    r.down:SetSize(54, 20)
+    r.down:SetPoint("LEFT", r.up, "RIGHT", 4, 0)
+    r.down:SetText("Down")
+    r.down:SetScript("OnClick", function() Move(r.level, 1) end)
+    box.rows[i] = r
+  end
+  function box.Refresh()
+    local cfg, list, inSequence = KS.GetClick(), {}, {}
+    for n, level in ipairs(cfg.order) do list[n] = level; inSequence[level] = n end
+    for _, level in ipairs(KS.ORDER) do if not inSequence[level] then list[#list + 1] = level end end
+    for i, r in ipairs(box.rows) do
+      local level, pos = list[i], inSequence[list[i]]
+      r.level = level
+      r.check:SetChecked(pos ~= nil)
+      r.check:SetEnabled(level ~= NORMAL)
+      r.num:SetText(pos and (pos .. ".") or "")
+      if KS.ICONS[level] then r.icon:SetTexture(KS.ICONS[level]); r.icon:Show() else r.icon:Hide() end
+      r.text:SetText(KS.LevelText(level) .. (level == NORMAL and " (no mark)" or ""))
+      r.up:SetEnabled(pos ~= nil and pos > 1)
+      r.down:SetEnabled(pos ~= nil and pos < #cfg.order)
+    end
+  end
+  return box
+end
