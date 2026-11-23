@@ -87,6 +87,7 @@ function KS.ShowMarkMenu(id, link, anchor)
   for _, level in ipairs(KS.ShownLevels(own)) do shown[level] = true end
   for _, b in ipairs(menu.buttons) do
     b.text:SetText(KS.LevelText(b.level))
+    KS.MarkTexture(b.icon, b.level) -- in the icon style in use (Icons.lua)
     b.check[b.level == own and "Show" or "Hide"](b.check)
     b:ClearAllPoints()
     b:SetPoint("TOPLEFT", 10, y)

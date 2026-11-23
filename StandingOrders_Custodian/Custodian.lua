@@ -804,7 +804,8 @@ end
 -- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
 -- they don't hide counts and other addons' text. Account-wide (StandingOrdersCustodianDB.icon).
 -- size: the icon's side as a % of the item button's width (40% of the width covers 16% of the area).
-local ICON_DEFAULTS = { size = 40, anchor = "BOTTOMLEFT", alpha = 75 }
+-- style: "game" (the game's art), "trimmed" or "badges" (Icons.lua).
+local ICON_DEFAULTS = { size = 40, anchor = "BOTTOMLEFT", alpha = 75, style = "game" }
 local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENTER" }
 local ANCHOR_TEXT = { BOTTOMLEFT = "Bottom left", TOPLEFT = "Top left", TOPRIGHT = "Top right",
   BOTTOMRIGHT = "Bottom right", CENTER = "Center" }
@@ -823,6 +824,8 @@ function KS.SetIconStyle(key, value)
     value = tonumber(value)
     if not value then return false end
     value = math.max(10, math.min(100, math.floor(value / 5 + 0.5) * 5))
+  elseif key == "style" then
+    if not KS.ICON_STYLE_NAMES[value] then return false end
   elseif key ~= "anchor" or not ANCHOR_TEXT[value] then
     return false
   end
@@ -850,19 +853,20 @@ end
 local function UpdateButton(btn)
   local bag, slot = ButtonSlot(btn)
   local info = bag and slot and C.GetContainerItemInfo(bag, slot)
-  local icon = ICONS[info and KS.GetLevel(info.itemID) or NORMAL]
+  local level = info and KS.GetLevel(info.itemID) or NORMAL
   local tex = btn.favesIcon
-  if icon then
+  if ICONS[level] then
     if not tex then
       tex = btn:CreateTexture(nil, "OVERLAY", nil, 7)
       btn.favesIcon = tex
     end
     KS.StyleIcon(tex, btn)
-    tex:SetTexture(icon)
+    KS.MarkTexture(tex, level) -- in the icon style in use (Icons.lua)
     tex:Show()
   elseif tex then
     tex:Hide()
   end
+  if tex then KS.MarkEdge(btn, tex, level) end
 end
 
 -- True while the Send Mail page is open and Postal's (or its Forever port Posty's) Express module is on: Express
@@ -1976,7 +1980,19 @@ local function CreatePanel()
     function(a) KS.SetIconStyle("anchor", a) end)
   pos:SetPoint("LEFT", posLabel, "RIGHT", 10, 0)
   local alphaText, alphaMinus, alphaPlus = Stepper(3, "Opacity", "alpha")
-  panel.iconStyle = { sizeMinus = sizeMinus, sizePlus = sizePlus, pos = pos, alphaMinus = alphaMinus, alphaPlus = alphaPlus }
+  local styleLabel = IconRow(4, "Style")
+  local styleChoice, showStyle = ChoiceControl(adv, 200, function() return KS.ICON_STYLES end,
+    function() return KS.GetIconStyleName() end,
+    function(s) return KS.ICON_STYLE_NAMES[s] or s end,
+    function(s) KS.SetIconStyle("style", s) end)
+  styleChoice:SetPoint("LEFT", styleLabel, "RIGHT", 10, 0)
+  local compare = CreateFrame("Button", nil, adv, "UIPanelButtonTemplate")
+  compare:SetSize(120, 22)
+  compare:SetPoint("LEFT", styleChoice, "RIGHT", 10, 0)
+  compare:SetText("Compare styles")
+  compare:SetScript("OnClick", function() KS.ShowIconCompare() end)
+  panel.iconStyle = { sizeMinus = sizeMinus, sizePlus = sizePlus, pos = pos, alphaMinus = alphaMinus, alphaPlus = alphaPlus,
+    style = styleChoice, compare = compare }
 
   local sample = CreateFrame("Frame", nil, adv)
   sample:SetSize(37, 37)
@@ -1995,10 +2011,13 @@ local function CreatePanel()
     sizeText:SetText(size .. "% of the button's width")
     showPos()
     alphaText:SetText(alpha .. "% opaque (" .. (100 - alpha) .. "% see-through)")
+    showStyle()
     KS.StyleIcon(mark, sample)
+    KS.MarkTexture(mark, LOCK)
+    KS.MarkEdge(sample, mark, LOCK)
   end
 
-  prev = Header(adv, "Equipment sets protect their items", iconRows[3], -22)
+  prev = Header(adv, "Equipment sets protect their items", iconRows[4], -22)
   local setsNote = Note(adv, "", prev, 0, -6)
   local rows = {}
   panel.setRows = rows
@@ -2112,7 +2131,7 @@ local PATHS = {
 }
 local function Tex(path) return "|T" .. path .. ":16:16|t" end
 local function Colored(color, text) return "|c" .. color .. text .. "|r" end -- pipes:ok (a color escape built from its parts)
-local function LevelLine(level, text) return Tex(ICONS[level]) .. " " .. Colored(COLORS[level], NAMES[level]) .. ": " .. text end
+local function LevelLine(level, text) return KS.IconTag(level) .. " " .. Colored(COLORS[level], NAMES[level]) .. ": " .. text end
 
 -- The intro's view helpers, in one table: the main chunk is at Lua's 200-local limit.
 local UI = {}
@@ -2122,7 +2141,7 @@ local UI = {}
 function UI.ShortLines()
   local legend, onme = {}, false
   for _, level in ipairs(KS.ShownLevels()) do -- Always on me only when it's in use (Simple.lua)
-    legend[#legend + 1] = (ICONS[level] and (Tex(ICONS[level]) .. " ") or "") .. Colored(COLORS[level], NAMES[level])
+    legend[#legend + 1] = (ICONS[level] and (KS.IconTag(level) .. " ") or "") .. Colored(COLORS[level], NAMES[level])
     onme = onme or level == ONME
   end
   return {
@@ -2140,10 +2159,11 @@ local INTRO_LINES = {
   { Colored(GOLD, "Your marks"), 0, 0, "GameFontNormalLarge" },
   { "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.", 0, 4 },
   { "", 0, 6 }, -- how Alt+Click works now (UI.FullLines)
-  { LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)"), 10, 4 },
-  { LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)"), 10, 3 },
-  { LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident"), 10, 3 },
-  { LevelLine(ONME, "Locked, and also kept out of the bank"), 10, 3 },
+  -- The marks' lines are made when shown (UI.FullLines), so their icons follow the icon style.
+  { function() return LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)") end, 10, 4 },
+  { function() return LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)") end, 10, 3 },
+  { function() return LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident") end, 10, 3 },
+  { function() return LevelLine(ONME, "Locked, and also kept out of the bank") end, 10, 3 },
   { "See and change every mark, with a search box: /soc list. Pick one item's mark from a menu: /soc mark <item>.", 0, 6 },
 
   { Colored(GOLD, "Marked for you"), 0, 12, "GameFontNormalLarge" },
@@ -2190,6 +2210,8 @@ function UI.FullLines()
       out[#out + 1] = line
     elseif rule and not KS.GetAuto(rule) then
       off = true
+    elseif type(line[1]) == "function" then
+      out[#out + 1] = { line[1](), line[2], line[3], line[4] }
     else
       out[#out + 1] = line
     end
@@ -2582,12 +2604,14 @@ local function IconCommand(rest)
   if key == "size" then ok = KS.SetIconStyle("size", value)
   elseif key == "opacity" or key == "alpha" then ok = KS.SetIconStyle("alpha", value)
   elseif key == "position" or key == "corner" or key == "anchor" then ok = KS.SetIconStyle("anchor", ANCHOR_WORDS[value])
+  elseif key == "style" then ok = KS.SetIconStyle("style", value)
+  elseif key == "compare" then return KS.ShowIconCompare()
   elseif key == "reset" then
     for k, v in pairs(ICON_DEFAULTS) do KS.SetIconStyle(k, v) end
   elseif key ~= "" then ok = false end
-  if not ok then return Err("Use /soc icon size 10-100, /soc icon position bottomleft||topleft||topright||bottomright||center, /soc icon opacity 10-100 or /soc icon reset.") end
+  if not ok then return Err("Use /soc icon size 10-100, /soc icon position bottomleft||topleft||topright||bottomright||center, /soc icon opacity 10-100, /soc icon style game||trimmed||badges, /soc icon compare or /soc icon reset.") end
   local size, anchor, alpha = KS.GetIconStyle()
-  Print("Mark icons: %d%% of the button's width, %s, %d%% opaque.", size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
+  Print("Mark icons: %s, %d%% of the button's width, %s, %d%% opaque.", KS.ICON_STYLE_NAMES[KS.GetIconStyleName()], size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
 end
 
 local function Help()
@@ -2597,7 +2621,7 @@ local function Help()
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
   print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
-  print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
+  print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || style game||trimmed||badges || compare || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
   print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
   print("  /soc mark <item link or ID> - pick an item's mark from a menu")

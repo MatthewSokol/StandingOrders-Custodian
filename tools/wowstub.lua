@@ -31,6 +31,9 @@ local function stub(name)
       if k == "GetScript" then return rawget(t, "__s_" .. a[1]) end
       if k == "HookScript" then rawset(t, "__h_" .. a[1], a[2]); return end
       if k == "SetChecked" then rawset(t, "__checked", a[1] and true or false); return end
+      if k == "SetTexture" then rawset(t, "__tex", a[1]); return end
+      if k == "GetTexture" then return rawget(t, "__tex") end
+      if k == "SetTexCoord" then rawset(t, "__coord", a); return end
       if k == "GetChecked" then return rawget(t, "__checked") or false end
       if k == "RegisterEvent" or k == "RegisterUnitEvent" then
         if not KNOWN_EVENTS[a[1]] then error("Frame:RegisterEvent(): Attempt to register unknown event \"" .. tostring(a[1]) .. "\"", 2) end

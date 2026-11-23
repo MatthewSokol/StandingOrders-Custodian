@@ -312,7 +312,7 @@ function KS.ClickEditor(parent, changed)
       r.check:SetChecked(pos ~= nil)
       r.check:SetEnabled(level ~= NORMAL)
       r.num:SetText(pos and (pos .. ".") or "")
-      if KS.ICONS[level] then r.icon:SetTexture(KS.ICONS[level]); r.icon:Show() else r.icon:Hide() end
+      if KS.MarkTexture(r.icon, level) then r.icon:Show() else r.icon:Hide() end
       r.text:SetText(KS.LevelText(level) .. (level == NORMAL and " (no mark)" or ""))
       r.up:SetEnabled(pos ~= nil and pos > 1)
       r.down:SetEnabled(pos ~= nil and pos < #cfg.order)

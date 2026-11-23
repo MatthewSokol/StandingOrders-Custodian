@@ -430,6 +430,33 @@ end
 CALL("/soc icon reset", SlashCmdList.SOC, "icon reset")
 CHECK("/soc icon reset goes back to the defaults", style() == "40 BOTTOMLEFT 75", style())
 
+-- Mark icon styles (Icons.lua): the game's art (the default), trimmed (item icons cropped, a dark edge) or badges.
+CHECK("icon style: the game's art by default", KS.GetIconStyleName() == "game")
+local styleMenu = st and MENU_RADIOS(st.style) or {}
+CHECK("settings: the Style dropdown offers the three styles", #styleMenu == 3 and styleMenu[1].text == "Game icons", #styleMenu)
+local tex = STUB("Texture")
+CALL("/soc icon style trimmed", SlashCmdList.SOC, "icon style trimmed")
+KS.MarkTexture(tex, L.MAIL)
+CHECK("trimmed: an item icon (the letter) is cropped", tex:GetTexture() == KS.ICONS[L.MAIL] and rawget(tex, "__coord")[1] == 0.08)
+KS.MarkTexture(tex, L.JUNK)
+CHECK("trimmed: the coin isn't an item icon, so it isn't cropped", rawget(tex, "__coord")[1] == 0)
+CHECK("trimmed: the intro's icons are cropped too", KS.IconTag(L.MAIL):find(":5:59:5:59", 1, true) ~= nil, KS.IconTag(L.MAIL))
+CALL("/soc icon style badges", SlashCmdList.SOC, "icon style badges")
+KS.MarkTexture(tex, L.LOCK)
+CHECK("badges: Locked is Media\\Locked", tex:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\Locked", tex:GetTexture())
+CHECK("badges: the bags follow", bagButtons[1].favesIcon:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\OnMe", bagButtons[1].favesIcon:GetTexture())
+CHAT = {}
+CALL("/soc icon style shiny", SlashCmdList.SOC, "icon style shiny")
+CHECK("an unknown style is refused and kept", KS.GetIconStyleName() == "badges" and CHAT_HAS("/soc icon style"), KS.GetIconStyleName())
+CALL("/soc icon compare", SlashCmdList.SOC, "icon compare")
+local cmp = SOCustodianIconCompare
+CHECK("the compare window shows four marks in three styles", cmp and cmp:IsShown() and #cmp.cells == 12)
+CHECK("its cells show items from the bags", cmp.cells[1].item:GetTexture() ~= nil)
+CALL("Use trimmed", cmp.use[2]:GetScript("OnClick"), cmp.use[2])
+CHECK("Use puts the style on", KS.GetIconStyleName() == "trimmed")
+CALL("/soc icon reset", SlashCmdList.SOC, "icon reset")
+CHECK("/soc icon reset: the game's art again", KS.GetIconStyleName() == "game")
+
 -- ElvUI bags, AdiBags and BetterBags: Alt+Click on a live bag button marks the item in that slot; a
 -- closed bank's buttons (and a BetterBags button showing another item) are left alone.
 for id = 7001, 7003 do STUB_ITEMDB[id] = { name = "Test Ring " .. id, quality = 1, sellPrice = 0, classID = 4, subclassID = 0 } end

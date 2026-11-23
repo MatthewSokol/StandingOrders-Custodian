@@ -16,5 +16,6 @@
 Custodian.lua
 Clicks.lua
 Simple.lua
+Icons.lua
 Marks.lua
 Adapters.lua
