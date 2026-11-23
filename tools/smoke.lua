@@ -434,30 +434,34 @@ end
 CALL("/soc icon reset", SlashCmdList.SOC, "icon reset")
 CHECK("/soc icon reset goes back to the defaults", style() == "40 BOTTOMLEFT 75", style())
 
--- Mark icon styles (Icons.lua): the game's art (the default), trimmed (item icons cropped, a dark edge) or badges.
-CHECK("icon style: the game's art by default", KS.GetIconStyleName() == "game")
+-- Mark icon styles (Icons.lua): game icons (the default: the game's art, item icons cropped, a dark edge) or addon icons.
+CHECK("icon style: game icons by default", KS.GetIconStyleName() == "game")
 local styleMenu = st and MENU_RADIOS(st.style) or {}
-CHECK("settings: the Style dropdown offers the three styles", #styleMenu == 3 and styleMenu[1].text == "Game icons", #styleMenu)
+CHECK("settings: the Style dropdown offers two styles", #styleMenu == 2 and styleMenu[1].text == "Game icons" and styleMenu[2].text == "Addon icons", #styleMenu)
 local tex = STUB("Texture")
-CALL("/soc icon style trimmed", SlashCmdList.SOC, "icon style trimmed")
 KS.MarkTexture(tex, L.MAIL)
-CHECK("trimmed: an item icon (the letter) is cropped", tex:GetTexture() == KS.ICONS[L.MAIL] and rawget(tex, "__coord")[1] == 0.08)
+CHECK("game icons: an item icon (the letter) is cropped", tex:GetTexture() == KS.ICONS[L.MAIL] and rawget(tex, "__coord")[1] == 0.08)
 KS.MarkTexture(tex, L.JUNK)
-CHECK("trimmed: the coin isn't an item icon, so it isn't cropped", rawget(tex, "__coord")[1] == 0)
-CHECK("trimmed: the intro's icons are cropped too", KS.IconTag(L.MAIL):find(":5:59:5:59", 1, true) ~= nil, KS.IconTag(L.MAIL))
-CALL("/soc icon style badges", SlashCmdList.SOC, "icon style badges")
+CHECK("game icons: the coin isn't an item icon, so it isn't cropped", rawget(tex, "__coord")[1] == 0)
+CHECK("game icons: the intro's icons are cropped too", KS.IconTag(L.MAIL):find(":5:59:5:59", 1, true) ~= nil, KS.IconTag(L.MAIL))
+CALL("/soc icon style addon", SlashCmdList.SOC, "icon style addon")
 KS.MarkTexture(tex, L.LOCK)
-CHECK("badges: Locked is Media\\Locked", tex:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\Locked", tex:GetTexture())
-CHECK("badges: the bags follow", bagButtons[1].favesIcon:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\OnMe", bagButtons[1].favesIcon:GetTexture())
+CHECK("addon icons: Locked is Media\\Locked", tex:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\Locked", tex:GetTexture())
+CHECK("addon icons: the bags follow", bagButtons[1].favesIcon:GetTexture() == "Interface\\AddOns\\StandingOrders_Custodian\\Media\\OnMe", bagButtons[1].favesIcon:GetTexture())
 CHAT = {}
 CALL("/soc icon style shiny", SlashCmdList.SOC, "icon style shiny")
-CHECK("an unknown style is refused and kept", KS.GetIconStyleName() == "badges" and CHAT_HAS("/soc icon style"), KS.GetIconStyleName())
+CHECK("an unknown style is refused and kept", KS.GetIconStyleName() == "addon" and CHAT_HAS("/soc icon style"), KS.GetIconStyleName())
+CALL("/soc icon style trimmed", SlashCmdList.SOC, "icon style trimmed")
+CHECK("the test builds' \"trimmed\" means game icons", KS.GetIconStyleName() == "game")
+StandingOrdersCustodianDB.icon.style = "badges"
+CHECK("a saved \"badges\" reads as addon icons", KS.GetIconStyleName() == "addon")
 CALL("/soc icon compare", SlashCmdList.SOC, "icon compare")
 local cmp = SOCustodianIconCompare
-CHECK("the compare window shows four marks in three styles", cmp and cmp:IsShown() and #cmp.cells == 12)
+CHECK("the compare window shows four marks in two styles", cmp and cmp:IsShown() and #cmp.cells == 8, cmp and #cmp.cells)
 CHECK("its cells show items from the bags", cmp.cells[1].item:GetTexture() ~= nil)
-CALL("Use trimmed", cmp.use[2]:GetScript("OnClick"), cmp.use[2])
-CHECK("Use puts the style on", KS.GetIconStyleName() == "trimmed")
+CALL("Use game icons", cmp.use[1]:GetScript("OnClick"), cmp.use[1])
+CHECK("Use puts the style on", KS.GetIconStyleName() == "game" and StandingOrdersCustodianDB.icon.style == "game")
+CALL("/soc icon style addon", SlashCmdList.SOC, "icon style addon")
 CALL("/soc icon reset", SlashCmdList.SOC, "icon reset")
 CHECK("/soc icon reset: the game's art again", KS.GetIconStyleName() == "game")
 

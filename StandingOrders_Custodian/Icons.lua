@@ -1,7 +1,8 @@
 -- Custodian: mark icon styles, picked in /soc settings (advanced options) or with /soc icon style:
---   game     the game's own art (a coin, a letter, a key, a purple diamond), as in 1.0.0; the default for now
---   trimmed  the same art, with the item icons' painted borders cropped off and a thin dark edge instead
---   badges   Custodian's own badges (Media\*.tga, drawn by tools/badges.js): a colored circle with a white glyph
+--   game   the game's own art (a coin, a letter, a key, a purple diamond), with the item icons' painted borders
+--          cropped off and a thin dark edge instead; the default
+--   addon  Custodian's own badges (Media\*.tga, drawn by tools/badges.js): a colored circle with a white glyph
+-- Earlier test builds saved "trimmed" and "badges": those read as game and addon. 1.0.0's uncropped art is gone.
 -- /soc icon compare opens a window with each mark in each style over items from your own bags.
 -- A field-only file: Custodian.lua's main chunk is at Lua's 200-local limit.
 
@@ -11,12 +12,14 @@ local L = KS.LEVELS
 local MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\Media\\"
 local BADGES = { [L.JUNK] = "Junk", [L.MAIL] = "Mail", [L.LOCK] = "Locked", [L.ONME] = "OnMe" }
 
-KS.ICON_STYLES = { "game", "trimmed", "badges" }
-KS.ICON_STYLE_NAMES = { game = "Game icons", trimmed = "Trimmed game icons", badges = "Badges" }
+KS.ICON_STYLES = { "game", "addon" }
+KS.ICON_STYLE_NAMES = { game = "Game icons", addon = "Addon icons" }
+KS.ICON_STYLE_ALIAS = { trimmed = "game", badges = "addon", badge = "addon" }
 
 function KS.GetIconStyleName()
   local db = StandingOrdersCustodianDB
   local style = db and db.icon and db.icon.style
+  style = KS.ICON_STYLE_ALIAS[style] or style
   return KS.ICON_STYLE_NAMES[style] and style or "game"
 end
 
@@ -28,12 +31,12 @@ function KS.MarkTexture(tex, level, style)
   local path = KS.ICONS[level]
   if not path then return false end
   style = style or KS.GetIconStyleName()
-  if style == "badges" and BADGES[level] then
+  if style == "addon" and BADGES[level] then
     tex:SetTexture(MEDIA .. BADGES[level], nil, nil, "TRILINEAR")
     tex:SetTexCoord(0, 1, 0, 1)
   else
     tex:SetTexture(path)
-    if style == "trimmed" and IsItemIcon(path) then tex:SetTexCoord(0.08, 0.92, 0.08, 0.92) else tex:SetTexCoord(0, 1, 0, 1) end
+    if IsItemIcon(path) then tex:SetTexCoord(0.08, 0.92, 0.08, 0.92) else tex:SetTexCoord(0, 1, 0, 1) end
   end
   return true
 end
@@ -44,7 +47,7 @@ local edges = setmetatable({}, { __mode = "k" })
 function KS.MarkEdge(owner, tex, level, style)
   style = style or KS.GetIconStyleName()
   local edge = edges[owner]
-  if not (style == "trimmed" and IsItemIcon(KS.ICONS[level]) and tex:IsShown()) then
+  if not (style ~= "addon" and IsItemIcon(KS.ICONS[level]) and tex:IsShown()) then
     if edge then edge:Hide() end
     return
   end
@@ -65,8 +68,8 @@ function KS.IconTag(level, size)
   local path, style = KS.ICONS[level], KS.GetIconStyleName()
   if not path then return "" end
   size = size or 16
-  if style == "badges" and BADGES[level] then path = MEDIA .. BADGES[level]
-  elseif style == "trimmed" and IsItemIcon(path) then
+  if style == "addon" and BADGES[level] then path = MEDIA .. BADGES[level]
+  elseif IsItemIcon(path) then
     return "|T" .. path .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t"
   end
   return "|T" .. path .. ":" .. size .. ":" .. size .. "|t"
@@ -97,7 +100,7 @@ end
 
 local function Build()
   win = CreateFrame("Frame", "SOCustodianIconCompare", UIParent, "BasicFrameTemplateWithInset")
-  win:SetSize(430, 120 + #SHOWN * 44)
+  win:SetSize(340, 120 + #SHOWN * 44)
   win:SetPoint("CENTER")
   win:SetFrameStrata("DIALOG")
   win:SetClampedToScreen(true)
@@ -111,7 +114,7 @@ local function Build()
   title:SetText("Mark icon styles")
   local note = win:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   note:SetPoint("TOPLEFT", 16, -32)
-  note:SetWidth(398)
+  note:SetWidth(308)
   note:SetJustifyH("LEFT")
   note:SetText("Items from your bags under each mark, at your icon size, position and opacity. Use puts a style on your bags.")
   win.cells, win.heads, win.use = {}, {}, {}

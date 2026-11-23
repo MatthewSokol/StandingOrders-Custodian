@@ -806,7 +806,7 @@ end
 -- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
 -- they don't hide counts and other addons' text. Account-wide (StandingOrdersCustodianDB.icon).
 -- size: the icon's side as a % of the item button's width (40% of the width covers 16% of the area).
--- style: "game" (the game's art), "trimmed" or "badges" (Icons.lua).
+-- style: "game" (the game's art, borders trimmed) or "addon" (Custodian's badges) (Icons.lua).
 local ICON_DEFAULTS = { size = 40, anchor = "BOTTOMLEFT", alpha = 75, style = "game" }
 local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENTER" }
 local ANCHOR_TEXT = { BOTTOMLEFT = "Bottom left", TOPLEFT = "Top left", TOPRIGHT = "Top right",
@@ -827,6 +827,7 @@ function KS.SetIconStyle(key, value)
     if not value then return false end
     value = math.max(10, math.min(100, math.floor(value / 5 + 0.5) * 5))
   elseif key == "style" then
+    value = KS.ICON_STYLE_ALIAS[value] or value
     if not KS.ICON_STYLE_NAMES[value] then return false end
   elseif key ~= "anchor" or not ANCHOR_TEXT[value] then
     return false
@@ -2625,7 +2626,7 @@ local function IconCommand(rest)
   elseif key == "reset" then
     for k, v in pairs(ICON_DEFAULTS) do KS.SetIconStyle(k, v) end
   elseif key ~= "" then ok = false end
-  if not ok then return Err("Use /soc icon size 10-100, /soc icon position bottomleft||topleft||topright||bottomright||center, /soc icon opacity 10-100, /soc icon style game||trimmed||badges, /soc icon compare or /soc icon reset.") end
+  if not ok then return Err("Use /soc icon size 10-100, /soc icon position bottomleft||topleft||topright||bottomright||center, /soc icon opacity 10-100, /soc icon style game||addon, /soc icon compare or /soc icon reset.") end
   local size, anchor, alpha = KS.GetIconStyle()
   Print("Mark icons: %s, %d%% of the button's width, %s, %d%% opaque.", KS.ICON_STYLE_NAMES[KS.GetIconStyleName()], size, (ANCHOR_TEXT[anchor] or anchor):lower(), alpha)
 end
@@ -2637,7 +2638,7 @@ local function Help()
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
   print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
-  print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || style game||trimmed||badges || compare || reset - mark icons on bag items (size: % of the button's width)")
+  print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || style game||addon || compare || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
   print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
   print("  /soc mark <item link or ID> - pick an item's mark from a menu")
