@@ -82,10 +82,20 @@ function KS.ShowMarkMenu(id, link, anchor)
   menu.itemID, menu.link = id, link or ItemLink(id)
   menu.title:SetText(menu.link)
   local own = KS.GetOwnLevel(id)
+  -- Only the marks in use (Always on me with the advanced options, in the Alt+Click sequence, or as this item's mark).
+  local shown, y = {}, -32
+  for _, level in ipairs(KS.ShownLevels(own)) do shown[level] = true end
   for _, b in ipairs(menu.buttons) do
     b.text:SetText(KS.LevelText(b.level))
     b.check[b.level == own and "Show" or "Hide"](b.check)
+    b:ClearAllPoints()
+    b:SetPoint("TOPLEFT", 10, y)
+    b[shown[b.level] and "Show" or "Hide"](b)
+    if shown[b.level] then y = y - 22 end
   end
+  menu.char:ClearAllPoints()
+  menu.char:SetPoint("TOPLEFT", 8, y - 2)
+  menu:SetHeight(-y + 34)
   local scope = KS.GetItemScope(id)
   menu.char:SetChecked(scope == "char" or (not scope and (KS.IsPersonal(id) or KS.GetScope() == "char")))
   menu:ClearAllPoints()

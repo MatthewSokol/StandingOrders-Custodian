@@ -809,7 +809,7 @@ local ICON_ANCHORS = { "BOTTOMLEFT", "TOPLEFT", "TOPRIGHT", "BOTTOMRIGHT", "CENT
 local ANCHOR_TEXT = { BOTTOMLEFT = "Bottom left", TOPLEFT = "Top left", TOPRIGHT = "Top right",
   BOTTOMRIGHT = "Bottom right", CENTER = "Center" }
 local ANCHOR_OFFSET = { BOTTOMLEFT = { 1, 1 }, TOPLEFT = { 1, -1 }, TOPRIGHT = { -1, -1 }, BOTTOMRIGHT = { -1, 1 }, CENTER = { 0, 0 } }
-KS.ICON_ANCHORS, KS.ANCHOR_TEXT = ICON_ANCHORS, ANCHOR_TEXT
+KS.ICON_ANCHORS, KS.ANCHOR_TEXT, KS.ICON_DEFAULTS = ICON_ANCHORS, ANCHOR_TEXT, ICON_DEFAULTS
 
 function KS.GetIconStyle()
   local st = db and db.icon or ICON_DEFAULTS
@@ -1157,10 +1157,13 @@ end
 
 KS.AUTO_MARKS = true -- Standing Orders: Vendor checks this and leaves auto-marking to Custodian
 
--- unusableJunk is off by default: it's new, it can only guess which gear a character will grow into, and with
--- Standing Orders: Vendor selling Junk by itself a wrong guess is sold at the next vendor.
-local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, unusableJunk = false, boeMail = true, matsMail = true, keepReceived = true }
+-- A new install marks only grays Junk (the simple options; Simple.lua): the other rules are advanced options, off
+-- until turned on. An install from 1.0.0 keeps its own choices (1.0.0 had every rule but unusableJunk on).
+-- unusableJunk can only guess which gear a character will grow into, and with Standing Orders: Vendor selling Junk
+-- by itself a wrong guess is sold at the next vendor.
+local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = false, unusableJunk = false, boeMail = false, matsMail = false, keepReceived = true }
 local AUTO_KEYS = { "grayJunk", "whiteJunk", "unusableJunk", "boeMail", "matsMail", "keepReceived" }
+KS.AUTO_DEFAULTS, KS.AUTO_KEYS = AUTO_DEFAULTS, AUTO_KEYS
 
 local CLASS = (Enum and Enum.ItemClass) or {}
 local CONSUMABLE, CONTAINER, WEAPON, REAGENT, PROJECTILE, TRADEGOODS, RECIPE, QUIVER, QUEST, KEY, MISC =
@@ -1778,72 +1781,20 @@ local function CreatePanel()
   title:SetPoint("LEFT", panel.icon, "RIGHT", 8, 0)
   title:SetText("Standing Orders: Custodian")
 
-  local prev = Header(panel, "Auto-mark items in your bags", title, -16)
-  local first = true
-  for _, key in ipairs(AUTO_KEYS) do
-    local cb = Check(panel, AUTO_TEXT[key], prev, first and -6 or -2, function(self)
-      KS.SetAuto(key, self:GetChecked())
-    end)
-    if key == "keepReceived" then cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -10) end
-    refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
-    prev, first = cb, false
-  end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters. Soulbound gear counts as usable when the class can train that weapon type or will wear that armor within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins); enchanters keep green and better to disenchant.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
-
-  prev = Header(panel, "New marks (Alt+Click, /soc <level>)", prev)
-  local acct = Check(panel, "Apply to all my characters", prev, -6, function()
-    KS.SetScope("account")
-    RefreshPanel()
-  end)
-  local char = Check(panel, "Apply to this character only", acct, -2, function()
-    KS.SetScope("char")
-    RefreshPanel()
-  end)
+  -- The simple options, always shown: how Alt+Click works, gray items become Junk, the intro and the Marked items
+  -- window; then the switch for the advanced options (Simple.lua) and which of them are on.
+  local prev = Header(panel, "Alt+Click in your bags", title, -16)
+  local howNote = Note(panel, "", prev, 0, -6)
   refreshers[#refreshers + 1] = function()
-    acct:SetChecked(KS.GetScope() ~= "char")
-    char:SetChecked(KS.GetScope() == "char")
-  end
-  prev = Note(panel, "Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", char, 26, -2)
-
-  local clickHeader = Header(panel, "Alt+Click in your bags", prev)
-  clickHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local cycle = Check(panel, "Alt+Click moves the mark along a sequence:", clickHeader, -6, function()
-    KS.SetAltClick("cycle")
-    RefreshPanel()
-  end)
-  -- The sequence (Clicks.lua): a preset, or Custom once it's changed with /soc click.
-  local seq, showSeq = ChoiceControl(panel, 180, function()
-      return KS.ClickPreset() == "custom" and { "loop", "dial", "custom" } or { "loop", "dial" }
-    end,
-    function() return KS.ClickPreset() end,
-    function(p) return KS.CLICK_PRESET_NAMES[p] end,
-    function(p)
-      if p ~= "custom" then KS.ApplyClickPreset(p) end
-      local w = KS.WrapWarning()
-      if w then Print("|cffff8040%s|r", w) end
-    end)
-  seq:SetPoint("LEFT", cycle.Text, "RIGHT", 10, 0)
-  local menuMode = Check(panel, "Alt+Click opens a menu to pick the mark", cycle, -2, function()
-    KS.SetAltClick("menu")
-    RefreshPanel()
-  end)
-  local seqNote = Note(panel, "", menuMode, 26, -2)
-  refreshers[#refreshers + 1] = function()
-    cycle:SetChecked(KS.GetAltClick() == "cycle")
-    menuMode:SetChecked(KS.GetAltClick() == "menu")
-    showSeq()
     local w = KS.WrapWarning()
-    seqNote:SetText(KS.ClickText(KS.GetClick()) .. (w and ("\n|cffff8040" .. w .. "|r") or ""))
+    howNote:SetText(KS.ClickText() .. (w and ("\n|cffff8040" .. w .. "|r") or ""))
   end
-  panel.altClickChecks, panel.clickChoice, panel.clickNote = { cycle = cycle, menu = menuMode }, seq, seqNote
-  prev = seqNote
-
-  local chatHeader = Header(panel, "Chat", prev)
-  chatHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local chat = Check(panel, "Show Custodian's own messages in chat", chatHeader, -6, function(self) KS.SetChat(self:GetChecked()) end)
-  refreshers[#refreshers + 1] = function() chat:SetChecked(KS.GetChat()) end
-  panel.chatCheck = chat
-  prev = Note(panel, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Replies to your own clicks and commands always show.", chat, 26, -2)
+  panel.clickNote = howNote
+  prev = Header(panel, "Marked for you", howNote)
+  local gray = Check(panel, AUTO_TEXT.grayJunk, prev, -6, function(self) KS.SetAuto("grayJunk", self:GetChecked()) end)
+  refreshers[#refreshers + 1] = function() gray:SetChecked(KS.GetAuto("grayJunk")) end
+  panel.grayCheck = gray
+  prev = Note(panel, "Standing Orders: Vendor sells Junk at any vendor. Items you got on purpose (traded, bought, or mailed to you by a player) are left alone.", gray, 26, -2)
 
   local intro = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
   intro:SetSize(170, 24)
@@ -1861,15 +1812,132 @@ local function CreatePanel()
   marks:SetScript("OnClick", function() KS.ShowMarkList() end)
   panel.marksButton = marks
 
+  local advCheck = Check(panel, "Show advanced options", intro, -14, function(self)
+    KS.SetShowAdvanced(self:GetChecked())
+    KS.RefreshSettings()
+  end)
+  local advNote = Note(panel, "", advCheck, 26, -2)
+  local simple = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+  simple:SetSize(140, 22)
+  simple:SetPoint("TOPLEFT", advNote, "BOTTOMLEFT", 0, -6)
+  simple:SetText("Back to simple")
+  simple:SetScript("OnClick", function() KS.AskBackToSimple() end)
+  -- The advanced options sit in a frame of their own, so hiding it hides them all.
+  local adv = CreateFrame("Frame", nil, panel)
+  adv:SetPoint("TOPLEFT")
+  adv:SetSize(1, 1)
+  refreshers[#refreshers + 1] = function()
+    local on = KS.AdvancedOn()
+    advCheck:SetChecked(KS.GetShowAdvanced())
+    advNote:SetText(#on == 0 and "All advanced options are at their simple defaults."
+      or ((#on == 1 and "1 advanced option is on: " or (#on .. " advanced options are on: ")) .. table.concat(on, ", ") .. "."))
+    simple:SetEnabled(#on > 0)
+    adv[KS.GetShowAdvanced() and "Show" or "Hide"](adv)
+  end
+  panel.advCheck, panel.advNote, panel.simpleButton, panel.advanced = advCheck, advNote, simple, adv
+
+  -- Advanced: the Alt+Click sequence (Clicks.lua): a preset, the editor, what Alt+Right-click does, the ends; or the menu.
+  prev = Header(adv, "Alt+Click sequence", simple, -24)
+  prev:SetPoint("TOPLEFT", simple, "BOTTOMLEFT", -26, -24)
+  local cycle = Check(adv, "Alt+Click moves the mark along a sequence:", prev, -6, function()
+    KS.SetAltClick("cycle")
+    RefreshPanel()
+  end)
+  local seq, showSeq = ChoiceControl(adv, 180, function()
+      return KS.ClickPreset() == "custom" and { "loop", "dial", "custom" } or { "loop", "dial" }
+    end,
+    function() return KS.ClickPreset() end,
+    function(p) return KS.CLICK_PRESET_NAMES[p] end,
+    function(p)
+      if p ~= "custom" then KS.ApplyClickPreset(p) end
+      local w = KS.WrapWarning()
+      if w then Print("|cffff8040%s|r", w) end
+    end)
+  seq:SetPoint("LEFT", cycle.Text, "RIGHT", 10, 0)
+  local editor = KS.ClickEditor(adv, RefreshPanel)
+  editor:SetPoint("TOPLEFT", cycle, "BOTTOMLEFT", 26, -4)
+  local function SetClickField(key, on)
+    local c = KS.GetClick()
+    c[key] = on and true or false
+    KS.SetClick(c)
+    local w = KS.WrapWarning()
+    if w then Print("|cffff8040%s|r", w) end
+    RefreshPanel()
+  end
+  local back = Check(adv, "Alt+Right-click goes back one step (off: it takes the mark off)", editor, -4, function(self) SetClickField("back", self:GetChecked()) end)
+  local ends = Check(adv, "Loop around at the ends (off: stop at the first and last mark)", back, -2, function(self) SetClickField("loop", self:GetChecked()) end)
+  local menuMode = Check(adv, "Alt+Click opens a menu to pick the mark instead", ends, -6, function()
+    KS.SetAltClick("menu")
+    RefreshPanel()
+  end)
+  menuMode:SetPoint("TOPLEFT", ends, "BOTTOMLEFT", -26, -6)
+  refreshers[#refreshers + 1] = function()
+    local c = KS.GetClick()
+    cycle:SetChecked(KS.GetAltClick() == "cycle")
+    menuMode:SetChecked(KS.GetAltClick() == "menu")
+    back:SetChecked(c.back)
+    ends:SetChecked(c.loop)
+    showSeq()
+    editor.Refresh()
+  end
+  panel.altClickChecks, panel.clickChoice, panel.clickEditor = { cycle = cycle, menu = menuMode }, seq, editor
+  panel.clickBack, panel.clickEnds = back, ends
+
+  -- Advanced: the other auto-marks.
+  prev = Header(adv, "More auto-marks", menuMode)
+  local first = true
+  for _, key in ipairs(AUTO_KEYS) do
+    if key ~= "grayJunk" then
+      local cb = Check(adv, AUTO_TEXT[key], prev, first and -6 or -2, function(self)
+        KS.SetAuto(key, self:GetChecked())
+        RefreshPanel()
+      end)
+      if key == "keepReceived" then cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -10) end
+      refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
+      prev, first = cb, false
+    end
+  end
+  prev = Note(adv, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters. Soulbound gear counts as usable when the class can train that weapon type or will wear that armor within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins); enchanters keep green and better to disenchant.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+
+  -- Advanced: where new marks go.
+  local scopeHeader = Header(adv, "New marks (Alt+Click, /soc <level>)", prev)
+  scopeHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
+  local acct = Check(adv, "Apply to all my characters", scopeHeader, -6, function()
+    KS.SetScope("account")
+    RefreshPanel()
+  end)
+  local char = Check(adv, "Apply to this character only", acct, -2, function()
+    KS.SetScope("char")
+    RefreshPanel()
+  end)
+  refreshers[#refreshers + 1] = function()
+    acct:SetChecked(KS.GetScope() ~= "char")
+    char:SetChecked(KS.GetScope() == "char")
+  end
+  prev = Note(adv, "Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", char, 26, -2)
+
+  -- Advanced: Custodian's own messages in chat.
+  local chatHeader = Header(adv, "Chat", prev)
+  chatHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
+  local chat = Check(adv, "Show Custodian's own messages in chat", chatHeader, -6, function(self)
+    KS.SetChat(self:GetChecked())
+    RefreshPanel()
+  end)
+  refreshers[#refreshers + 1] = function() chat:SetChecked(KS.GetChat()) end
+  panel.chatCheck = chat
+  prev = Note(adv, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Replies to your own clicks and commands always show.", chat, 26, -2)
+
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
   -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
   local DEFAULT_CHOICES = CONFIRM_ENABLED and { CONFIRM, LOCK, ONME, "off" } or { LOCK, ONME, "off" }
   local SET_CHOICES = CONFIRM_ENABLED and { "default", CONFIRM, LOCK, ONME, "off" } or { "default", LOCK, ONME, "off" }
   -- Mark icons: size, position and opacity, with a sample bag button that shows the result.
-  prev = Header(panel, "Mark icons on bag items", intro, -22)
+  local iconHeader = Header(adv, "Mark icons on bag items", prev)
+  iconHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -22)
+  prev = iconHeader
   local iconRows = {}
   local function IconRow(i, label)
-    local fs = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    local fs = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     fs:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
     fs:SetWidth(80)
     fs:SetJustifyH("LEFT")
@@ -1879,14 +1947,14 @@ local function CreatePanel()
   end
   local function Stepper(i, label, key)
     local fs = IconRow(i, label)
-    local minus = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    local minus = CreateFrame("Button", nil, adv, "UIPanelButtonTemplate")
     minus:SetSize(24, 22)
     minus:SetPoint("LEFT", fs, "RIGHT", 10, 0)
     minus:SetText("-")
-    local value = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    local value = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     value:SetPoint("LEFT", minus, "RIGHT", 6, 0)
     value:SetWidth(230) -- "70% opaque (30% see-through)" on one line
-    local plus = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    local plus = CreateFrame("Button", nil, adv, "UIPanelButtonTemplate")
     plus:SetSize(24, 22)
     plus:SetPoint("LEFT", value, "RIGHT", 6, 0)
     plus:SetText("+")
@@ -1902,7 +1970,7 @@ local function CreatePanel()
   local sizeText, sizeMinus, sizePlus = Stepper(1, "Size", "size")
   local posLabel = IconRow(2, "Position")
   -- As wide as a stepper row: - (24), gap, value (230), gap, + (24).
-  local pos, showPos = ChoiceControl(panel, 290, function() return ICON_ANCHORS end,
+  local pos, showPos = ChoiceControl(adv, 290, function() return ICON_ANCHORS end,
     function() return select(2, KS.GetIconStyle()) end,
     function(a) return ANCHOR_TEXT[a] or a end,
     function(a) KS.SetIconStyle("anchor", a) end)
@@ -1910,7 +1978,7 @@ local function CreatePanel()
   local alphaText, alphaMinus, alphaPlus = Stepper(3, "Opacity", "alpha")
   panel.iconStyle = { sizeMinus = sizeMinus, sizePlus = sizePlus, pos = pos, alphaMinus = alphaMinus, alphaPlus = alphaPlus }
 
-  local sample = CreateFrame("Frame", nil, panel)
+  local sample = CreateFrame("Frame", nil, adv)
   sample:SetSize(37, 37)
   sample:SetPoint("LEFT", pos, "RIGHT", 40, 0)
   local item = sample:CreateTexture(nil, "ARTWORK")
@@ -1930,18 +1998,18 @@ local function CreatePanel()
     KS.StyleIcon(mark, sample)
   end
 
-  prev = Header(panel, "Equipment sets protect their items", iconRows[3], -22)
-  local setsNote = Note(panel, "", prev, 0, -6)
+  prev = Header(adv, "Equipment sets protect their items", iconRows[3], -22)
+  local setsNote = Note(adv, "", prev, 0, -6)
   local rows = {}
   panel.setRows = rows
   local function Row(i)
     if rows[i] then return rows[i] end
     local r = {}
-    r.label = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    r.label = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     r.label:SetPoint("TOPLEFT", setsNote, "BOTTOMLEFT", 0, -12 - (i - 1) * 26)
     r.label:SetWidth(180)
     r.label:SetJustifyH("LEFT")
-    r.button, r.show = ChoiceControl(panel, 240, function() return r.setID and SET_CHOICES or DEFAULT_CHOICES end,
+    r.button, r.show = ChoiceControl(adv, 240, function() return r.setID and SET_CHOICES or DEFAULT_CHOICES end,
       function() return r.setID and KS.GetSetChoice(r.setID) or KS.GetSetDefault() end,
       KS.SetChoiceText,
       function(c) KS.SetSetChoice(r.setID, c) end)
@@ -1977,6 +2045,7 @@ local function CreatePanel()
     if type(w) == "number" and w > 0 then panel:SetWidth(w) end
     local top, last = panel:GetTop(), setsNote
     for _, row in ipairs(rows) do if row.button:IsShown() then last = row.button end end
+    if not adv:IsShown() then last = simple end -- advanced options hidden: the simple ones end at Back to simple
     local bottom = last:GetBottom()
     if type(top) == "number" and type(bottom) == "number" then panel:SetHeight(math.max(1, top - bottom + 24)) end
   end
@@ -1986,9 +2055,13 @@ local function CreatePanel()
     FitPanel()
     C_Timer.After(0, FitPanel) -- positions settle after the first frame
   end)
+  -- After a change from outside the page (Back to simple): refresh it and fit its height to what's shown.
+  KS.RefreshSettings = function() RefreshPanel(); FitPanel() end
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   outer.chatCheck, outer.clickChoice, outer.clickNote = panel.chatCheck, panel.clickChoice, panel.clickNote
   outer.altClickChecks, outer.marksButton = panel.altClickChecks, panel.marksButton
+  outer.advCheck, outer.advNote, outer.simpleButton, outer.advanced = panel.advCheck, panel.advNote, panel.simpleButton, panel.advanced
+  outer.clickEditor, outer.clickBack, outer.clickEnds, outer.grayCheck = panel.clickEditor, panel.clickBack, panel.clickEnds, panel.grayCheck
   if Settings and Settings.RegisterCanvasLayoutCategory then
     category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
     Settings.RegisterAddOnCategory(category)
@@ -2047,16 +2120,17 @@ local UI = {}
 -- The short view, shown by default: how to change a mark (as Alt+Click is set up now), the marks, and where
 -- to see them all. { text, indent, gap before (pixels), font }
 function UI.ShortLines()
-  local legend = {}
-  for _, level in ipairs(ORDER) do
+  local legend, onme = {}, false
+  for _, level in ipairs(KS.ShownLevels()) do -- Always on me only when it's in use (Simple.lua)
     legend[#legend + 1] = (ICONS[level] and (Tex(ICONS[level]) .. " ") or "") .. Colored(COLORS[level], NAMES[level])
+    onme = onme or level == ONME
   end
   return {
     { Colored(GOLD, "In short"), 0, 0, "GameFontNormalLarge" },
     { KS.ClickText(), 0, 6 },
     { table.concat(legend, "    "), 10, 8 },
-    { Colored(COLORS[LOCK], NAMES[LOCK]) .. " items can't be sold, disenchanted, destroyed, traded or mailed by accident; "
-      .. Colored(COLORS[ONME], NAMES[ONME]) .. " also keeps them out of the bank.", 0, 8 },
+    { Colored(COLORS[LOCK], NAMES[LOCK]) .. " items can't be sold, disenchanted, destroyed, traded or mailed by accident"
+      .. (onme and ("; " .. Colored(COLORS[ONME], NAMES[ONME]) .. " also keeps them out of the bank.") or "."), 0, 8 },
     { "See and change every mark, with a search box: /soc list. Options: /soc settings.", 0, 8 },
   }
 end
@@ -2073,13 +2147,16 @@ local INTRO_LINES = {
   { "See and change every mark, with a search box: /soc list. Pick one item's mark from a menu: /soc mark <item>.", 0, 6 },
 
   { Colored(GOLD, "Marked for you"), 0, 12, "GameFontNormalLarge" },
-  { "• Grays, and white gear with no profession or quest use: " .. Colored(COLORS[JUNK], "Junk"), 10, 4 },
-  { "• Unbound Bind on Equip items, green and up: " .. Colored(COLORS[MAIL], "Mail"), 10, 2 },
-  { "• Crafting materials none of this character's professions use: " .. Colored(COLORS[MAIL], "Mail") .. ", for this character only (enchanting materials are left alone)", 10, 2 },
-  { "• Never items traded to you, bought (AH or vendor) or mailed to you by a player", 10, 2 },
+  -- A 5th field names the auto-mark rule a line describes: UI.FullLines leaves it out while that rule is off.
+  { "• Grays: " .. Colored(COLORS[JUNK], "Junk"), 10, 4, nil, "grayJunk" },
+  { "• White gear, weapons and junk with no profession or quest use: " .. Colored(COLORS[JUNK], "Junk"), 10, 2, nil, "whiteJunk" },
+  { "• Soulbound gear this character can't use: " .. Colored(COLORS[JUNK], "Junk") .. ", for this character only", 10, 2, nil, "unusableJunk" },
+  { "• Unbound Bind on Equip items, green and up: " .. Colored(COLORS[MAIL], "Mail"), 10, 2, nil, "boeMail" },
+  { "• Crafting materials none of this character's professions use: " .. Colored(COLORS[MAIL], "Mail") .. ", for this character only (enchanting materials are left alone)", 10, 2, nil, "matsMail" },
+  { "• Never items traded to you, bought (AH or vendor) or mailed to you by a player", 10, 2, nil, "keepReceived" },
   { "• Never profession tools (fishing poles, mining picks, hammers...)", 10, 2 },
   { "• Never consumables, reagents or vendor trade goods (thread, vials...); when you mark one, the mark is for this character only", 10, 2 },
-  { Colored(MUTED, "Change any of this in /soc settings."), 10, 4 },
+  { "", 10, 4, nil, "more" }, -- where to change these (UI.FullLines)
 
   { Colored(GREEN, "Protected against"), 0, 12, "GameFontNormalLarge" },
   { "• Selling it: it's bought straight back while the vendor is open", 10, 4 },
@@ -2101,10 +2178,23 @@ local INTRO_LINES = {
   { Colored(MUTED, "Green with a check: in use now. White: installed. Gray: not installed."), 10, 2 },
 }
 
--- The detailed view, with its Alt+Click line as Alt+Click is set up now.
+-- The detailed view as things are set up now: its Alt+Click line, and only the auto-mark rules that are on.
 function UI.FullLines()
   INTRO_LINES[3][1] = KS.ClickText() .. " /soc settings has other sequences, and a menu instead. The marks:"
-  return INTRO_LINES
+  local out, off = {}, false
+  for _, line in ipairs(INTRO_LINES) do
+    local rule = line[5]
+    if rule == "more" then
+      line[1] = Colored(MUTED, off and "More rules (white gear, Bind on Equip items, crafting materials...) are in /soc settings, under Show advanced options."
+        or "Change any of this in /soc settings.")
+      out[#out + 1] = line
+    elseif rule and not KS.GetAuto(rule) then
+      off = true
+    else
+      out[#out + 1] = line
+    end
+  end
+  return out
 end
 
 -- The supported bags: { label, addon folder (nil = built in), old name }. The label matches the adapter's name;
@@ -2344,12 +2434,12 @@ local TESTS = {
       if not name then
         if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(s.id) end
         d[#d + 1] = Detail("item " .. s.id, "not loaded yet: run again", "warn")
-      elseif s.rule and not db.auto[s.rule] then
-        d[#d + 1] = Detail(name, s.rule .. " is off", "warn")
       else
+        -- With its rule off (white gear is an advanced option), the item must be left alone.
+        local want = (s.rule and not db.auto[s.rule]) and false or s.want
         local info = { itemID = s.id, quality = quality, hasNoValue = (sellPrice or 0) == 0, isBound = false }
         local got = AutoLevel(info)
-        local ok = (got or false) == s.want
+        local ok = (got or false) == want
         d[#d + 1] = Detail(name .. " (" .. s.why .. ")", got and NAMES[got] or (got == nil and "undecided" or "left alone"),
           ok and "pass" or "fail")
       end
@@ -2511,6 +2601,7 @@ local function Help()
   print("  /soc mark <item link or ID> - pick an item's mark from a menu")
   print("  /soc click loop||dial - the Alt+Click sequence: Quick loop or Protection dial (now " .. KS.CLICK_PRESET_NAMES[KS.ClickPreset()] .. ")")
   print("  /soc click order junk lock mail || right clear||back || ends loop||stop - your own sequence (marks: junk, mail, normal, lock, onme)")
+  print("  /soc simple - put the advanced options back to their simple defaults (asks first; marks stay)")
   print("  /soc altclick cycle||menu - Alt+Click moves along the sequence, or opens the menu (now " .. KS.GetAltClick() .. ")")
   print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
   print("  /soc log [n] - show the last n log lines (default 25)")
@@ -2594,6 +2685,8 @@ SlashCmdList.SOC = function(msg)
     Print("%s", KS.ClickText())
   elseif cmd == "click" or cmd == "clicks" then
     KS.ClickCommand(rest)
+  elseif cmd == "simple" then
+    KS.AskBackToSimple()
   elseif cmd == "chat" then
     if rest == "on" or rest == "off" then KS.SetChat(rest == "on") else KS.SetChat(not KS.GetChat()) end
     Print("Custodian's own messages now show %s.", KS.GetChat() and "in chat and the log" or "only in the log (/soc log)")
@@ -2663,7 +2756,8 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     db.auto = db.auto or {}
     if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
     for key, on in pairs(AUTO_DEFAULTS) do
-      if db.auto[key] == nil then db.auto[key] = on end
+      -- An older install missing a rule gets 1.0.0's default for it: on, except unusableJunk.
+      if db.auto[key] == nil then db.auto[key] = on or (not fresh and key ~= "unusableJunk") end
     end
     db.autoMailSeen, db.autoMailed, db.autoMail = nil, nil, nil
     db.icon = db.icon or {}

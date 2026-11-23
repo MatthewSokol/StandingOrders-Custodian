@@ -367,6 +367,13 @@ KS.SetAltClick("menu")
 CHECK("in menu mode the short view says Alt+Click opens a menu", KS.IntroText("short"):find("pick its mark from a menu", 1, true) ~= nil)
 KS.SetAltClick("cycle")
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
+CHECK("settings: advanced options are hidden at first", not KS.GetShowAdvanced() and not panel.advanced:IsShown())
+local advText = panel.advNote:GetText()
+CHECK("settings: the simple page names the advanced options this 1.0.0 install has on", advText:find("advanced options are on", 1, true) ~= nil and advText:find("Protection dial", 1, true) ~= nil and advText:find("white gear becomes Junk", 1, true) ~= nil, advText)
+CHECK("1.0.0's auto-mark choices are kept", KS.GetAuto("whiteJunk") and KS.GetAuto("boeMail") and not KS.GetAuto("unusableJunk"))
+panel.advCheck:SetChecked(true)
+CALL("tick Show advanced options", panel.advCheck:GetScript("OnClick"), panel.advCheck)
+CHECK("settings: the advanced options show", KS.GetShowAdvanced() and panel.advanced:IsShown())
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
 if rows[2] then
@@ -563,6 +570,18 @@ CHECK("settings: the sequence dropdown offers Quick loop and Protection dial", #
 CALL("settings: pick Protection dial", seqMenu[2] and seqMenu[2].pick)
 CHECK("settings: Protection dial picked, and the note says so", KS.ClickPreset() == "dial" and panel.clickNote:GetText():find("protect it more", 1, true) ~= nil, panel.clickNote:GetText())
 CALL("settings: pick Quick loop", seqMenu[1] and seqMenu[1].pick)
+-- The sequence editor (advanced options): the marks in order, then those left out; Up and Down move, the box puts in.
+local ed = panel.clickEditor
+CHECK("editor: the Quick loop's marks in order, Always on me left out", ed.rows[1].level == L.NORMAL and ed.rows[2].level == L.JUNK and ed.rows[3].level == L.LOCK and ed.rows[4].level == L.MAIL and ed.rows[5].level == L.ONME and not ed.rows[5].check:GetChecked())
+CALL("editor: Down on Junk", ed.rows[2].down:GetScript("OnClick"), ed.rows[2].down)
+CHECK("editor: Junk moved after Locked, so it's Custom", KS.GetClick().order[2] == L.LOCK and KS.GetClick().order[3] == L.JUNK and KS.ClickPreset() == "custom")
+ed.rows[5].check:SetChecked(true)
+CALL("editor: put Always on me in", ed.rows[5].check:GetScript("OnClick"), ed.rows[5].check)
+CHECK("editor: Always on me joins at the end", KS.GetClick().order[5] == L.ONME, KS.GetClick().order[5])
+panel.clickBack:SetChecked(true)
+CALL("settings: tick Alt+Right-click goes back", panel.clickBack:GetScript("OnClick"), panel.clickBack)
+CHECK("settings: Alt+Right-click now steps back", KS.GetClick().back == true and KS.ClickStep(L.JUNK, false) == L.LOCK)
+CALL("/soc click loop", SlashCmdList.SOC, "click loop")
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
@@ -618,6 +637,19 @@ CHECK("untick Items in my bags: only marked items", onlyMarked and #marks.entrie
 CALL("/soc list print", SlashCmdList.SOC, "list print")
 KS.SetLevel(4306, L.NORMAL, nil, { quiet = true, scope = "account" })
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
+
+-- Back to simple: asks first, naming what changes; then every advanced option is at its simple default; marks stay.
+KS.SetChat(true)
+STUB_POPUP = nil
+CALL("Back to simple", panel.simpleButton:GetScript("OnClick"), panel.simpleButton)
+CHECK("Back to simple asks first, naming the options", STUB_POPUP and STUB_POPUP.which == "SOC_BACK_TO_SIMPLE" and tostring(STUB_POPUP.a1):find("messages in chat", 1, true) ~= nil, STUB_POPUP and STUB_POPUP.a1)
+local hearth = KS.GetLevel(6948)
+CALL("confirm Back to simple", StaticPopupDialogs.SOC_BACK_TO_SIMPLE.OnAccept)
+CHECK("every advanced option is back at its simple default", #KS.AdvancedOn() == 0 and not KS.GetChat() and not KS.GetAuto("whiteJunk") and KS.ClickPreset() == "loop", table.concat(KS.AdvancedOn(), ", "))
+CHECK("marks stay as they are", KS.GetLevel(6948) == hearth, KS.GetLevel(6948))
+CHAT = {}
+CALL("/soc simple with nothing on", SlashCmdList.SOC, "simple")
+CHECK("/soc simple says there's nothing to put back", CHAT_HAS("already at their simple defaults"), CHAT[1])
 
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end

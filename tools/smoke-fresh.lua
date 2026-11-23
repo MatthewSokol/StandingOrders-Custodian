@@ -44,3 +44,22 @@ click("LeftButton")
 click("LeftButton")
 CHECK("Alt+Right-click on Locked takes the mark off", click("RightButton") == L.NORMAL, KS.GetLevel(7001))
 CHECK("Alt+Right-click with no mark leaves it", click("RightButton") == L.NORMAL, KS.GetLevel(7001))
+
+-- Simple options: only grays are auto-marked; the advanced options are hidden and all at their simple defaults.
+CHECK("only the gray rule (and leaving items you got on purpose alone) is on", KS.GetAuto("grayJunk") and KS.GetAuto("keepReceived") and not KS.GetAuto("whiteJunk") and not KS.GetAuto("boeMail") and not KS.GetAuto("matsMail") and not KS.GetAuto("unusableJunk"))
+local panel = SOCustodianSettings
+CALL("settings panel OnShow", rawget(panel, "__s_OnShow"), panel)
+CHECK("advanced options are hidden", not panel.advanced:IsShown() and not panel.advCheck:GetChecked())
+CHECK("...and all at their simple defaults", #KS.AdvancedOn() == 0 and panel.advNote:GetText():find("simple defaults", 1, true) ~= nil, panel.advNote:GetText())
+CHECK("the simple page says how Alt+Click works", panel.clickNote:GetText():find("then no mark again", 1, true) ~= nil, panel.clickNote:GetText())
+CHECK("the intro's short view leaves Always on me out", not KS.IntroText("short"):find("Always on me", 1, true), KS.IntroText("short"))
+local full = KS.IntroText()
+CHECK("the detailed intro lists only the gray rule, and where the others are", full:find("• Grays", 1, true) ~= nil and not full:find("• White gear", 1, true) and full:find("Show advanced options", 1, true) ~= nil)
+CALL("/soc mark 7001", SlashCmdList.SOC, "mark 7001")
+local onme
+for _, b in ipairs(SOCustodianMarkMenu.buttons) do if b.level == L.ONME then onme = b end end
+CHECK("the mark menu leaves Always on me out", onme and not onme:IsShown())
+KS.SetShowAdvanced(true)
+CALL("/soc mark 7001 again", SlashCmdList.SOC, "mark 7001")
+CHECK("...and shows it with the advanced options", onme and onme:IsShown())
+KS.SetShowAdvanced(false)
