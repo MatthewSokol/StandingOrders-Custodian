@@ -2079,7 +2079,7 @@ end
 -- everyone sees the new one once. Built from separate lines (headings, indented bullets, small gaps)
 -- so it reads as sections, not one block of text.
 
-local INTRO_VERSION = 6
+local INTRO_VERSION = 7
 do -- the intro's helpers stay out of the main chunk's 200-local limit
 local GOLD, GREEN, ORANGE, MUTED = "ffffd100", "ff33ff99", "ffff8040", "ffbbbbbb"
 -- One table, not four locals: the main chunk is at Lua's 200-local limit, and locals in this do block count too.
@@ -2093,21 +2093,46 @@ local function Tex(path) return "|T" .. path .. ":16:16|t" end
 local function Colored(color, text) return "|c" .. color .. text .. "|r" end -- pipes:ok (a color escape built from its parts)
 local function LevelLine(level, text) return Tex(ICONS[level]) .. " " .. Colored(COLORS[level], NAMES[level]) .. ": " .. text end
 
--- { text, indent, gap before (pixels), font }
+-- The intro's view helpers, in one table: the main chunk is at Lua's 200-local limit.
+local UI = {}
+
+-- The short view, shown by default: how to change a mark (as Alt+Click is set up now), the marks, and where
+-- to see them all. { text, indent, gap before (pixels), font }
+function UI.ShortLines()
+  local legend = {}
+  for _, level in ipairs(ORDER) do
+    legend[#legend + 1] = (ICONS[level] and (Tex(ICONS[level]) .. " ") or "") .. Colored(COLORS[level], NAMES[level])
+  end
+  local how = KS.GetAltClick() == "menu" and "Alt+Click an item in your bags to pick its mark from a menu."
+    or ("Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less"
+      .. (KS.GetWrap() and " (it wraps around)." or "."))
+  return {
+    { Colored(GOLD, "In short"), 0, 0, "GameFontNormalLarge" },
+    { how, 0, 6 },
+    { table.concat(legend, "    "), 10, 8 },
+    { Colored(COLORS[LOCK], NAMES[LOCK]) .. " items can't be sold, disenchanted, destroyed, traded or mailed by accident; "
+      .. Colored(COLORS[ONME], NAMES[ONME]) .. " also keeps them out of the bank.", 0, 8 },
+    { "See and change every mark, with a search box: /soc list. Options: /soc settings.", 0, 8 },
+  }
+end
+
+-- The detailed view. { text, indent, gap before (pixels), font }
 local INTRO_LINES = {
   { Colored(GOLD, "Your marks"), 0, 0, "GameFontNormalLarge" },
   { "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.", 0, 4 },
-  { "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less:", 0, 6 },
+  { "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less (it wraps around; /soc settings can make Alt+Click open a menu instead):", 0, 6 },
   { LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)"), 10, 4 },
   { LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)"), 10, 3 },
   { LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident"), 10, 3 },
   { LevelLine(ONME, "Locked, and also kept out of the bank"), 10, 3 },
+  { "See and change every mark, with a search box: /soc list. Pick one item's mark from a menu: /soc mark <item>.", 0, 6 },
 
   { Colored(GOLD, "Marked for you"), 0, 12, "GameFontNormalLarge" },
   { "• Grays, and white gear with no profession or quest use: " .. Colored(COLORS[JUNK], "Junk"), 10, 4 },
   { "• Unbound Bind on Equip items, green and up: " .. Colored(COLORS[MAIL], "Mail"), 10, 2 },
   { "• Crafting materials none of this character's professions use: " .. Colored(COLORS[MAIL], "Mail") .. ", for this character only (enchanting materials are left alone)", 10, 2 },
   { "• Never items traded to you, bought (AH or vendor) or mailed to you by a player", 10, 2 },
+  { "• Never profession tools (fishing poles, mining picks, hammers...)", 10, 2 },
   { "• Never consumables, reagents or vendor trade goods (thread, vials...); when you mark one, the mark is for this character only", 10, 2 },
   { Colored(MUTED, "Change any of this in /soc settings."), 10, 4 },
 
@@ -2164,15 +2189,70 @@ local function BagEntry(entry)
   return Tex(PATHS.missing) .. " " .. Colored(MUTED, label) .. was
 end
 
--- The intro's words, for the self-test and smoke checks.
-function KS.IntroText()
+-- The intro's words, for the self-test and smoke checks: the detailed view (with the bag list), or with
+-- view "short" the short one.
+function KS.IntroText(view)
   local out = {}
-  for _, line in ipairs(INTRO_LINES) do out[#out + 1] = line[1] end
-  for _, entry in ipairs(BAG_LIST) do out[#out + 1] = BagEntry(entry) end
+  for _, line in ipairs(view == "short" and UI.ShortLines() or INTRO_LINES) do out[#out + 1] = line[1] end
+  if view ~= "short" then
+    for _, entry in ipairs(BAG_LIST) do out[#out + 1] = BagEntry(entry) end
+  end
   return table.concat(out, "\n")
 end
 
 local intro
+
+-- Places lines top-down from y, reusing pool's font strings (and hiding the ones it doesn't need).
+-- Returns the y under the last line.
+function UI.Place(pool, lines, y)
+  for i, line in ipairs(lines) do
+    local text, indent, gap, font = line[1], line[2] or 0, line[3] or 0, line[4] or "GameFontHighlight"
+    local fs = pool[i]
+    if not fs then
+      fs = intro:CreateFontString(nil, "OVERLAY", font)
+      pool[i] = fs
+    end
+    fs:SetFontObject(font)
+    y = y - gap
+    fs:ClearAllPoints()
+    fs:SetPoint("TOPLEFT", 18 + indent, y)
+    fs:SetWidth(444 - indent)
+    fs:SetJustifyH("LEFT")
+    fs:SetSpacing(2)
+    fs:SetText(text)
+    fs:Show()
+    y = y - fs:GetStringHeight()
+  end
+  for i = #lines + 1, #pool do pool[i]:Hide() end
+  return y
+end
+
+-- Lays the intro out in its view: short (the default) or detailed (StandingOrdersCustodianDB.introDetails).
+function UI.Layout()
+  local detailed = db.introDetails and true or false
+  local y = -36
+  if detailed then
+    UI.Place(intro.shortPool, {}, y)
+    y = UI.Place(intro.fullPool, INTRO_LINES, y) - 6
+    -- The bag list: two columns, refreshed every time (bag addons hook in after login).
+    for i, entry in ipairs(BAG_LIST) do
+      local fs = intro.bags[i]
+      local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
+      fs:ClearAllPoints()
+      fs:SetPoint("TOPLEFT", 28 + col * 222, y - row * 22)
+      fs:SetText(BagEntry(entry))
+      fs:Show()
+    end
+    y = y - math.ceil(#BAG_LIST / 2) * 22
+  else
+    UI.Place(intro.fullPool, {}, y)
+    for _, fs in ipairs(intro.bags) do fs:Hide() end
+    y = UI.Place(intro.shortPool, UI.ShortLines(), y)
+  end
+  intro.detailed = detailed
+  intro.toggle:SetText(detailed and "Show less" or "Show details")
+  intro:SetSize(480, -y + 56)
+end
 
 function KS:ShowIntro()
   if not intro then
@@ -2194,45 +2274,35 @@ function KS:ShowIntro()
     intro.icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
     intro.icon:SetTexture(KS.ICON)
 
-    local y = -36
-    for _, line in ipairs(INTRO_LINES) do
-      local text, indent, gap, font = line[1], line[2] or 0, line[3] or 0, line[4]
-      y = y - gap
-      local fs = intro:CreateFontString(nil, "OVERLAY", font or "GameFontHighlight")
-      fs:SetPoint("TOPLEFT", 18 + indent, y)
-      fs:SetWidth(444 - indent)
-      fs:SetJustifyH("LEFT")
-      fs:SetSpacing(2)
-      fs:SetText(text)
-      y = y - fs:GetStringHeight()
-    end
-    -- The bag list: two columns, refreshed every time the window opens (bag addons hook in after login).
-    intro.bags = {}
-    y = y - 6
+    intro.shortPool, intro.fullPool, intro.bags = {}, {}, {}
     for i = 1, #BAG_LIST do
       local fs = intro:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-      local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
-      fs:SetPoint("TOPLEFT", 28 + col * 222, y - row * 22)
       fs:SetWidth(212)
       fs:SetJustifyH("LEFT")
       intro.bags[i] = fs
     end
-    y = y - math.ceil(#BAG_LIST / 2) * 22
+
+    intro.toggle = CreateFrame("Button", nil, intro, "UIPanelButtonTemplate")
+    intro.toggle:SetSize(120, 24)
+    intro.toggle:SetPoint("BOTTOMLEFT", 18, 14)
+    intro.toggle:SetScript("OnClick", function()
+      db.introDetails = not db.introDetails
+      UI.Layout()
+    end)
 
     local ok = CreateFrame("Button", nil, intro, "UIPanelButtonTemplate")
     ok:SetSize(110, 24)
-    ok:SetPoint("BOTTOM", 0, 14)
+    ok:SetPoint("BOTTOMRIGHT", -18, 14)
     ok:SetText("Got it")
     ok:SetScript("OnClick", function()
       db.introSeen = INTRO_VERSION
       intro:Hide()
       Print("You can reopen this with /soc intro.")
     end)
-
-    intro:SetSize(480, -y + 54)
+    intro.ok = ok
     tinsert(UISpecialFrames, "SOCustodianIntro") -- Esc closes it (it shows again next login until "Got it")
   end
-  for i, entry in ipairs(BAG_LIST) do intro.bags[i]:SetText(BagEntry(entry)) end
+  UI.Layout()
   intro:Show()
 end
 end

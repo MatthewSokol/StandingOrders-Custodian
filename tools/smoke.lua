@@ -355,6 +355,17 @@ CHECK("intro: lists every supported bag addon", before("Blizzard bags", "ArkInve
 CHECK("intro: one bag line per supported bag", SOCustodianIntro.bags and #SOCustodianIntro.bags == 8)
 CHECK("intro: Bagnonium, with its old name Combuctor", introText:find("Bagnonium", 1, true) ~= nil and introText:find("(was Combuctor)", 1, true) ~= nil)
 CHECK("intro: no \"(in use)\" words; a legend explains the colors", not introText:find("(in use)", 1, true) and introText:find("Green with a check: in use now", 1, true) ~= nil)
+local introFrame = SOCustodianIntro
+CHECK("the intro opens in its short view by default", introFrame.detailed == false and introFrame.toggle:GetText() == "Show details" and introFrame.shortPool[2]:IsShown() and introFrame.shortPool[2]:GetText():find("Alt+Left-click", 1, true) ~= nil, introFrame.toggle:GetText())
+CHECK("the short view says where to see every mark", KS.IntroText("short"):find("/soc list", 1, true) ~= nil)
+CALL("Show details", introFrame.toggle:GetScript("OnClick"), introFrame.toggle)
+CHECK("Show details switches to the detailed view", introFrame.detailed == true and introFrame.toggle:GetText() == "Show less" and introFrame.fullPool[1]:IsShown() and not introFrame.shortPool[2]:IsShown() and introFrame.bags[1]:IsShown())
+CHECK("the view choice is remembered", StandingOrdersCustodianDB.introDetails == true)
+CALL("Show less", introFrame.toggle:GetScript("OnClick"), introFrame.toggle)
+CHECK("Show less goes back to the short view", introFrame.detailed == false and not introFrame.fullPool[1]:IsShown() and not introFrame.bags[1]:IsShown())
+KS.SetAltClick("menu")
+CHECK("in menu mode the short view says Alt+Click opens a menu", KS.IntroText("short"):find("pick its mark from a menu", 1, true) ~= nil)
+KS.SetAltClick("cycle")
 CALL("settings panel OnShow", panel and rawget(panel, "__s_OnShow"), panel)
 local rows = panel and panel.setRows or {}
 CHECK("panel lists the default and each set", #rows == 2 and rows[2].label:GetText() == "Tank Gear", #rows)
