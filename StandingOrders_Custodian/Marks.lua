@@ -68,9 +68,11 @@ local function BuildMenu()
   tinsert(UISpecialFrames, "SOCustodianMarkMenu") -- Esc closes it
 end
 
--- Gives the menu's item the picked level, for this character or all of them, and closes the menu.
+-- Gives the menu's item the picked level, for this character or all of them, and closes the menu. Picking the
+-- ticked mark again takes it off (Normal), like unticking a box.
 function KS.PickMark(level)
   if not (menu and menu.itemID) then return end
+  if level == KS.GetOwnLevel(menu.itemID) then level = KS.LEVELS.NORMAL end
   KS.SetLevel(menu.itemID, level, menu.link, { scope = menu.char:GetChecked() and "char" or "account" })
   menu:Hide()
 end
