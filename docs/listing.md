@@ -34,3 +34,4 @@ README.md
 - docs/screenshots/equipment-sets.png | Items in your equipment sets are Locked automatically.
 - docs/screenshots/bag-addon.png | Works in Blizzard bags and seven bag addons (Baganator shown).
 - docs/screenshots/intro.png | A short intro on first login, with Show details for the rest.
+- docs/screenshots/marked-items.png | Every mark in one window: this character, all characters, and the mark that counts.
