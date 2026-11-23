@@ -49,7 +49,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>5 Other guards</b> · 0 / 32</summary>
+<summary><b>5 Other guards</b> · 0 / 33</summary>
 
 - [ ] 5.1 A Locked item sold by right-click or dragged onto the vendor is bought straight back
 - [ ] 5.3 Buyback only ever buys back the Locked item, never a neighbouring buyback slot
@@ -83,6 +83,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.36 Alt+Right-click an item in a set: chat says it stays protected while it's in the set
 - [ ] 5.37 `/soc settings`, Equipment sets: each row is a dropdown: pick a level and the row shows it (a set also offers "default"); the default row changes every set left on "default"
 - [ ] 5.38 Mailbox with Posty Forever (or Postal) and its Express module on: open the Send Mail page and Alt+Left-click a Normal item in your bags: Express attaches it and its mark stays Normal (chat says once that Alt+Left-click belongs to Express there); Alt+Right-click still lowers a mark; close the mailbox and Alt+Left-click raises marks again; with Express turned off in Posty's options, Alt+Left-click at the mailbox raises the mark as usual
+- [ ] 5.39 Profession tools: put a Fishing Pole (and, if you have them, a Mining Pick, Blacksmith Hammer or Skinning Knife) in your bags: it isn't auto-marked Junk (no coin icon); a fishing pole that 1.0.0 had auto-marked Junk is unmarked after logging in on this build
 
 </details>
 
