@@ -39,7 +39,7 @@ Prefer picking from a list? `/soc altclick menu` (or the switch in `/soc setting
 
 The icons sit in the bottom left of the item button, 40% of its width across (so they cover about a sixth of it), at 75% opacity, so stack counts stay readable. Change their size (10% to 100% of the button's width), corner (or center) and opacity in `/soc settings` under Mark icons, or with `/soc icon size 50`, `/soc icon position center`, `/soc icon opacity 60` and `/soc icon reset`.
 
-Pick a style too: **Game icons** (the default), **Trimmed game icons** (the letter and key without their painted border, with a thin dark edge) or **Badges** (a colored circle with a white coin, envelope, padlock or diamond): `/soc icon style trimmed`, or Style under Mark icons in the advanced options. `/soc icon compare` (or Compare styles) shows each mark in each style over items from your own bags, and Use puts one on.
+Pick a style too: **Game icons** (the default: the game's coin, letter, key and diamond, with the letter and key's painted border trimmed off and a thin dark edge instead) or **Addon icons** (Custodian's own: a colored circle with a white coin, envelope, padlock or diamond): `/soc icon style addon`, or Style under Mark icons in the advanced options. `/soc icon compare` (or Compare styles) shows each mark in both styles over items from your own bags, and Use puts one on.
 
 ## Auto-marks
 

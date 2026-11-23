@@ -155,9 +155,9 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.10 Mark icon styles: trimmed game icons and badges, with a compare window</b> (#50) · open · 0 / 1</summary>
+<summary><b>2.2.10 Mark icon styles: game icons (trimmed) or addon icons, with a compare window</b> (#50) · open · 0 / 1</summary>
 
-- [ ] 2.2.10.1 `TESTING.md` 5.49: `/soc icon compare` shows every mark in the three styles over your bag items; Use and Style change the bags, menu and intro at once; `/soc icon reset` goes back; you pick the style that reads best
+- [ ] 2.2.10.1 `TESTING.md` 5.49: `/soc icon compare` shows every mark in both styles over your bag items; game icons are trimmed; Use and Style change the bags, menu and intro at once; `/soc icon reset` goes back to game icons
 
 </details>
 
