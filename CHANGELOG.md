@@ -6,6 +6,8 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-23
+
 ### Added
 
 - **Mark icon styles:** **Game icons** (the default) now trim the letter and key's painted border and add a thin dark edge, and **Addon icons** are Custodian's own (a colored circle with a white coin, envelope, padlock or diamond, easier to see at bag size). Pick one with `/soc icon style game` or `addon`, or under Mark icons in the advanced options; `/soc icon compare` shows each mark in both styles over items from your bags.
