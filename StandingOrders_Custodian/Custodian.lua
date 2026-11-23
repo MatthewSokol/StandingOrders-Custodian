@@ -101,49 +101,11 @@ end
 function KS.GetChat() return (db and db.chat) and true or false end
 function KS.SetChat(on) if db then db.chat = on and true or false end end
 
--- Wrap-around (StandingOrdersCustodianDB.wrap, on by default): Alt+Left-click past Always on me goes on to Junk,
--- Alt+Right-click past Junk to Always on me.
-function KS.GetWrap() return not (db and db.wrap == false) end
-
--- What Alt+Click in your bags does (StandingOrdersCustodianDB.altClick): "cycle" (the default: Alt+Left-click
--- raises the mark, Alt+Right-click lowers it) or "menu" (either one opens the mark menu, Marks.lua).
+-- What Alt+Click in your bags does (StandingOrdersCustodianDB.altClick): "cycle" (the default: Alt+Left-click and
+-- Alt+Right-click move the mark along the Alt+Click sequence, Clicks.lua) or "menu" (either one opens the mark
+-- menu, Marks.lua).
 function KS.GetAltClick() return (db and db.altClick == "menu") and "menu" or "cycle" end
 function KS.SetAltClick(mode) if db then db.altClick = (mode == "menu") and "menu" or "cycle" end end
-function KS.SetWrap(on) if db then db.wrap = on and true or false end end
-
--- Standing Orders addons that act on marks by themselves: Vendor sells Junk when a vendor opens (its autopilot,
--- on by default) and Mail sends Mail items when a mailbox opens (its autopilot). With wrap-around, Always on me
--- is one Alt+Left-click from Junk, so that combination gets a warning.
-function KS.SelfActing()
-  local v, m = rawget(_G, "StandingOrdersVendorDB"), rawget(_G, "StandingOrdersMailDB")
-  return {
-    vendor = type(v) == "table" and v.autopilot ~= nil and v.autopilot ~= "off",
-    mail = type(m) == "table" and m.autopilot == true,
-  }
-end
-
--- The warning text (and a short key for which addons it names), or nil when there's nothing to warn about.
-function KS.WrapWarning()
-  if not KS.GetWrap() then return nil end
-  local s = KS.SelfActing()
-  if not (s.vendor or s.mail) then return nil end
-  local who = {}
-  if s.vendor then who[#who + 1] = "Standing Orders: Vendor sells Junk when you open a vendor" end
-  if s.mail then who[#who + 1] = "Standing Orders: Mail sends Mail items when you open a mailbox" end
-  return "Careful: with wrap-around on, one Alt+Left-click on an Always on me item makes it Junk (and the next one Mail), and "
-    .. table.concat(who, ", and ") .. ". Turn wrap-around off in /soc settings (or /soc wrap off) if that's a risk for you.",
-    (s.vendor and "vendor" or "") .. (s.mail and "mail" or "")
-end
-
--- Shown once per combination (at login, so turning on Vendor's or Mail's autopilot later is caught too).
-function KS.CheckWrapWarning()
-  local w, key = KS.WrapWarning()
-  if not db then return end
-  if not w then db.wrapWarned = nil return end
-  if db.wrapWarned == key then return end
-  db.wrapWarned = key
-  Print("|cffff8040%s|r", w)
-end
 
 local function Err(msg)
   UIErrorsFrame:AddMessage(msg, 1, 0.2, 0.2)
@@ -168,8 +130,9 @@ KS.LevelText = LevelText
 local cdb -- StandingOrdersCustodianCharDB
 local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set name (see Equipment sets)
 
--- For Marks.lua (the mark menu and the Marked items window).
+-- For Marks.lua (the mark menu and the Marked items window) and Clicks.lua (the Alt+Click sequence).
 KS.ORDER, KS.NAMES, KS.ICONS, KS.COLORS = ORDER, NAMES, ICONS, COLORS
+KS.Print, KS.Err = Print, Err
 
 function KS.GetLevel(id)
   if not id then return NORMAL end
@@ -935,29 +898,14 @@ local function PreClick(btn, mouse)
     return
   end
 
-  -- Alt+Left-click raises protection (Junk > Mail > Normal > Confirm > Locked > Always on me);
-  -- Alt+Right-click lowers it.
+  -- Alt+Left-click and Alt+Right-click move the mark along the Alt+Click sequence (Clicks.lua), or open the menu.
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     if KS.GetAltClick() == "menu" then
       KS.ShowMarkMenu(info.itemID, info.hyperlink)
       return
     end
-    local cur = KS.GetLevel(info.itemID)
-    local i = 3
-    for n, level in ipairs(ORDER) do if level == cur then i = n end end
-    i = i + (mouse == "LeftButton" and 1 or -1)
-    local wrapped = i < 1 or i > #ORDER
-    if wrapped and KS.GetWrap() then i = (i - 1) % #ORDER + 1 else i = math.max(1, math.min(#ORDER, i)) end
-    local new = ORDER[i]
-    if new == cur then
-      Print("%s is already %s.", info.hyperlink, LevelText(cur))
-    else
-      KS.SetLevel(info.itemID, new, info.hyperlink)
-      if wrapped and new == JUNK and KS.SelfActing().vendor then
-        Print("|cffff8040That wrapped around to Junk: Standing Orders: Vendor sells it the next time you open a vendor.|r")
-      end
-    end
+    KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton")
     return
   end
 
@@ -1855,40 +1803,40 @@ local function CreatePanel()
     acct:SetChecked(KS.GetScope() ~= "char")
     char:SetChecked(KS.GetScope() == "char")
   end
-  prev = Note(panel, "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less, Alt+Shift+Left-click to move its mark between all characters and this one.", char, 26, -2)
+  prev = Note(panel, "Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", char, 26, -2)
 
   local clickHeader = Header(panel, "Alt+Click in your bags", prev)
   clickHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local cycle = Check(panel, "Alt+Left-click raises the mark, Alt+Right-click lowers it", clickHeader, -6, function()
+  local cycle = Check(panel, "Alt+Click moves the mark along a sequence:", clickHeader, -6, function()
     KS.SetAltClick("cycle")
     RefreshPanel()
   end)
+  -- The sequence (Clicks.lua): a preset, or Custom once it's changed with /soc click.
+  local seq, showSeq = ChoiceControl(panel, 180, function()
+      return KS.ClickPreset() == "custom" and { "loop", "dial", "custom" } or { "loop", "dial" }
+    end,
+    function() return KS.ClickPreset() end,
+    function(p) return KS.CLICK_PRESET_NAMES[p] end,
+    function(p)
+      if p ~= "custom" then KS.ApplyClickPreset(p) end
+      local w = KS.WrapWarning()
+      if w then Print("|cffff8040%s|r", w) end
+    end)
+  seq:SetPoint("LEFT", cycle.Text, "RIGHT", 10, 0)
   local menuMode = Check(panel, "Alt+Click opens a menu to pick the mark", cycle, -2, function()
     KS.SetAltClick("menu")
     RefreshPanel()
   end)
+  local seqNote = Note(panel, "", menuMode, 26, -2)
   refreshers[#refreshers + 1] = function()
     cycle:SetChecked(KS.GetAltClick() == "cycle")
     menuMode:SetChecked(KS.GetAltClick() == "menu")
-  end
-  panel.altClickChecks = { cycle = cycle, menu = menuMode }
-  local wrap = Check(panel, "Wrap around: after Always on me comes Junk again", menuMode, -2, function(self)
-    KS.SetWrap(self:GetChecked())
-    local w = self:GetChecked() and KS.WrapWarning()
-    if w then Print("|cffff8040%s|r", w) end
-    RefreshPanel()
-  end)
-  panel.wrapCheck = wrap
-  local wrapNote = Note(panel, "", wrap, 26, -2)
-  panel.wrapNote = wrapNote
-  refreshers[#refreshers + 1] = function()
-    wrap:SetChecked(KS.GetWrap())
+    showSeq()
     local w = KS.WrapWarning()
-    wrapNote:SetText(w and ("|cffff8040" .. w .. "|r")
-      or (KS.GetWrap() and "Raising or lowering: Alt+Left-click on Always on me goes on to Junk; Alt+Right-click on Junk goes to Always on me."
-        or "Off: Alt+Click stops at Junk and at Always on me."))
+    seqNote:SetText(KS.ClickText(KS.GetClick()) .. (w and ("\n|cffff8040" .. w .. "|r") or ""))
   end
-  prev = wrapNote
+  panel.altClickChecks, panel.clickChoice, panel.clickNote = { cycle = cycle, menu = menuMode }, seq, seqNote
+  prev = seqNote
 
   local chatHeader = Header(panel, "Chat", prev)
   chatHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
@@ -2039,7 +1987,7 @@ local function CreatePanel()
     C_Timer.After(0, FitPanel) -- positions settle after the first frame
   end)
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
-  outer.chatCheck, outer.wrapCheck, outer.wrapNote = panel.chatCheck, panel.wrapCheck, panel.wrapNote
+  outer.chatCheck, outer.clickChoice, outer.clickNote = panel.chatCheck, panel.clickChoice, panel.clickNote
   outer.altClickChecks, outer.marksButton = panel.altClickChecks, panel.marksButton
   if Settings and Settings.RegisterCanvasLayoutCategory then
     category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
@@ -2103,12 +2051,9 @@ function UI.ShortLines()
   for _, level in ipairs(ORDER) do
     legend[#legend + 1] = (ICONS[level] and (Tex(ICONS[level]) .. " ") or "") .. Colored(COLORS[level], NAMES[level])
   end
-  local how = KS.GetAltClick() == "menu" and "Alt+Click an item in your bags to pick its mark from a menu."
-    or ("Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less"
-      .. (KS.GetWrap() and " (it wraps around)." or "."))
   return {
     { Colored(GOLD, "In short"), 0, 0, "GameFontNormalLarge" },
-    { how, 0, 6 },
+    { KS.ClickText(), 0, 6 },
     { table.concat(legend, "    "), 10, 8 },
     { Colored(COLORS[LOCK], NAMES[LOCK]) .. " items can't be sold, disenchanted, destroyed, traded or mailed by accident; "
       .. Colored(COLORS[ONME], NAMES[ONME]) .. " also keeps them out of the bank.", 0, 8 },
@@ -2120,7 +2065,7 @@ end
 local INTRO_LINES = {
   { Colored(GOLD, "Your marks"), 0, 0, "GameFontNormalLarge" },
   { "Marks are for all your characters. Alt+Shift+Left-click an item to keep its mark on this character only (or back again); /soc scope char makes that the default.", 0, 4 },
-  { "Alt+Left-click an item in your bags to protect it more, Alt+Right-click to protect it less (it wraps around; /soc settings can make Alt+Click open a menu instead):", 0, 6 },
+  { "", 0, 6 }, -- how Alt+Click works now (UI.FullLines)
   { LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)"), 10, 4 },
   { LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)"), 10, 3 },
   { LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident"), 10, 3 },
@@ -2155,6 +2100,12 @@ local INTRO_LINES = {
   { Colored(GOLD, "Works with these bags"), 0, 12, "GameFontNormalLarge" },
   { Colored(MUTED, "Green with a check: in use now. White: installed. Gray: not installed."), 10, 2 },
 }
+
+-- The detailed view, with its Alt+Click line as Alt+Click is set up now.
+function UI.FullLines()
+  INTRO_LINES[3][1] = KS.ClickText() .. " /soc settings has other sequences, and a menu instead. The marks:"
+  return INTRO_LINES
+end
 
 -- The supported bags: { label, addon folder (nil = built in), old name }. The label matches the adapter's name;
 -- an old name is the addon's earlier name, still supported (Bagnonium was Combuctor).
@@ -2193,7 +2144,7 @@ end
 -- view "short" the short one.
 function KS.IntroText(view)
   local out = {}
-  for _, line in ipairs(view == "short" and UI.ShortLines() or INTRO_LINES) do out[#out + 1] = line[1] end
+  for _, line in ipairs(view == "short" and UI.ShortLines() or UI.FullLines()) do out[#out + 1] = line[1] end
   if view ~= "short" then
     for _, entry in ipairs(BAG_LIST) do out[#out + 1] = BagEntry(entry) end
   end
@@ -2233,7 +2184,7 @@ function UI.Layout()
   local y = -36
   if detailed then
     UI.Place(intro.shortPool, {}, y)
-    y = UI.Place(intro.fullPool, INTRO_LINES, y) - 6
+    y = UI.Place(intro.fullPool, UI.FullLines(), y) - 6
     -- The bag list: two columns, refreshed every time (bag addons hook in after login).
     for i, entry in ipairs(BAG_LIST) do
       local fs = intro.bags[i]
@@ -2369,6 +2320,8 @@ local TESTS = {
     end
     d[#d + 1] = Detail("auto-mark settings", #missing == 0 and "all set" or table.concat(missing, ", "),
       #missing == 0 and "pass" or "fail")
+    local seq = type(db.click) == "table" and #KS.GetClick().order >= 2
+    d[#d + 1] = Detail("Alt+Click sequence", KS.CLICK_PRESET_NAMES[KS.ClickPreset()], seq and "pass" or "fail")
     return Result(d)
   end },
   { id = "hooks", name = "Guards hooked", run = function()
@@ -2556,13 +2509,14 @@ local function Help()
   print("  /soc status - check which guards are active")
   print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
   print("  /soc mark <item link or ID> - pick an item's mark from a menu")
-  print("  /soc altclick cycle||menu - Alt+Click raises/lowers the mark, or opens the menu (now " .. KS.GetAltClick() .. ")")
-  print("  /soc wrap on||off - Alt+Click wraps around: after Always on me comes Junk, and back (now " .. (KS.GetWrap() and "on" or "off") .. ")")
+  print("  /soc click loop||dial - the Alt+Click sequence: Quick loop or Protection dial (now " .. KS.CLICK_PRESET_NAMES[KS.ClickPreset()] .. ")")
+  print("  /soc click order junk lock mail || right clear||back || ends loop||stop - your own sequence (marks: junk, mail, normal, lock, onme)")
+  print("  /soc altclick cycle||menu - Alt+Click moves along the sequence, or opens the menu (now " .. KS.GetAltClick() .. ")")
   print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
   print("  /soc log [n] - show the last n log lines (default 25)")
   print("  /soc debug - toggle debug messages")
   print("  /soc selftest - check this install (results are saved for bug reports)")
-  print("  In bags: Alt+Left-click raises protection, Alt+Right-click lowers it (wrapping around unless /soc wrap off),")
+  print("  In bags: " .. KS.ClickText())
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
 end
 
@@ -2637,12 +2591,9 @@ SlashCmdList.SOC = function(msg)
     KS.ShowMarkMenu(id, rest:match("|c.-|r") or ItemLink(id)) -- pipes:ok (a pattern)
   elseif cmd == "altclick" and (rest == "cycle" or rest == "menu") then
     KS.SetAltClick(rest)
-    Print("Alt+Click in your bags now %s.", rest == "menu" and "opens a menu to pick the mark" or "raises (Left) or lowers (Right) the mark")
-  elseif cmd == "wrap" then
-    if rest == "on" or rest == "off" then KS.SetWrap(rest == "on") else KS.SetWrap(not KS.GetWrap()) end
-    Print("Alt+Click wrap-around is %s.", KS.GetWrap() and "on: after Always on me comes Junk, and back" or "off: it stops at Junk and at Always on me")
-    local w = KS.WrapWarning()
-    if w then Print("|cffff8040%s|r", w) end
+    Print("%s", KS.ClickText())
+  elseif cmd == "click" or cmd == "clicks" then
+    KS.ClickCommand(rest)
   elseif cmd == "chat" then
     if rest == "on" or rest == "off" then KS.SetChat(rest == "on") else KS.SetChat(not KS.GetChat()) end
     Print("Custodian's own messages now show %s.", KS.GetChat() and "in chat and the log" or "only in the log (/soc log)")
@@ -2690,6 +2641,7 @@ f:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 
 f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
   if event == "ADDON_LOADED" and arg1 == ADDON then
+    local fresh = StandingOrdersCustodianDB == nil -- a new install, not one from 1.0.0 or a test build
     StandingOrdersCustodianDB = StandingOrdersCustodianDB or {}
     db = StandingOrdersCustodianDB
     db.items = db.items or {}
@@ -2707,8 +2659,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
     for id in pairs(db.autoMailed or {}) do db.autoMarked[id] = db.autoMarked[id] or MAIL end
     if db.chat == nil then db.chat = false end -- Custodian's own messages: the log only, unless turned on
-    if db.wrap == nil then db.wrap = true end -- Alt+Click wraps around (Always on me <-> Junk)
-    if db.altClick == nil then db.altClick = "cycle" end -- or "menu"
+    KS.InitClick(db, fresh) -- the Alt+Click sequence: the Quick loop when new, 1.0.0's clicks otherwise
     db.auto = db.auto or {}
     if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
     for key, on in pairs(AUTO_DEFAULTS) do
@@ -2742,6 +2693,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     MigrateAutoMarks()
     KS.QueueAutoMark(5)
     if db.introSeen ~= INTRO_VERSION then C_Timer.After(4, function() KS:ShowIntro() end) end
+    C_Timer.After(5, KS.OfferQuickLoop) -- 1.0.0 players only, once, after the intro
     C_Timer.After(6, KS.CheckWrapWarning) -- after the other Standing Orders addons have loaded their settings
   elseif event == "MERCHANT_SHOW" then
     LearnVendorMats()

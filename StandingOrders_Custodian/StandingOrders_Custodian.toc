@@ -14,5 +14,6 @@
 ## X-Curse-Project-ID: 1806484
 
 Custodian.lua
+Clicks.lua
 Marks.lua
 Adapters.lua

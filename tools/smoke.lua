@@ -498,35 +498,71 @@ local cached = plain({ GetBag = function() return 2 end, GetID = function() retu
 CALL("Bagnon Item:Update (cached)", Bagnon.Item.Update, cached)
 altClick("Bagnon cached view", cached, 7003, STEP_UP)
 
--- Wrap-around (on by default): past Always on me comes Junk, and back; Vendor/Mail acting on their own get a warning
-CHECK("wrap-around is on by default", KS.GetWrap() == true and StandingOrdersCustodianDB.wrap == true)
-altClick("wrap: Alt+Left-click on Always on me", elv, 7001, L.JUNK)
+-- The Alt+Click sequence (Clicks.lua). This saved data is from 1.0.0 (no sequence yet), so it kept 1.0.0's clicks,
+-- the Protection dial (the steps up above), and is offered the Quick loop once, after the intro.
+CHECK("an install from 1.0.0 keeps the Protection dial", KS.ClickPreset() == "dial", KS.ClickPreset())
+CHECK("test builds' wrap-around switch is gone", StandingOrdersCustodianDB.wrap == nil)
+CHECK("the Quick loop offer waits for the intro to close", StandingOrdersCustodianDB.clickOffer == true and rawget(SOCustodianIntro, "__h_OnHide") ~= nil)
+altClick("dial: Alt+Left-click on Always on me stops there", elv, 7001, L.ONME)
+STUB_POPUP = nil
+CALL("the intro closes", function() SOCustodianIntro:Hide(); rawget(SOCustodianIntro, "__h_OnHide")() end)
+RUN_TIMERS()
+CHECK("then the Quick loop is offered", STUB_POPUP and STUB_POPUP.which == "SOC_CLICK_OFFER" and StandingOrdersCustodianDB.clickOffer == nil)
+CHECK("the offer explains the Quick loop", StaticPopupDialogs.SOC_CLICK_OFFER.text:find("Junk, then Locked, then Mail, then no mark again", 1, true) ~= nil)
+STUB_POPUP = nil
+CALL("offer again", KS.OfferQuickLoop)
+CHECK("it's offered only once", STUB_POPUP == nil)
+CALL("Switch", StaticPopupDialogs.SOC_CLICK_OFFER.OnAccept)
+CHECK("Switch: the Quick loop", KS.ClickPreset() == "loop", KS.ClickPreset())
+-- Quick loop: Junk, Locked, Mail, no mark; Always on me steps on like Locked; Alt+Right-click takes the mark off.
+altClick("loop: Always on me goes on to Mail", elv, 7001, L.MAIL)
+altClick("loop: Mail goes on to no mark", elv, 7001, L.NORMAL)
+altClick("loop: no mark becomes Junk", elv, 7001, L.JUNK)
+altClick("loop: Junk becomes Locked", elv, 7001, L.LOCK)
+altClick("loop: Locked becomes Mail", elv, 7001, L.MAIL)
 STUB_ALT = true
-CALL("wrap: Alt+Right-click on Junk", elv.__h_PreClick, elv, "RightButton")
+CALL("loop: Alt+Right-click", elv.__h_PreClick, elv, "RightButton")
 STUB_ALT = false
-CHECK("wrap: Alt+Right-click on Junk goes to Always on me", KS.GetLevel(7001) == L.ONME, KS.GetLevel(7001))
-CALL("/soc wrap off", SlashCmdList.SOC, "wrap off")
-altClick("no wrap: Alt+Left-click on Always on me stays", elv, 7001, L.ONME)
-CALL("/soc wrap on", SlashCmdList.SOC, "wrap on")
-CHECK("no warning while neither Vendor nor Mail acts on its own", KS.WrapWarning() == nil)
+CHECK("loop: Alt+Right-click takes the mark off", KS.GetLevel(7001) == L.NORMAL, KS.GetLevel(7001))
+CHECK("loop: its words", KS.ClickText():find("then no mark again", 1, true) ~= nil and KS.ClickText():find("takes its mark off", 1, true) ~= nil, KS.ClickText())
+-- Warnings: only when one click can take Locked or Always on me straight to Junk while Vendor sells Junk by itself.
 StandingOrdersVendorDB = { autopilot = "junk" }
+CHECK("the Quick loop has no risky step, so no warning", #KS.RiskySteps() == 0 and KS.WrapWarning() == nil)
+CALL("/soc click dial", SlashCmdList.SOC, "click dial")
+CHECK("the Protection dial has no risky step either", KS.ClickPreset() == "dial" and KS.WrapWarning() == nil)
+CALL("/soc click ends loop", SlashCmdList.SOC, "click ends loop")
 local warning = KS.WrapWarning()
-CHECK("the warning names Vendor's selling when its autopilot is on", warning and warning:find("Standing Orders: Vendor", 1, true) ~= nil, warning)
+CHECK("a dial whose ends loop is Custom, and warns", KS.ClickPreset() == "custom" and warning and warning:find("Standing Orders: Vendor", 1, true) ~= nil and warning:find("Always on me", 1, true) ~= nil, warning)
+KS.SetLevel(7001, L.ONME, nil, { quiet = true, scope = "account" })
 CHAT = {}
-altClick("wrap onto Junk while Vendor sells by itself", elv, 7001, L.JUNK)
-CHECK("a wrap onto Junk warns that Vendor will sell it", CHAT_HAS("wrapped around to Junk"), CHAT[1])
-StandingOrdersVendorDB = { autopilot = "off" }
-StandingOrdersMailDB = { autopilot = true }
-warning = KS.WrapWarning()
-CHECK("the warning names Mail's sending (and not Vendor) when only Mail's autopilot is on", warning and warning:find("Standing Orders: Mail", 1, true) ~= nil and not warning:find("Vendor", 1, true), warning)
+altClick("looping dial: Always on me wraps to Junk", elv, 7001, L.JUNK)
+CHECK("that click says Vendor will sell it", CHAT_HAS("from Always on me to Junk"), CHAT[1])
 CHAT = {}
-CALL("login wrap warning", KS.CheckWrapWarning)
-CALL("login wrap warning again", KS.CheckWrapWarning)
+CALL("login warning", KS.CheckWrapWarning)
+CALL("login warning again", KS.CheckWrapWarning)
 CHECK("the login warning shows once per combination", #CHAT == 1 and CHAT_HAS("Careful"), #CHAT)
-KS.SetWrap(false)
-CHECK("no warning with wrap-around off", KS.WrapWarning() == nil)
-KS.SetWrap(true)
-StandingOrdersVendorDB, StandingOrdersMailDB = nil, nil
+StandingOrdersVendorDB = { autopilot = "off" }
+CHECK("no warning while Vendor doesn't sell by itself", KS.WrapWarning() == nil)
+StandingOrdersVendorDB = { autopilot = "junk" }
+CALL("/soc click ends stop", SlashCmdList.SOC, "click ends stop")
+CHECK("ends that stop: the Protection dial again", KS.ClickPreset() == "dial")
+-- Your own order: Normal goes first when it's missing; an unknown mark is refused.
+CALL("/soc click order lock junk", SlashCmdList.SOC, "click order lock junk")
+local cfg = KS.GetClick()
+CHECK("a custom order keeps Normal in it", KS.ClickPreset() == "custom" and #cfg.order == 3 and cfg.order[1] == L.NORMAL and cfg.order[2] == L.LOCK, #cfg.order)
+CALL("/soc click right clear", SlashCmdList.SOC, "click right clear")
+CHECK("custom: Alt+Right-click takes the mark off", KS.ClickStep(L.LOCK, false) == L.NORMAL)
+CHAT = {}
+CALL("/soc click order lock nonsense", SlashCmdList.SOC, "click order lock nonsense")
+CHECK("an unknown mark is refused and the order kept", #KS.GetClick().order == 3 and CHAT_HAS("/soc click order"), #KS.GetClick().order)
+StandingOrdersVendorDB = nil
+CALL("/soc click loop", SlashCmdList.SOC, "click loop")
+CHECK("/soc click loop: the Quick loop", KS.ClickPreset() == "loop")
+local seqMenu = MENU_RADIOS(panel.clickChoice)
+CHECK("settings: the sequence dropdown offers Quick loop and Protection dial", #seqMenu == 2 and seqMenu[1].text == "Quick loop" and seqMenu[1].selected(), #seqMenu)
+CALL("settings: pick Protection dial", seqMenu[2] and seqMenu[2].pick)
+CHECK("settings: Protection dial picked, and the note says so", KS.ClickPreset() == "dial" and panel.clickNote:GetText():find("protect it more", 1, true) ~= nil, panel.clickNote:GetText())
+CALL("settings: pick Quick loop", seqMenu[1] and seqMenu[1].pick)
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")

@@ -64,14 +64,17 @@ for (const f of files.filter(f => f.endsWith(".lua"))) {
   say(hits.length ? "FAIL" : "PASS", "protected calls", hits.length ? `${f}: SpellStopTargeting() at line ${hits.join(", ")}` : `${f}: none`);
 }
 
-// --- Smoke test (addon loaded in a Lua VM with a stubbed WoW API)
-const smoke = node("harness.js", ADDON, "", path.join("tools", "smoke.lua"));
-const smokeOut = (smoke.stdout || "") + (smoke.stderr || "");
-const checks = (smokeOut.match(/^ok /gm) || []).length;
-if (smoke.status === 0) say("PASS", "smoke test", `${checks} checks ok`);
-else {
-  say("FAIL", "smoke test", "see below");
-  smokeOut.split("\n").filter(l => /^(ERROR|FAIL|LOAD ERROR|COMPILE ERROR|HARNESS)/.test(l)).forEach(l => console.log("       " + l));
+// --- Smoke tests (addon loaded in a Lua VM with a stubbed WoW API): smoke.lua starts from 1.0.0's saved data,
+// smoke-fresh.lua from none (a new install).
+for (const script of ["smoke.lua", "smoke-fresh.lua"]) {
+  const smoke = node("harness.js", ADDON, "", path.join("tools", script));
+  const smokeOut = (smoke.stdout || "") + (smoke.stderr || "");
+  const checks = (smokeOut.match(/^ok /gm) || []).length;
+  if (smoke.status === 0) say("PASS", "smoke test", `${script}: ${checks} checks ok`);
+  else {
+    say("FAIL", "smoke test", `${script}: see below`);
+    smokeOut.split("\n").filter(l => /^(ERROR|FAIL|LOAD ERROR|COMPILE ERROR|HARNESS)/.test(l)).forEach(l => console.log("       " + l));
+  }
 }
 
 // --- Privacy: no character, account or player names in anything that gets published, and neutral
