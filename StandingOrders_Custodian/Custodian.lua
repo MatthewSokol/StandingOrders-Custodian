@@ -922,7 +922,7 @@ local function PreClick(btn, mouse)
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     if KS.GetAltClick() == "menu" then
-      KS.ShowMarkMenu(info.itemID, info.hyperlink)
+      KS.ShowMarkMenu(info.itemID, info.hyperlink, nil, btn)
       return
     end
     KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton")

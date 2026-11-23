@@ -75,8 +75,9 @@ function KS.PickMark(level)
   menu:Hide()
 end
 
--- Opens the menu for an item: under anchor (a frame) when given, else at the mouse.
-function KS.ShowMarkMenu(id, link, anchor)
+-- Opens the menu for an item: next to beside (the bag button, like a context menu), under anchor
+-- (a Marked items row), else at the mouse. It always stays on the screen.
+function KS.ShowMarkMenu(id, link, anchor, beside)
   if not id then return end
   if not menu then BuildMenu() end
   menu.itemID, menu.link = id, link or ItemLink(id)
@@ -102,7 +103,10 @@ function KS.ShowMarkMenu(id, link, anchor)
   menu:ClearAllPoints()
   local x, y = GetCursorPosition and GetCursorPosition()
   local scale = UIParent:GetEffectiveScale()
-  if anchor then
+  if menu.SetClampedToScreen then menu:SetClampedToScreen(true) end
+  if beside then
+    menu:SetPoint("TOPLEFT", beside, "TOPRIGHT", 4, 0)
+  elseif anchor then
     menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
   elseif x and y and scale then
     menu:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale + 8, y / scale + 8)
