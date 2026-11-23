@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.0.0): 8 changes, 8 rows.**
+**Waiting since the last release (1.0.0): 9 changes, 9 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -110,9 +110,10 @@ yet (no test journal; see `BACKLOG.md`).
 </details>
 
 <details open>
-<summary><b>2.2.4 Alt+Click wraps around, with a warning when Vendor or Mail act on their own</b> (#43) · open · 0 / 1</summary>
+<summary><b>2.2.4 Alt+Click sequences: the Quick loop for new installs, 1.0.0's clicks kept with an offer</b> (#43, #48) · open · 0 / 2</summary>
 
-- [ ] 2.2.4.1 `TESTING.md` 5.41: Alt+Click wraps between Always on me and Junk (off with `/soc wrap off`); with Vendor selling on its own, the warning shows in settings, when turning wrap-around on, once at login, and on a click that wraps onto Junk
+- [ ] 2.2.4.1 `TESTING.md` 5.41: the Quick loop (Junk, Locked, Mail, no mark; Alt+Right-click unmarks), the Protection dial (stops at the ends), your own order with `/soc click`, and the warning when one click takes Locked to Junk while Vendor sells Junk by itself
+- [ ] 2.2.4.2 `TESTING.md` 5.45: an install from 1.0.0 keeps its clicks and is offered the Quick loop once, after the intro
 
 </details>
 
