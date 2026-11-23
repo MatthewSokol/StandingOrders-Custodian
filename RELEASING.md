@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.0.0): 11 changes, 14 rows.**
+**Waiting since the last release (1.1.0): 0 changes, 0 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,91 +82,11 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 14</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 0</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
 yet (no test journal; see `BACKLOG.md`).
-
-<details open>
-<summary><b>2.2.1 The mailbox: Alt+Left-click is Postal's</b> (#40) · open · 0 / 1</summary>
-
-- [ ] 2.2.1.1 `TESTING.md` 5.38: with Posty Forever's Express on, Alt+Left-click at the Send Mail page attaches the item and leaves its mark alone; elsewhere, and with Express off, Alt+Left-click still raises marks
-
-</details>
-
-<details open>
-<summary><b>2.2.2 Profession tools aren't Junk</b> (#41) · open · 0 / 1</summary>
-
-- [ ] 2.2.2.1 `TESTING.md` 5.39: a Fishing Pole (and other profession tools) in your bags stays unmarked, and 1.0.0's Junk auto-mark on one comes off at login
-
-</details>
-
-<details open>
-<summary><b>2.2.3 Custodian's own messages: log only unless chat is on</b> (#42) · open · 0 / 1</summary>
-
-- [ ] 2.2.3.1 `TESTING.md` 5.40: auto-mark, buyback and blocked-action messages stay out of chat by default (the red error still shows) and are in `/soc log`; `/soc chat on` or the Chat switch brings them back
-
-</details>
-
-<details open>
-<summary><b>2.2.4 Alt+Click sequences: the Quick loop for new installs, 1.0.0's clicks kept with an offer</b> (#43, #48) · open · 0 / 2</summary>
-
-- [ ] 2.2.4.1 `TESTING.md` 5.41: the Quick loop (Junk, Locked, Mail, no mark; Alt+Right-click unmarks), the Protection dial (stops at the ends), your own order with `/soc click`, and the warning when one click takes Locked to Junk while Vendor sells Junk by itself
-- [ ] 2.2.4.2 `TESTING.md` 5.45: an install from 1.0.0 keeps its clicks and is offered the Quick loop once, after the intro
-
-</details>
-
-<details open>
-<summary><b>2.2.5 Unusable soulbound gear becomes Junk on that character (off by default)</b> (#44) · open · 0 / 1</summary>
-
-- [ ] 2.2.5.1 `TESTING.md` 5.42: with the new rule on, soulbound gear the class can never use (or not for 5+ levels) becomes Junk "(this character)"; usable gear, trainable weapon types and an enchanter's green and better stay Normal
-
-</details>
-
-<details open>
-<summary><b>2.2.6 Mark menu: Alt+Click can open it, /soc mark opens it</b> (#45) · open · 0 / 1</summary>
-
-- [ ] 2.2.6.1 `TESTING.md` 5.43: with "Alt+Click opens a menu" on, Alt+Click opens the mark menu (levels with icons, own mark ticked, This character only); picking sets the mark; Esc closes it; `/soc mark <item>` opens it too
-
-</details>
-
-<details open>
-<summary><b>2.2.7 Marked items window with search</b> (#46) · open · 0 / 1</summary>
-
-- [ ] 2.2.7.1 `TESTING.md` 5.44: `/soc list` opens the Marked items window; the search narrows as you type (names and marks); a row's mark opens the mark menu and the change shows at once; Items in my bags can be unticked
-
-</details>
-
-<details open>
-<summary><b>2.2.8 The intro opens short, with Show details</b> (#47) · open · 0 / 1</summary>
-
-- [ ] 2.2.8.1 `TESTING.md` 1.4: the intro opens in its short view; Show details and Show less switch views and the choice is remembered; in menu mode the short view explains the menu
-
-</details>
-
-<details open>
-<summary><b>2.2.9 Simple and advanced options; new installs auto-mark only grays</b> (#49) · open · 0 / 3</summary>
-
-- [ ] 2.2.9.1 `TESTING.md` 5.46: the simple settings page, Show advanced options (hiding changes nothing), the advanced options that are on, and Back to simple
-- [ ] 2.2.9.2 `TESTING.md` 5.47: the Alt+Click sequence editor (Up, Down, in and out, Custom, presets, back one step, loop at the ends)
-- [ ] 2.2.9.3 `TESTING.md` 5.48: a new install auto-marks only grays and offers Always on me only with the advanced options shown
-
-</details>
-
-<details open>
-<summary><b>2.2.10 Mark icon styles: game icons (trimmed) or addon icons, with a compare window</b> (#50) · open · 0 / 1</summary>
-
-- [ ] 2.2.10.1 `TESTING.md` 5.49: `/soc icon compare` shows every mark in both styles over your bag items; game icons are trimmed; Use and Style change the bags, menu and intro at once; `/soc icon reset` goes back to game icons
-
-</details>
-
-<details open>
-<summary><b>2.2.11 Marked items: columns for this character, all characters, and the mark that counts</b> (#51) · open · 0 / 1</summary>
-
-- [ ] 2.2.11.1 The same steps as 2.2.7.1 (the Marked items window; its text now includes the new columns): the This character and All characters dropdowns and the Mark column. Tick this when 2.2.7.1 passes
-
-</details>
 
 </details>
 
@@ -180,14 +100,14 @@ yet (no test journal; see `BACKLOG.md`).
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Custodian/StandingOrders_Custodian.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
-- [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond) (1.1.0: retake on a clean install, the game icons are trimmed now: mark one item at each level by Alt+Click or the mark menu)
-- [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel) (1.1.0: unchanged, the 1.0.0 file stays; tick it)
-- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags (1.1.0: unchanged, the 1.0.0 file stays; tick it)
-- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soc settings` scrolled to the top (1.1.0: retake; it opens on the simple page now)
-- [ ] 3.3.5 Shot `equipment-sets`: `/soc settings` scrolled to Equipment sets, with a set's dropdown open (1.1.0: unchanged, the 1.0.0 file stays; tick it)
-- [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart) (1.1.0: unchanged, the 1.0.0 file stays; tick it)
-- [ ] 3.3.7 Shot `intro`: `/soc intro` (1.1.0: retake; it opens in the short view now)
-- [ ] 3.3.7.1 Shot `marked-items` (new in 1.1.0): in a quiet spot, `/soc list` with a few marked items showing (one with a This character mark, so the two columns differ), no dropdown open
+- [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond)
+- [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel)
+- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags
+- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soc settings` scrolled to the top
+- [ ] 3.3.5 Shot `equipment-sets`: `/soc settings` scrolled to Equipment sets, with a set's dropdown open
+- [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart)
+- [ ] 3.3.7 Shot `intro`: `/soc intro`
+- [ ] 3.3.7.1 Shot `marked-items`: in a quiet spot, `/soc list` with a few marked items showing (one with a This character mark, so the two columns differ), no dropdown open
 - [ ] 3.3.8 Claude takes the new files from `_forever_\Screenshots`, crops them, hides every name, saves them as `docs/screenshots/<shot>.png` and adds them to `docs/listing.md`; you check each picture `auto executed · when you say the shots are done`
 - [ ] 3.3 You review the listing: name, summary, first lines of the description, categories and screenshots, side by side with two or three similar addons, with every character name hidden, and say it's good
 - [ ] 3.4 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated · prep`
@@ -197,7 +117,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
-- [ ] 3.9.2 Images: delete the 1.0.0 images, then upload the eight screenshots below, each with its title and description (any order; 3.9.2.9 sets it)
+- [ ] 3.9.2 Images: delete the images of the last release, then upload the eight screenshots below, each with its title and description (any order; 3.9.2.9 sets it)
 - [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each one (Junk coin, Locked key, Mail letter).`
 - [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
@@ -256,7 +176,7 @@ Every release:
    - **Display name:** `Standing Orders: Custodian <version>`.
    - **Release type:** Release (or Beta).
    - **Game version:** the WoW Forever / Interface 16001 entry.
-   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release uses `docs/curseforge/changelog-1.1.0.md`).
+   - **Changelog:** paste this version's `CHANGELOG.md` entry, as Markdown (the first release used `docs/curseforge/changelog-1.0.0.md`).
 3. Wait for approval (usually minutes to hours), then install it from the CurseForge app on a clean profile and `/reload` once.
 
 ### Other sites (if you choose them)
