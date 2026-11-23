@@ -93,3 +93,30 @@ function KS.ShownLevels(own)
   end
   return out
 end
+
+-- /soc why <item>: what the "soulbound gear this character can't use" rule decides for an item, without needing a
+-- soulbound copy: shift-click any link (chat, the auction house). For testing the rule and for curious players.
+function KS.WhyUnusable(id, link)
+  local GetInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+  local name, _, quality, _, _, _, _, _, equipLoc, _, _, classID, subclassID = GetInfo(id)
+  if not name then return KS.Print("That item isn't loaded yet; try again in a moment.") end
+  local minLevel = select(5, GetInfo(id))
+  local class, level = UnitClass and UnitClass("player") or "?", UnitLevel and UnitLevel("player") or 1
+  local reason = KS.UnusableReason(classID, subclassID, minLevel)
+  local verdict
+  if classID ~= 2 and classID ~= 4 then
+    verdict = "not a weapon or armor, so this rule leaves it alone"
+  elseif equipLoc == "INVTYPE_BODY" or equipLoc == "INVTYPE_TABARD" then
+    verdict = "shirts and tabards are never marked"
+  elseif not reason then
+    verdict = "usable by this character now or within 5 levels, so it's left alone"
+  elseif (quality or 0) >= 2 and KS.IsEnchanter() then
+    verdict = (reason == "never" and "this class can't use it" or "not usable for 5+ levels")
+      .. ", but this character is an enchanter: green and better stays Normal to disenchant"
+  else
+    verdict = (reason == "never" and "this class can't use it" or "not usable for 5+ levels")
+      .. ": a soulbound copy becomes Junk on this character only"
+  end
+  KS.Print("%s for this %s (level %d): %s.%s", link, class, level, verdict,
+    KS.GetAuto("unusableJunk") and "" or " (The rule is off: /soc settings > Show advanced options > More auto-marks.)")
+end

@@ -694,6 +694,17 @@ CHAT = {}
 CALL("/soc simple with nothing on", SlashCmdList.SOC, "simple")
 CHECK("/soc simple says there's nothing to put back", CHAT_HAS("already at their simple defaults"), CHAT[1])
 
+-- /soc why <item>: the unusable-gear rule for any item, no soulbound copy needed (2.2.5's easy test).
+STUB_ITEMDB[7100] = { name = "Test Plate Chest", quality = 2, sellPrice = 100, classID = 4, subclassID = 4, minLevel = 10, equipLoc = "INVTYPE_CHEST" }
+STUB_ITEMDB[7101] = { name = "Test Cloth Robe", quality = 1, sellPrice = 10, classID = 4, subclassID = 1, minLevel = 5, equipLoc = "INVTYPE_ROBE" }
+STUB_CLASS, STUB_LEVEL = "MAGE", 20
+CHAT = {}
+CALL("/soc why a plate chest, as a Mage", SlashCmdList.SOC, "why 7100")
+CHECK("/soc why: a Mage can never use plate, and the rule is off by default", CHAT_HAS("this class can't use it") and CHAT_HAS("The rule is off"), CHAT[1])
+CHAT = {}
+CALL("/soc why a cloth robe, as a Mage", SlashCmdList.SOC, "why 7101")
+CHECK("/soc why: cloth is usable, left alone", CHAT_HAS("left alone"), CHAT[1])
+STUB_CLASS, STUB_LEVEL = "WARRIOR", 60
 local undefined = {}
 for k in pairs(UNDEFINED) do undefined[#undefined + 1] = k end
 table.sort(undefined)

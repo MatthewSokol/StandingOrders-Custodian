@@ -2643,6 +2643,7 @@ local function Help()
   print("  /soc mark <item link or ID> - pick an item's mark from a menu")
   print("  /soc click loop||dial - the Alt+Click sequence: Quick loop or Protection dial (now " .. KS.CLICK_PRESET_NAMES[KS.ClickPreset()] .. ")")
   print("  /soc click order junk lock mail || right clear||back || ends loop||stop - your own sequence (marks: junk, mail, normal, lock, onme)")
+  print("  /soc why <item> - would soulbound gear this character can't use become Junk? (no copy needed)")
   print("  /soc simple - put the advanced options back to their simple defaults (asks first; marks stay)")
   print("  /soc altclick cycle||menu - Alt+Click moves along the sequence, or opens the menu (now " .. KS.GetAltClick() .. ")")
   print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
@@ -2727,6 +2728,10 @@ SlashCmdList.SOC = function(msg)
     Print("%s", KS.ClickText())
   elseif cmd == "click" or cmd == "clicks" then
     KS.ClickCommand(rest)
+  elseif cmd == "why" then
+    local id = LinkID(rest) or tonumber(rest)
+    if not id then return Err("Use /soc why <shift-clicked item or item ID>.") end
+    KS.WhyUnusable(id, rest:match("|c.-|r") or ItemLink(id)) -- pipes:ok (a pattern)
   elseif cmd == "simple" then
     KS.AskBackToSimple()
   elseif cmd == "chat" then
