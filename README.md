@@ -41,15 +41,15 @@ The icons sit in the bottom left of the item button, 40% of its width across (so
 
 ## Auto-marks
 
-New items in your bags are marked for you (all on by default; turn each off in `/soc settings`):
+New items in your bags are marked for you. A new install marks only gray items Junk; the other rules are advanced options, off until you turn them on in `/soc settings` (tick **Show advanced options**). If you had 1.0.0, your rules stay as they were.
 
-| Item | Becomes |
-|---|---|
-| Gray | Junk |
-| White gear, weapons and junk with no profession or quest use | Junk |
-| Crafting materials none of this character's professions use (cloth, herbs, ore, leather...) | Mail, on this character only |
-| Bind on Equip, green and up, not yet bound | Mail |
-| Soulbound gear this character can't use, or not for more than 5 levels (**off by default**) | Junk, on this character only |
+| Item | Becomes | On a new install |
+|---|---|---|
+| Gray | Junk | On |
+| White gear, weapons and junk with no profession or quest use | Junk | Off |
+| Crafting materials none of this character's professions use (cloth, herbs, ore, leather...) | Mail, on this character only | Off |
+| Bind on Equip, green and up, not yet bound | Mail | Off |
+| Soulbound gear this character can't use, or not for more than 5 levels | Junk, on this character only | Off |
 
 **Per-character items** are never auto-marked: consumables (food, drink, potions, scrolls...), reagents (ankhs, light feathers, powders...) and trade goods that vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of these, so when you mark one, the mark is for that character only (add `account` to the command, or Alt+Shift+Left-click it, to share it). Standing Orders knows the common vendor trade goods and learns the rest from every vendor you open.
 
@@ -106,8 +106,14 @@ local level = StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemI
 if StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemID) == StandingOrdersCustodian.LEVELS.MAIL then --[[ send it to the bank character ]] end
 ```
 
+## Settings: simple and advanced
+
+`/soc settings` opens with the simple options: how Alt+Click works (with a warning if one click can take a protected item straight to Junk), **Gray items become Junk**, and buttons for the intro and the Marked items window. Tick **Show advanced options** for the rest: the Alt+Click sequence (Quick loop, Protection dial or your own order, with Up and Down for each mark, what Alt+Right-click does, whether the ends loop, or a menu instead), more auto-marks, where new marks go, Custodian's messages in chat, mark icons and equipment sets. Showing or hiding them changes nothing about what Custodian does.
+
+The simple page names the advanced options you have on, and **Back to simple** (or `/soc simple`) puts them back to their simple defaults after asking; your marks stay. **Always on me** is offered (in the mark menu and the intro) once the advanced options are shown, when it's in your Alt+Click sequence, or when an item already has it.
+
 ## Commands
 
 Every command also works as `/custodian` instead of `/soc` (handy if another addon has taken `/soc`).
 
-`/soc selftest` (checks this install and saves the results; handy for bug reports), `/soc settings` (auto-marks, where new marks go, mark icons, equipment sets), `/soc icon` (mark icon size, position and opacity), `/soc help`, `/soc intro` (a short version by default, with Show details for what's protected, what isn't yet and which bags it works with; also shown once on first login), `/soc status` (which guards are active), `/soc log` (recent guard decisions and Custodian's own messages), `/soc chat on|off` (also show those messages in chat: what it auto-marked, bought back or moved back, and actions it blocked; off by default), `/soc debug`.
+`/soc selftest` (checks this install and saves the results; handy for bug reports), `/soc settings` (the simple options, and Show advanced options for the rest), `/soc simple` (advanced options back to their simple defaults; asks first), `/soc click` (the Alt+Click sequence; see Item levels), `/soc icon` (mark icon size, position and opacity), `/soc help`, `/soc intro` (a short version by default, with Show details for what's protected, what isn't yet and which bags it works with; also shown once on first login), `/soc status` (which guards are active), `/soc log` (recent guard decisions and Custodian's own messages), `/soc chat on|off` (also show those messages in chat: what it auto-marked, bought back or moved back, and actions it blocked; off by default), `/soc debug`.

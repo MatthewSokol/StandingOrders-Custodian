@@ -8,6 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
+- **Simple and advanced options:** `/soc settings` opens with the simple options (how Alt+Click works, Gray items become Junk, the intro and Marked items). **Show advanced options** shows the rest, including an editor for the Alt+Click sequence; hiding them changes nothing. The simple page names the advanced options you have on, and **Back to simple** (or `/soc simple`) puts them back after asking. Always on me is offered once the advanced options are shown, when it's in your sequence, or when an item already has it.
 - **Marked items window** (`/soc list`, or the Marked items button in `/soc settings`): every item with a mark, plus the unmarked items in your bags, most protected first. The search box narrows the list as you type, by item name or by mark ("locked", "junk"...), and each row's mark opens the mark menu to change it. `/soc list print` still lists marks in chat.
 - **Mark menu:** pick an item's mark from a menu (the levels with their icons, the current one ticked, and "This character only"). `/soc mark <item>` opens it for any item, and with `/soc altclick menu` (or the switch in `/soc settings`) Alt+Click in your bags opens it instead of moving the mark along the sequence.
 - **Unusable soulbound gear becomes Junk** (new auto-mark, off by default; turn it on in `/soc settings`): soulbound weapons and armor this character's class can never use, or not for more than 5 levels, are marked Junk on this character only. Weapon types the class can train count as usable, and so does armor it learns later once it's within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins). Enchanters keep green and better gear to disenchant.
@@ -15,6 +16,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
+- **New installs auto-mark only grays:** white gear, Bind on Equip items and crafting materials are advanced options now, off on a new install. If you had 1.0.0, your rules stay as they were.
 - **Shorter intro:** it opens with a short version (how to change a mark, the marks, where to see them all); **Show details** brings back everything, and Custodian remembers which one you like. It shows once more at your next login.
 - **Quieter chat:** Custodian's own messages (what it auto-marked, bought back or moved back, and actions it blocked) now go to the log only (`/soc log`). Turn them back on in chat with `/soc chat on` or the new **Chat** switch in `/soc settings`. The red error on screen still shows when an action is blocked, and replies to your own clicks and commands always show.
 
