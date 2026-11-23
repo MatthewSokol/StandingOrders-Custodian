@@ -15,6 +15,7 @@ gets its own version, and a release publishes one of them.
 
 ### Changed
 
+- **Shorter intro:** it opens with a short version (how to change a mark, the marks, where to see them all); **Show details** brings back everything, and Custodian remembers which one you like. It shows once more at your next login.
 - **Quieter chat:** Custodian's own messages (what it auto-marked, bought back or moved back, and actions it blocked) now go to the log only (`/soc log`). Turn them back on in chat with `/soc chat on` or the new **Chat** switch in `/soc settings`. The red error on screen still shows when an action is blocked, and replies to your own clicks and commands always show.
 
 ### Fixed

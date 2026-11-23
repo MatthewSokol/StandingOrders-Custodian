@@ -5,10 +5,11 @@ Run through this before each CurseForge release. To check items off, open a GitH
 Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/green.js` is green, `/reload`, `/soc debug`, and keep BugSack open (and Mechanic, if installed). At the end: `/soc selftest`, `/reload`, then `node tools/green.js --game`. Each row has an outline id (`3.2`) to point at; this is the full regression suite, one row per behaviour (rows other steps already prove were dropped, so ids have gaps). The release checklist in `RELEASING.md` (stage 2.2) lists which of these rows each change since the last release needs.
 
 <details open>
-<summary><b>1 Fresh install</b> · 0 / 4</summary>
+<summary><b>1 Fresh install</b> · 0 / 5</summary>
 
 - [ ] 1.2 Esc closes the intro without acknowledging it, so it shows again next login
 - [ ] 1.3 `/soc intro` reopens it
+- [ ] 1.4 The intro opens short ("In short": Alt+Left-click / Alt+Right-click, the five marks with icons, what Locked does, /soc list); Show details shows the full intro and the bag list, Show less goes back; after a /reload, `/soc intro` opens in the view you left it in; with "Alt+Click opens a menu" on, the short view says Alt+Click opens a menu
 - [ ] 1.5 `/soc list` says nothing is marked and `/soc status` shows every guard on (on the clean install)
 - [ ] 1.7 Mark an item, log in a second character: the mark is there too (levels are account wide)
 

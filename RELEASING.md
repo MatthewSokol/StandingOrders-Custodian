@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.0.0): 7 changes, 7 rows.**
+**Waiting since the last release (1.0.0): 8 changes, 8 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 7</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 8</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
@@ -134,6 +134,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.7 Marked items window with search</b> (#46) · open · 0 / 1</summary>
 
 - [ ] 2.2.7.1 `TESTING.md` 5.44: `/soc list` opens the Marked items window; the search narrows as you type (names and marks); a row's mark opens the mark menu and the change shows at once; Items in my bags can be unticked
+
+</details>
+
+<details open>
+<summary><b>2.2.8 The intro opens short, with Show details</b> (#47) · open · 0 / 1</summary>
+
+- [ ] 2.2.8.1 `TESTING.md` 1.4: the intro opens in its short view; Show details and Show less switch views and the choice is remembered; in menu mode the short view explains the menu
 
 </details>
 
