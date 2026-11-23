@@ -180,13 +180,14 @@ yet (no test journal; see `BACKLOG.md`).
 
 - [ ] 3.1 The CurseForge project ID is in the `.toc` (`## X-Curse-Project-ID`), so `green.js` has no warning for it `auto validated · green.js`
 - [ ] 3.2 SEO tuned with the wow-mod-seo skill: `docs/listing.md` drafted or refreshed (search keywords checked against similar addons such as Keep or Toss: Forever, iGuard and ItemGuard; the name, summary, categories per site, the README as the description, screenshot captions), and the `.toc` `## Title`, `## Notes`, `## Category` and `## IconTexture` match it; `node ~/.claude/skills/wow-mod-seo/scripts/lint-listing.js docs/listing.md --toc StandingOrders_Custodian/StandingOrders_Custodian.toc --readme README.md` is clean `auto executed · before prep` `auto validated · lint-listing.js`
-- [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond)
-- [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel)
-- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags
-- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soc settings` scrolled to the top
-- [ ] 3.3.5 Shot `equipment-sets`: `/soc settings` scrolled to Equipment sets, with a set's dropdown open
-- [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart)
-- [ ] 3.3.7 Shot `intro`: `/soc intro`
+- [ ] 3.3.1 Shot `bags-levels`: in a quiet spot (no players near, or face a wall), the default bags with one item at each level (Junk coin, Mail letter, Locked key, Always on me purple diamond) (1.1.0: unchanged, the 1.0.0 file stays; tick it)
+- [ ] 3.3.2 Shot `disenchant-blocker`: cast Disenchant and, with the targeting cursor up, hover over a Locked item so its red cover and "blocked" line show (Esc to cancel) (1.1.0: unchanged, the 1.0.0 file stays; tick it)
+- [ ] 3.3.3 Shot `guard`: at a vendor, sell a Locked item; capture the red error ("… Lower it to Normal to sell it …") with the item back in your bags (1.1.0: unchanged, the 1.0.0 file stays; tick it)
+- [ ] 3.3.4 Shot `settings`: in a quiet spot (the window is see-through, so names behind it show): `/soc settings` scrolled to the top (1.1.0: retake; it opens on the simple page now)
+- [ ] 3.3.5 Shot `equipment-sets`: `/soc settings` scrolled to Equipment sets, with a set's dropdown open (1.1.0: unchanged, the 1.0.0 file stays; tick it)
+- [ ] 3.3.6 Shot `bag-addon`: the same marks in Baganator or another bag addon (needs that addon's profile and a restart) (1.1.0: unchanged, the 1.0.0 file stays; tick it)
+- [ ] 3.3.7 Shot `intro`: `/soc intro` (1.1.0: retake; it opens in the short view now)
+- [ ] 3.3.7.1 Shot `marked-items` (new in 1.1.0): in a quiet spot, `/soc list` with a few marked items showing (one with a This character mark, so the two columns differ), no dropdown open
 - [ ] 3.3.8 Claude takes the new files from `_forever_\Screenshots`, crops them, hides every name, saves them as `docs/screenshots/<shot>.png` and adds them to `docs/listing.md`; you check each picture `auto executed · when you say the shots are done`
 - [ ] 3.3 You review the listing: name, summary, first lines of the description, categories and screenshots, side by side with two or three similar addons, with every character name hidden, and say it's good
 - [ ] 3.4 Candidate picked (`pipeline.js candidates`; default the newest) and `pipeline.js prep <version>` passed in a clean checkout `auto executed · when you say you're ready` `auto validated · prep`
@@ -196,7 +197,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.8 `<env> restore` `auto executed · after the zip test` `auto validated · restore verified`
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
-- [ ] 3.9.2 Images → Upload: the seven screenshots, each with its title and description, in this order; star (feature) only the first, `bags-levels`, so it is the project's main image
+- [ ] 3.9.2 Images → Upload: the eight screenshots, each with its title and description, in this order; star (feature) only the first, `bags-levels`, so it is the project's main image
 - [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
 - [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
@@ -204,6 +205,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9.2.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
 - [ ] 3.9.2.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
 - [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
+- [ ] 3.9.2.8 File `<repo>\docs\screenshots\marked-items.png`; title `Marked items`; description `Every mark in one window: this character, all characters, and the mark that counts.`
 - [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Custodian-1.0.0.zip`; display name `Standing Orders: Custodian 1.0.0`; release type Release; game version WoW Forever (Interface 16001)
 - [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-1.0.0.md`
 - [ ] 3.9.5 When CurseForge approves the file (minutes to hours), install it from the CurseForge app on a clean profile, `/reload` once and check the addon list shows 1.0.0
