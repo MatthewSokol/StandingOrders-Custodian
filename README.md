@@ -47,6 +47,7 @@ New items in your bags are marked for you (all on by default; turn each off in `
 | White gear, weapons and junk with no profession or quest use | Junk |
 | Crafting materials none of this character's professions use (cloth, herbs, ore, leather...) | Mail, on this character only |
 | Bind on Equip, green and up, not yet bound | Mail |
+| Soulbound gear this character can't use, or not for more than 5 levels (**off by default**) | Junk, on this character only |
 
 **Per-character items** are never auto-marked: consumables (food, drink, potions, scrolls...), reagents (ankhs, light feathers, powders...) and trade goods that vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of these, so when you mark one, the mark is for that character only (add `account` to the command, or Alt+Shift+Left-click it, to share it). Standing Orders knows the common vendor trade goods and learns the rest from every vendor you open.
 
