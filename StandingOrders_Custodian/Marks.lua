@@ -1,9 +1,10 @@
 -- Custodian: more ways to change a mark besides Alt+Click cycling and the /soc commands, so there's always one
 -- that works: the mark menu (pick the level from a list; Alt+Click opens it when /soc altclick menu is set, and
--- /soc mark <item> opens it for any item).
+-- /soc mark <item> opens it for any item) and the Marked items window (/soc list: search, then change any mark).
 
 local KS = StandingOrdersCustodian
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+local GetInstant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
 
 local function ItemLink(id) return select(2, GetItemInfo(id)) or ("item:" .. id) end
 
@@ -98,4 +99,174 @@ function KS.ShowMarkMenu(id, link, anchor)
     menu:SetPoint("CENTER")
   end
   menu:Show()
+end
+
+---------------------------------------------------------------------------------------------------
+-- The Marked items window (/soc list): every item with a mark of its own, plus (ticked by default) the unmarked
+-- items in your bags, so new items can be marked here too. The search box narrows the list as you type, by item
+-- name or by mark ("locked", "junk"...). Each row's button opens the mark menu under it.
+
+local ROW_H, ROW_W = 22, 356
+local win
+
+local function NameOf(id)
+  local name = GetItemInfo(id)
+  if not name and C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(id) end
+  return name
+end
+
+-- The rows to show: { id, level, scope, name }, most protected first, then by name.
+local function Entries(text, withBags)
+  local list, seen = {}, {}
+  for _, e in ipairs(KS.MarkedItems()) do
+    list[#list + 1] = e
+    seen[e.id] = true
+  end
+  if withBags then
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+      for slot = 1, (C_Container.GetContainerNumSlots(bag) or 0) do
+        local info = C_Container.GetContainerItemInfo(bag, slot)
+        local id = info and info.itemID
+        if id and not seen[id] then
+          seen[id] = true
+          list[#list + 1] = { id = id, level = KS.GetOwnLevel(id) }
+        end
+      end
+    end
+  end
+  local out = {}
+  text = (text or ""):lower()
+  for _, e in ipairs(list) do
+    e.name = NameOf(e.id) or ("item " .. e.id)
+    if text == "" or e.name:lower():find(text, 1, true) or (KS.NAMES[e.level] or ""):lower():find(text, 1, true) then
+      out[#out + 1] = e
+    end
+  end
+  table.sort(out, function(a, b)
+    if a.level ~= b.level then return a.level > b.level end
+    return a.name < b.name
+  end)
+  return out
+end
+
+local function Row(i)
+  if win.rows[i] then return win.rows[i] end
+  local r = CreateFrame("Button", nil, win.content)
+  r:SetSize(ROW_W, ROW_H)
+  r:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_H)
+  r:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  r.icon = r:CreateTexture(nil, "ARTWORK")
+  r.icon:SetSize(18, 18)
+  r.icon:SetPoint("LEFT", 2, 0)
+  r.name = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  r.name:SetPoint("LEFT", 26, 0)
+  r.name:SetWidth(196)
+  r.name:SetJustifyH("LEFT")
+  r.mark = CreateFrame("Button", nil, r, "UIPanelButtonTemplate")
+  r.mark:SetSize(126, 20)
+  r.mark:SetPoint("RIGHT", -2, 0)
+  r.mark:SetScript("OnClick", function(self) KS.ShowMarkMenu(r.id, r.link, self) end)
+  r:SetScript("OnEnter", function(self)
+    if not GameTooltip then return end
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetHyperlink("item:" .. self.id)
+    GameTooltip:Show()
+  end)
+  r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+  win.rows[i] = r
+  return r
+end
+
+local function Refresh()
+  if not (win and win:IsShown()) then return end
+  local text = win.search:GetText() or ""
+  if text == "" then win.hint:Show() else win.hint:Hide() end
+  local list = Entries(text, win.bags:GetChecked())
+  win.entries = list
+  local marked = 0
+  for i, e in ipairs(list) do
+    local r = Row(i)
+    r.id, r.link = e.id, ItemLink(e.id)
+    r.icon:SetTexture((GetInstant and select(5, GetInstant(e.id))) or 134400)
+    local shown = GetItemInfo(e.id) and r.link or e.name
+    r.name:SetText(shown .. (e.scope == "char" and " |cff9d9d9d(this character)|r" or ""))
+    r.mark:SetText(KS.LevelText(e.level))
+    r:Show()
+    if e.scope then marked = marked + 1 end
+  end
+  for i = #list + 1, #win.rows do win.rows[i]:Hide() end
+  win.content:SetHeight(math.max(1, #list * ROW_H))
+  if #list == 0 then
+    win.count:SetText(text ~= "" and "Nothing matches." or "Nothing marked yet: Alt+Click an item in your bags, or tick Items in my bags.")
+  else
+    win.count:SetText(("%d shown, %d with a mark. Click a mark to change it."):format(#list, marked))
+  end
+end
+KS.RefreshMarkList = Refresh
+
+local function BuildWindow()
+  win = CreateFrame("Frame", "SOCustodianMarks", UIParent, "BasicFrameTemplateWithInset")
+  win:SetSize(410, 470)
+  win:SetPoint("CENTER")
+  win:SetFrameStrata("DIALOG")
+  win:SetClampedToScreen(true)
+  win:EnableMouse(true)
+  win:SetMovable(true)
+  win:RegisterForDrag("LeftButton")
+  win:SetScript("OnDragStart", win.StartMoving)
+  win:SetScript("OnDragStop", win.StopMovingOrSizing)
+  local title = win:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  title:SetPoint("TOP", 8, -5)
+  title:SetText("Standing Orders: Custodian - Marked items")
+  local icon = win:CreateTexture(nil, "OVERLAY")
+  icon:SetSize(16, 16)
+  icon:SetPoint("RIGHT", title, "LEFT", -4, 0)
+  icon:SetTexture(KS.ICON)
+
+  win.search = CreateFrame("EditBox", "SOCustodianMarksSearch", win, "InputBoxTemplate")
+  win.search:SetSize(200, 20)
+  win.search:SetPoint("TOPLEFT", 24, -34)
+  win.search:SetAutoFocus(false)
+  win.search:SetScript("OnTextChanged", function() Refresh() end)
+  win.search:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+  win.hint = win.search:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+  win.hint:SetPoint("LEFT", 2, 0)
+  win.hint:SetText("Search: item or mark")
+  win.bags = CreateFrame("CheckButton", nil, win, "UICheckButtonTemplate")
+  win.bags:SetSize(24, 24)
+  win.bags:SetPoint("LEFT", win.search, "RIGHT", 10, 0)
+  win.bags.Text:SetText("Items in my bags")
+  win.bags:SetChecked(true)
+  win.bags:SetScript("OnClick", function() Refresh() end)
+
+  local scroll = CreateFrame("ScrollFrame", nil, win, "UIPanelScrollFrameTemplate")
+  scroll:SetPoint("TOPLEFT", 14, -62)
+  scroll:SetPoint("BOTTOMRIGHT", -34, 34)
+  win.content = CreateFrame("Frame", nil, scroll)
+  win.content:SetSize(ROW_W, 1)
+  scroll:SetScrollChild(win.content)
+  win.count = win:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  win.count:SetPoint("BOTTOMLEFT", 18, 14)
+  win.rows = {}
+  win:SetScript("OnShow", Refresh)
+  tinsert(UISpecialFrames, "SOCustodianMarks") -- Esc closes it
+
+  -- Stay current while open: marks changed anywhere, and item names the client loads later.
+  hooksecurefunc(KS, "SetLevel", Refresh)
+  hooksecurefunc(KS, "ToggleItemScope", Refresh)
+  local names = CreateFrame("Frame")
+  pcall(names.RegisterEvent, names, "GET_ITEM_INFO_RECEIVED")
+  names:SetScript("OnEvent", function()
+    if not win:IsShown() or win.pending then return end
+    win.pending = true
+    C_Timer.After(0.3, function() win.pending = nil; Refresh() end)
+  end)
+end
+
+-- Opens the Marked items window, with the search box set to text when given.
+function KS.ShowMarkList(text)
+  if not win then BuildWindow() end
+  win:Show()
+  if text then win.search:SetText(text) end
+  Refresh()
 end

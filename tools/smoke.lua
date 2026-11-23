@@ -536,6 +536,40 @@ CALL("pick Mail for this character only", KS.PickMark, L.MAIL)
 CHECK("the menu's This character only applies", KS.GetLevel(7001) == L.MAIL and KS.GetItemScope(7001) == "char", KS.GetItemScope(7001))
 CALL("/soc altclick cycle", SlashCmdList.SOC, "altclick cycle")
 KS.SetLevel(7001, L.ONME, nil, { quiet = true, scope = "account" })
+
+-- The Marked items window: marked items plus bag items; the search narrows as you type; rows open the mark menu
+CALL("/soc list", SlashCmdList.SOC, "list")
+local marks = SOCustodianMarks
+CHECK("/soc list opens the Marked items window", marks and marks:IsShown())
+local function shownNames() local t = {} for _, e in ipairs(marks.entries or {}) do t[#t + 1] = e.name end return table.concat(t, ", ") end
+CHECK("it lists marked items and unmarked bag items", marks.entries and #marks.entries >= 6 and shownNames():find("Hearthstone", 1, true) and shownNames():find("Silk Cloth", 1, true), shownNames())
+CHECK("most protected first", marks.entries[1].level == L.ONME, marks.entries[1] and marks.entries[1].level)
+local function search(text)
+  marks.search:SetText(text)
+  CALL("type " .. text, marks.search:GetScript("OnTextChanged"), marks.search)
+end
+search("ring")
+CHECK("the search narrows as you type", #marks.entries >= 1 and shownNames():find("Test Ring", 1, true) and not shownNames():find("Hearthstone", 1, true), shownNames())
+search("always on me")
+local allOnMe = #marks.entries > 0
+for _, e in ipairs(marks.entries) do if e.level ~= L.ONME then allOnMe = false end end
+CHECK("the search matches mark names too", allOnMe, shownNames())
+search("no such item")
+CHECK("no match: an empty list and a note", #marks.entries == 0 and marks.count:GetText() == "Nothing matches.")
+search("silk")
+CHECK("an unmarked bag item shows as Normal", #marks.entries == 1 and marks.entries[1].level == L.NORMAL and marks.entries[1].scope == nil)
+CALL("click the row's mark", marks.rows[1].mark:GetScript("OnClick"), marks.rows[1].mark)
+CHECK("the row's mark button opens the menu on that item", SOCustodianMarkMenu:IsShown() and SOCustodianMarkMenu.itemID == 4306)
+SOCustodianMarkMenu.char:SetChecked(false)
+CALL("pick Locked from the row's menu", KS.PickMark, L.LOCK)
+CHECK("the pick is saved and the list follows", KS.GetLevel(4306) == L.LOCK and marks.entries[1].level == L.LOCK, marks.entries[1] and marks.entries[1].level)
+marks.bags:SetChecked(false)
+search("")
+local onlyMarked = true
+for _, e in ipairs(marks.entries) do if not e.scope then onlyMarked = false end end
+CHECK("untick Items in my bags: only marked items", onlyMarked and #marks.entries > 0)
+CALL("/soc list print", SlashCmdList.SOC, "list print")
+KS.SetLevel(4306, L.NORMAL, nil, { quiet = true, scope = "account" })
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
 
 local undefined = {}

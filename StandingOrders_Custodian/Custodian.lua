@@ -184,6 +184,20 @@ function KS.GetOwnLevel(id)
   return Effective((cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL)
 end
 
+-- Every item with a mark of its own: { id, level, scope = "char" or "account" }. This character's mark wins (a
+-- stored Normal there overrides an account-wide mark). Equipment-set protection isn't a mark and isn't listed.
+function KS.MarkedItems()
+  local list, seen = {}, {}
+  for id, l in pairs(cdb and cdb.items or {}) do
+    list[#list + 1] = { id = id, level = Effective(l), scope = "char" }
+    seen[id] = true
+  end
+  for id, l in pairs(db and db.items or {}) do
+    if not seen[id] then list[#list + 1] = { id = id, level = Effective(l), scope = "account" } end
+  end
+  return list
+end
+
 -- "char" when this character has its own mark for the item, "account" for an account-wide one, else nil.
 function KS.GetItemScope(id)
   if id and cdb and cdb.items[id] then return "char" end
@@ -1892,6 +1906,12 @@ local function CreatePanel()
   if type(textW) == "number" and textW > 0 then intro:SetWidth(math.max(170, math.ceil(textW) + 32)) end
   panel.introButton = intro
   intro:SetScript("OnClick", function() KS:ShowIntro() end)
+  local marks = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+  marks:SetSize(150, 24)
+  marks:SetPoint("LEFT", intro, "RIGHT", 8, 0)
+  marks:SetText("Marked items")
+  marks:SetScript("OnClick", function() KS.ShowMarkList() end)
+  panel.marksButton = marks
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
   -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
@@ -2020,7 +2040,7 @@ local function CreatePanel()
   end)
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   outer.chatCheck, outer.wrapCheck, outer.wrapNote = panel.chatCheck, panel.wrapCheck, panel.wrapNote
-  outer.altClickChecks = panel.altClickChecks
+  outer.altClickChecks, outer.marksButton = panel.altClickChecks, panel.marksButton
   if Settings and Settings.RegisterCanvasLayoutCategory then
     category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
     Settings.RegisterAddOnCategory(category)
@@ -2458,7 +2478,7 @@ end
 local function Help()
   Print("Commands (/custodian works the same as /soc):")
   print("  /soc junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
-  print("  /soc list - show marked items")
+  print("  /soc list [search] - the Marked items window: search, then change any mark (/soc list print: in chat)")
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
   print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
@@ -2535,8 +2555,8 @@ SlashCmdList.SOC = function(msg)
     KS.SetAuto("boeMail", rest == "on")
     KS.SetAuto("matsMail", rest == "on")
     Print("Auto-marking Mail (BoE items and crafting materials) is %s.", rest)
-  elseif cmd == "list" then
-    ListItems()
+  elseif cmd == "list" or cmd == "marks" then
+    if rest == "print" then ListItems() else KS.ShowMarkList(rest ~= "" and rest or nil) end
   elseif cmd == "status" then
     Status()
   elseif cmd == "intro" or cmd == "protect" then
