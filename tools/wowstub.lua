@@ -40,7 +40,7 @@ local function stub(name)
         local ev = rawget(t, "__ev") or {}; ev[a[1]] = true; rawset(t, "__ev", ev); return
       end
       if k == "GetID" then return rawget(t, "__id") or 0 end
-      if k == "SetupMenu" then rawset(t, "__menu", a[1]); return end -- DropdownButton: MENU_RADIOS() reads it
+      if k == "SetupMenu" then rawset(t, "__menu", a[1]); MENU_RADIOS(t); return end -- DropdownButton: MENU_RADIOS() reads it; the game builds the menu at once, so the stub does too
       return nil
     end
   end })

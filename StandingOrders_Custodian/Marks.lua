@@ -127,6 +127,7 @@ end
 local ROW_H, ROW_W = 26, 520
 local COL_NAME, COL_DD, COL_MARK = 186, 124, 80
 local DEFAULT = 0 -- "Account default" in the This character column: no mark of its own
+local NONE = {} -- a row before it has an item: the menu system can build its menu as soon as the dropdown exists
 local win
 
 local function NameOf(id)
@@ -227,6 +228,7 @@ end
 local function Row(i)
   if win.rows[i] then return win.rows[i] end
   local r = CreateFrame("Button", nil, win.content)
+  r.entry = NONE
   r:SetSize(ROW_W, ROW_H)
   r:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_H)
   r:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
@@ -237,17 +239,17 @@ local function Row(i)
   r.name:SetPoint("LEFT", 24, 0)
   r.name:SetWidth(COL_NAME - 26)
   r.name:SetJustifyH("LEFT")
-  r.char = Column(r, function() return r.entry.char or DEFAULT end,
+  r.char = Column(r, function() return (r.entry or NONE).char or DEFAULT end,
     function()
       local list = { DEFAULT }
-      for _, l in ipairs(LevelChoices(r.entry.char)) do list[#list + 1] = l end
+      for _, l in ipairs(LevelChoices((r.entry or NONE).char)) do list[#list + 1] = l end
       return list
     end,
     function(c) return c == DEFAULT and "|cff9d9d9dAccount default|r" or KS.LevelText(c) end,
     function(c) KS.SetMarkIn(r.id, "char", c ~= DEFAULT and c or nil) end)
   r.char:SetPoint("LEFT", COL_NAME, 0)
-  r.account = Column(r, function() return r.entry.account or KS.LEVELS.NORMAL end,
-    function() return LevelChoices(r.entry.account) end,
+  r.account = Column(r, function() return (r.entry or NONE).account or KS.LEVELS.NORMAL end,
+    function() return LevelChoices((r.entry or NONE).account) end,
     KS.LevelText,
     function(c) KS.SetMarkIn(r.id, "account", c) end)
   r.account:SetPoint("LEFT", COL_NAME + COL_DD + 8, 0)
