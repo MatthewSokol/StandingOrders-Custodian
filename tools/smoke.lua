@@ -330,7 +330,11 @@ CALL("/soc sets onme", SlashCmdList.SOC, "sets onme")
 CHECK("default for sets applies", KS.GetLevel(9999) == L.ONME, KS.GetLevel(9999))
 CHAT = {}
 KS.SetLevel(9999, L.JUNK)
-CHECK("lowering a set item explains it stays protected", CHAT_HAS([[equipment set "Tank Gear"]]) and KS.GetLevel(9999) == L.ONME)
+local function LOG_HAS(text) for _, l in ipairs(StandingOrdersCustodianDB.log or {}) do if l:find(text, 1, true) then return true end end return false end
+CHECK("lowering a set item explains it stays protected (in the log; chat is off)", LOG_HAS([[equipment set "Tank Gear"]]) and not CHAT_HAS([[equipment set "Tank Gear"]]) and KS.GetLevel(9999) == L.ONME)
+CHAT = {}
+CALL("/soc junk 9999 (a typed command)", SlashCmdList.SOC, "junk 9999")
+CHECK("a typed command still answers in chat", CHAT_HAS("is now") and CHAT_HAS([[equipment set "Tank Gear"]]), CHAT[1])
 STUB_SETS[1].items[16] = nil
 FIRE("EQUIPMENT_SETS_CHANGED")
 CHECK("taken out of the set: back to its own mark", KS.GetLevel(9999) == L.JUNK, KS.GetLevel(9999))

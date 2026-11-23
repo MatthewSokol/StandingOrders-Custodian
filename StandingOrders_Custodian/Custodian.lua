@@ -92,7 +92,7 @@ end
 
 -- Messages about what Custodian did on its own (auto-marks, buybacks, items moved back, blocked actions): always
 -- kept in the log (/soc log), and shown in chat too only with "Show Custodian's own messages in chat" on
--- (StandingOrdersCustodianDB.chat, off by default). Replies to your own clicks and commands use Print.
+-- (StandingOrdersCustodianDB.chat, off by default). So do the replies to your Alt+Clicks ("... is now Junk."); typed commands answer in chat.
 function KS.Notify(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
   Log(msg)
@@ -242,7 +242,8 @@ do
   end
 end
 
--- opts (optional): { scope = "account"|"char", quiet = true }. The old third-argument link still works.
+-- opts (optional): { scope = "account"|"char", quiet = true, reply = true }. The old third-argument link still works.
+-- The "is now" line goes through KS.Notify (the log, and chat only with chat on), except for a typed command (reply).
 function KS.SetLevel(id, level, link, opts)
   if not id then return end
   level = Effective(level) -- another addon asking for Confirm while it's off gets Locked
@@ -256,9 +257,10 @@ function KS.SetLevel(id, level, link, opts)
     cdb.items[id] = nil -- an account-wide change replaces this character's own mark
   end
   if not opts.quiet then
-    Print("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
+    local Say = opts.reply and Print or KS.Notify
+    Say("%s is now %s%s.", link or ItemLink(id), LevelText(level), ScopeText(scope))
     if KS.GetLevel(id) > level and setNameOf[id] then
-      Print("It stays %s while it's in the equipment set \"%s\" (/soc sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
+      Say("It stays %s while it's in the equipment set \"%s\" (/soc sets).", LevelText(KS.GetLevel(id)), setNameOf[id])
     end
   end
   RefreshBags()
@@ -271,11 +273,11 @@ function KS.ToggleItemScope(id, link)
   if mine then
     db.items[id] = (mine ~= NORMAL) and mine or nil
     cdb.items[id] = nil
-    Print("%s is now %s for all characters.", link, LevelText(KS.GetLevel(id)))
+    KS.Notify("%s is now %s for all characters.", link, LevelText(KS.GetLevel(id)))
   elseif shared then
     cdb.items[id] = shared
     db.items[id] = nil
-    Print("%s is now %s%s; your other characters no longer have it marked.", link, LevelText(Effective(shared)), ScopeText("char"))
+    KS.Notify("%s is now %s%s; your other characters no longer have it marked.", link, LevelText(Effective(shared)), ScopeText("char"))
   else
     Print("%s isn't marked. Alt+Click it first.", link)
     return
@@ -1943,7 +1945,7 @@ local function CreatePanel()
   end)
   refreshers[#refreshers + 1] = function() chat:SetChecked(KS.GetChat()) end
   panel.chatCheck = chat
-  prev = Note(adv, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Replies to your own clicks and commands always show.", chat, 26, -2)
+  prev = Note(adv, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Alt+Click replies (\"... is now Junk.\") follow this too; typed commands always answer.", chat, 26, -2)
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
   -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
@@ -2696,7 +2698,7 @@ SlashCmdList.SOC = function(msg)
     end
     local id = LinkID(rest) or tonumber(rest)
     if not id then return Err("Shift-click an item into the command, or give its item ID.") end
-    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope }) -- pipes:ok (a pattern)
+    KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope, reply = true }) -- pipes:ok (a pattern)
   elseif cmd == "sets" or cmd == "set" then
     SetsCommand(rest)
   elseif cmd == "scope" and (rest == "char" or rest == "account") then

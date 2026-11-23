@@ -140,7 +140,7 @@ end
 function KS.ClickMark(id, link, forward)
   local cur = KS.GetLevel(id)
   local new = KS.ClickStep(cur, forward)
-  if new == cur then return KS.Print("%s is already %s.", link, KS.LevelText(cur)) end
+  if new == cur then return KS.Notify("%s is already %s.", link, KS.LevelText(cur)) end
   KS.SetLevel(id, new, link)
   if new == JUNK and cur >= LOCK and KS.SelfActing().vendor then
     KS.Print("|cffff8040That took it from %s to Junk: Standing Orders: Vendor sells it the next time you open a vendor.|r", KS.NAMES[cur])
