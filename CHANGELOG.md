@@ -8,6 +8,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
+- **Mark menu:** pick an item's mark from a menu (the levels with their icons, the current one ticked, and "This character only"). `/soc mark <item>` opens it for any item, and with `/soc altclick menu` (or the switch in `/soc settings`) Alt+Click in your bags opens it instead of raising or lowering the mark.
 - **Unusable soulbound gear becomes Junk** (new auto-mark, off by default; turn it on in `/soc settings`): soulbound weapons and armor this character's class can never use, or not for more than 5 levels, are marked Junk on this character only. Weapon types the class can train count as usable, and so does armor it learns later once it's within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins). Enchanters keep green and better gear to disenchant.
 - **Wrap-around:** Alt+Left-click on an Always on me item goes on to Junk, and Alt+Right-click on Junk to Always on me (on by default; `/soc wrap off` or the switch in `/soc settings` turns it off). If Standing Orders: Vendor sells Junk on its own or Standing Orders: Mail sends Mail on its own, Custodian warns you (in the settings, when you turn wrap-around on, once at login, and when a click wraps onto Junk).
 
