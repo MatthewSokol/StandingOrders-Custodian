@@ -24,7 +24,7 @@ gets its own version, and a release publishes one of them.
 ### Fixed
 
 - **Profession tools aren't Junk:** auto-marks no longer mark fishing poles, mining picks, blacksmith hammers, spanners, skinning knives, enchanting rods and other profession tools Junk (white ones looked like plain white weapons). A Junk auto-mark 1.0.0 put on one comes off at your next login.
-- **Mailbox with Postal or Posty:** on the Send Mail page, Alt+Left-click in your bags is left to Postal's Express module (it attaches the item, or sends it with AutoSend), so Custodian no longer also changes the item's mark with that click. Alt+Right-click and the `/soc` commands still work there, and with Express turned off Custodian keeps Alt+Left-click.
+- **Mailbox with Postal or Posty:** on the Send Mail page, Alt+Left-click in the default bags is left to Postal's (or Posty's) Express module when Express has hooked that click (it attaches the item, or sends it with AutoSend), so Custodian no longer also changes the item's mark. In a bag addon, or when Express isn't hooked, Custodian keeps the click. Alt+Right-click and the `/soc` commands still work there, and with Express turned off Custodian keeps Alt+Left-click.
 
 ## [1.0.0] - 2026-11-21
 

@@ -480,19 +480,31 @@ altClick("ElvUI bags", elv, 7001, STEP_UP)
 local elvBank = plain({ BagID = -1, SlotID = 1 })
 CALL("ElvUI bank UpdateSlot", ElvB.UpdateSlot, ElvB, { isBank = true, Bags = { [-1] = { [1] = elvBank } } }, -1, 1)
 altClick("ElvUI closed bank", elvBank, 7001, STEP_UP)
--- At the mailbox with Postal/Posty's Express on, Alt+Left-click is Express's (it attaches the item): no mark change.
-local express = { enabled = true, IsEnabled = function(self) return self.enabled end }
-Postal = { GetModule = function(_, name) return name == "Express" and express or nil end }
+-- At the mailbox with Posty's (or Postal's) Express on and hooked into the default bags' click, Alt+Left-click on a
+-- default bag button is Express's (it attaches the item): no mark change. A bag addon's buttons (ElvUI here) stay
+-- Custodian's: Express never sees those clicks (in game: ArkInventory, where Express attached nothing).
+local express = { enabled = true, hooked = true, IsEnabled = function(self) return self.enabled end,
+  IsHooked = function(self, name) return self.hooked and name == "ContainerFrameItemButton_OnModifiedClick" end }
+PostyForever = { GetModule = function(_, name) return name == "Express" and express or nil end }
 SendMailFrame = { IsVisible = function() return true end }
-CHECK("mailbox: Express owns Alt+Left-click", KS.MailAddonOwnsAltClick() == true)
-altClick("ElvUI bags at the mailbox with Express on", elv, 7001, STEP_UP)
+local blizz = bagButtons[1]
+CHECK("mailbox: Posty's Express owns Alt+Left-click on the default bags", KS.MailAddonOwnsAltClick(blizz) == true)
+CHECK("mailbox: not on a bag addon's buttons", KS.MailAddonOwnsAltClick(elv) == false)
+local before = KS.GetLevel(7001)
+altClick("ElvUI bags at the mailbox: Custodian still changes the mark", elv, 7001, KS.ClickStep(before, true))
+KS.SetLevel(7001, before, nil, { quiet = true, scope = "account" })
+express.hooked = false
+CHECK("mailbox: Express not hooked into the bags' click (another client): Custodian keeps it", KS.MailAddonOwnsAltClick(blizz) == false)
+express.hooked = true
 express.enabled = false
-CHECK("mailbox: Express off, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
+CHECK("mailbox: Express off, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick(blizz) == false)
 express.enabled = true
+PostyForever, Postal = nil, PostyForever
+CHECK("Postal (the global Postal) counts too", KS.MailAddonOwnsAltClick(blizz) == true)
 SendMailFrame = { IsVisible = function() return false end }
-CHECK("away from the Send Mail page, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
+CHECK("away from the Send Mail page, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick(blizz) == false)
 Postal, SendMailFrame = nil, nil
-CHECK("without Postal or Posty, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick() == false)
+CHECK("without Postal or Posty, Custodian keeps Alt+Click", KS.MailAddonOwnsAltClick(blizz) == false)
 -- On Forever, AdiBags' secure overlay takes right-clicks; the item button's PreClick never sees them.
 local adiOverlay = { HookScript = function(self, script, fn) self["__h_" .. script] = fn end }
 local adi = plain({ bag = 2, slot = 2, IsBank = function() return false end, ForeverSecureUse = adiOverlay })
