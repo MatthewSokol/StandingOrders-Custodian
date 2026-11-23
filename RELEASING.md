@@ -198,7 +198,7 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9 After your go-ahead: `git push origin v<version>` (only that tag), then the CurseForge steps 3.9.1–3.9.5 (the project already exists, so only the description, images and file) (before, or together with, Standing Orders: Vendor, whose warning links to this addon)
 - [ ] 3.9.1 CurseForge → your project → Description: set the editor to Markdown, select everything in it, and paste this (the README without its repo-only logo and links; Vendor and Mail say coming soon) `paste · docs/curseforge/description.md`
 - [ ] 3.9.2 Images → Upload: the eight screenshots, each with its title and description, in this order; star (feature) only the first, `bags-levels`, so it is the project's main image
-- [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
+- [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each one (Junk coin, Locked key, Mail letter).`
 - [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
 - [ ] 3.9.2.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Simple options up front; Show advanced options for the rest.`

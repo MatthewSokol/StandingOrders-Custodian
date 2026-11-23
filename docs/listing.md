@@ -27,7 +27,7 @@ docs/logo.png
 README.md
 
 ## Screenshots
-- docs/screenshots/bags-levels.png | Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).
+- docs/screenshots/bags-levels.png | Mark items with Alt+Click; an icon shows each one (Junk coin, Locked key, Mail letter).
 - docs/screenshots/guard.png | Sold by mistake? It's bought straight back.
 - docs/screenshots/disenchant-blocker.png | Disenchant, Prospect and Mill can't touch a Locked item.
 - docs/screenshots/settings.png | Simple options up front; Show advanced options for the rest.
