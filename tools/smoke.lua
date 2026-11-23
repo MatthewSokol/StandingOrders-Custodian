@@ -445,6 +445,36 @@ altClick("Bagnon", bagnon, 7002, KS.CONFIRM_ENABLED and L.LOCK or L.ONME)
 local cached = plain({ GetBag = function() return 2 end, GetID = function() return 3 end, IsCached = function() return true end })
 CALL("Bagnon Item:Update (cached)", Bagnon.Item.Update, cached)
 altClick("Bagnon cached view", cached, 7003, STEP_UP)
+
+-- Wrap-around (on by default): past Always on me comes Junk, and back; Vendor/Mail acting on their own get a warning
+CHECK("wrap-around is on by default", KS.GetWrap() == true and StandingOrdersCustodianDB.wrap == true)
+altClick("wrap: Alt+Left-click on Always on me", elv, 7001, L.JUNK)
+STUB_ALT = true
+CALL("wrap: Alt+Right-click on Junk", elv.__h_PreClick, elv, "RightButton")
+STUB_ALT = false
+CHECK("wrap: Alt+Right-click on Junk goes to Always on me", KS.GetLevel(7001) == L.ONME, KS.GetLevel(7001))
+CALL("/soc wrap off", SlashCmdList.SOC, "wrap off")
+altClick("no wrap: Alt+Left-click on Always on me stays", elv, 7001, L.ONME)
+CALL("/soc wrap on", SlashCmdList.SOC, "wrap on")
+CHECK("no warning while neither Vendor nor Mail acts on its own", KS.WrapWarning() == nil)
+StandingOrdersVendorDB = { autopilot = "junk" }
+local warning = KS.WrapWarning()
+CHECK("the warning names Vendor's selling when its autopilot is on", warning and warning:find("Standing Orders: Vendor", 1, true) ~= nil, warning)
+CHAT = {}
+altClick("wrap onto Junk while Vendor sells by itself", elv, 7001, L.JUNK)
+CHECK("a wrap onto Junk warns that Vendor will sell it", CHAT_HAS("wrapped around to Junk"), CHAT[1])
+StandingOrdersVendorDB = { autopilot = "off" }
+StandingOrdersMailDB = { autopilot = true }
+warning = KS.WrapWarning()
+CHECK("the warning names Mail's sending (and not Vendor) when only Mail's autopilot is on", warning and warning:find("Standing Orders: Mail", 1, true) ~= nil and not warning:find("Vendor", 1, true), warning)
+CHAT = {}
+CALL("login wrap warning", KS.CheckWrapWarning)
+CALL("login wrap warning again", KS.CheckWrapWarning)
+CHECK("the login warning shows once per combination", #CHAT == 1 and CHAT_HAS("Careful"), #CHAT)
+KS.SetWrap(false)
+CHECK("no warning with wrap-around off", KS.WrapWarning() == nil)
+KS.SetWrap(true)
+StandingOrdersVendorDB, StandingOrdersMailDB = nil, nil
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
 
 local undefined = {}
