@@ -143,8 +143,14 @@ local function Matches(text, e)
   return false
 end
 
+local order, orderN -- itemID -> its row's place, kept while the window is open (nil: sort again)
+local function ByMark(a, b)
+  if a.level ~= b.level then return a.level > b.level end
+  return a.name < b.name
+end
+
 -- The rows to show: { id, name, char, account, level (the one that counts), set (true when a set raises it),
--- scope }, most protected first, then by name.
+-- scope }, in the window's order.
 local function Entries(text, withBags)
   local list, seen = {}, {}
   for _, e in ipairs(KS.MarkedItems()) do
@@ -171,12 +177,19 @@ local function Entries(text, withBags)
     e.scope = KS.GetItemScope(e.id)
     e.level = KS.GetLevel(e.id)
     e.set = e.level > KS.GetOwnLevel(e.id)
+  end
+  -- Most protected first, then by name, when the window opens (or on Re-sort); after that each row keeps its
+  -- place, so changing a mark doesn't move it. Items new since then go at the end.
+  if not order then
+    table.sort(list, ByMark)
+    order, orderN = {}, #list
+    for i, e in ipairs(list) do order[e.id] = i end
+  end
+  for _, e in ipairs(list) do
+    if not order[e.id] then orderN = orderN + 1; order[e.id] = orderN end
     if Matches(text, e) then out[#out + 1] = e end
   end
-  table.sort(out, function(a, b)
-    if a.level ~= b.level then return a.level > b.level end
-    return a.name < b.name
-  end)
+  table.sort(out, function(a, b) return order[a.id] < order[b.id] end)
   return out
 end
 
@@ -336,8 +349,13 @@ local function BuildWindow()
   scroll:SetScrollChild(win.content)
   win.count = win:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   win.count:SetPoint("BOTTOMLEFT", 18, 14)
+  win.resort = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
+  win.resort:SetSize(80, 22)
+  win.resort:SetPoint("BOTTOMRIGHT", -14, 8)
+  win.resort:SetText("Re-sort")
+  win.resort:SetScript("OnClick", function() KS.ResortMarkList() end)
   win.rows = {}
-  win:SetScript("OnShow", Refresh)
+  win:SetScript("OnShow", function() order = nil; Refresh() end) -- sorted afresh each time it opens
   tinsert(UISpecialFrames, "SOCustodianMarks") -- Esc closes it
 
   -- Stay current while open: marks changed anywhere, and item names the client loads later.
@@ -351,6 +369,12 @@ local function BuildWindow()
     win.pending = true
     C_Timer.After(0.3, function() win.pending = nil; Refresh() end)
   end)
+end
+
+-- Re-sort: most protected first again, then by name.
+function KS.ResortMarkList()
+  order = nil
+  Refresh()
 end
 
 -- Opens the Marked items window, with the search box set to text when given.
