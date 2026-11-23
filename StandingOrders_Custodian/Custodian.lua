@@ -104,6 +104,11 @@ function KS.SetChat(on) if db then db.chat = on and true or false end end
 -- Wrap-around (StandingOrdersCustodianDB.wrap, on by default): Alt+Left-click past Always on me goes on to Junk,
 -- Alt+Right-click past Junk to Always on me.
 function KS.GetWrap() return not (db and db.wrap == false) end
+
+-- What Alt+Click in your bags does (StandingOrdersCustodianDB.altClick): "cycle" (the default: Alt+Left-click
+-- raises the mark, Alt+Right-click lowers it) or "menu" (either one opens the mark menu, Marks.lua).
+function KS.GetAltClick() return (db and db.altClick == "menu") and "menu" or "cycle" end
+function KS.SetAltClick(mode) if db then db.altClick = (mode == "menu") and "menu" or "cycle" end end
 function KS.SetWrap(on) if db then db.wrap = on and true or false end end
 
 -- Standing Orders addons that act on marks by themselves: Vendor sells Junk when a vendor opens (its autopilot,
@@ -163,11 +168,20 @@ KS.LevelText = LevelText
 local cdb -- StandingOrdersCustodianCharDB
 local setLevelOf, setNameOf = {}, {} -- equipment sets: itemID -> level and set name (see Equipment sets)
 
+-- For Marks.lua (the mark menu and the Marked items window).
+KS.ORDER, KS.NAMES, KS.ICONS, KS.COLORS = ORDER, NAMES, ICONS, COLORS
+
 function KS.GetLevel(id)
   if not id then return NORMAL end
   local level = Effective((cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL)
   local fromSet = setLevelOf[id]
   return (fromSet and fromSet > level) and fromSet or level
+end
+
+-- The item's own mark, without equipment-set protection on top.
+function KS.GetOwnLevel(id)
+  if not id then return NORMAL end
+  return Effective((cdb and cdb.items[id]) or (db and db.items[id]) or NORMAL)
 end
 
 -- "char" when this character has its own mark for the item, "account" for an account-wide one, else nil.
@@ -910,6 +924,11 @@ local function PreClick(btn, mouse)
   -- Alt+Left-click raises protection (Junk > Mail > Normal > Confirm > Locked > Always on me);
   -- Alt+Right-click lowers it.
   if IsAltKeyDown() and not IsShiftKeyDown() and not IsControlKeyDown() then
+    btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
+    if KS.GetAltClick() == "menu" then
+      KS.ShowMarkMenu(info.itemID, info.hyperlink)
+      return
+    end
     local cur = KS.GetLevel(info.itemID)
     local i = 3
     for n, level in ipairs(ORDER) do if level == cur then i = n end end
@@ -917,7 +936,6 @@ local function PreClick(btn, mouse)
     local wrapped = i < 1 or i > #ORDER
     if wrapped and KS.GetWrap() then i = (i - 1) % #ORDER + 1 else i = math.max(1, math.min(#ORDER, i)) end
     local new = ORDER[i]
-    btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     if new == cur then
       Print("%s is already %s.", info.hyperlink, LevelText(cur))
     else
@@ -1827,7 +1845,20 @@ local function CreatePanel()
 
   local clickHeader = Header(panel, "Alt+Click in your bags", prev)
   clickHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local wrap = Check(panel, "Wrap around: after Always on me comes Junk again", clickHeader, -6, function(self)
+  local cycle = Check(panel, "Alt+Left-click raises the mark, Alt+Right-click lowers it", clickHeader, -6, function()
+    KS.SetAltClick("cycle")
+    RefreshPanel()
+  end)
+  local menuMode = Check(panel, "Alt+Click opens a menu to pick the mark", cycle, -2, function()
+    KS.SetAltClick("menu")
+    RefreshPanel()
+  end)
+  refreshers[#refreshers + 1] = function()
+    cycle:SetChecked(KS.GetAltClick() == "cycle")
+    menuMode:SetChecked(KS.GetAltClick() == "menu")
+  end
+  panel.altClickChecks = { cycle = cycle, menu = menuMode }
+  local wrap = Check(panel, "Wrap around: after Always on me comes Junk again", menuMode, -2, function(self)
     KS.SetWrap(self:GetChecked())
     local w = self:GetChecked() and KS.WrapWarning()
     if w then Print("|cffff8040%s|r", w) end
@@ -1840,7 +1871,7 @@ local function CreatePanel()
     wrap:SetChecked(KS.GetWrap())
     local w = KS.WrapWarning()
     wrapNote:SetText(w and ("|cffff8040" .. w .. "|r")
-      or (KS.GetWrap() and "Alt+Left-click on Always on me goes on to Junk; Alt+Right-click on Junk goes to Always on me."
+      or (KS.GetWrap() and "Raising or lowering: Alt+Left-click on Always on me goes on to Junk; Alt+Right-click on Junk goes to Always on me."
         or "Off: Alt+Click stops at Junk and at Always on me."))
   end
   prev = wrapNote
@@ -1989,6 +2020,7 @@ local function CreatePanel()
   end)
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   outer.chatCheck, outer.wrapCheck, outer.wrapNote = panel.chatCheck, panel.wrapCheck, panel.wrapNote
+  outer.altClickChecks = panel.altClickChecks
   if Settings and Settings.RegisterCanvasLayoutCategory then
     category = Settings.RegisterCanvasLayoutCategory(outer, outer.name)
     Settings.RegisterAddOnCategory(category)
@@ -2433,6 +2465,8 @@ local function Help()
   print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
   print("  /soc intro - what the marks mean, what's protected (and what isn't yet) and which bags it works with")
+  print("  /soc mark <item link or ID> - pick an item's mark from a menu")
+  print("  /soc altclick cycle||menu - Alt+Click raises/lowers the mark, or opens the menu (now " .. KS.GetAltClick() .. ")")
   print("  /soc wrap on||off - Alt+Click wraps around: after Always on me comes Junk, and back (now " .. (KS.GetWrap() and "on" or "off") .. ")")
   print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
   print("  /soc log [n] - show the last n log lines (default 25)")
@@ -2507,6 +2541,13 @@ SlashCmdList.SOC = function(msg)
     Status()
   elseif cmd == "intro" or cmd == "protect" then
     KS:ShowIntro()
+  elseif cmd == "mark" then
+    local id = LinkID(rest) or tonumber(rest)
+    if not id then return Err("Use /soc mark <shift-clicked item or item ID>.") end
+    KS.ShowMarkMenu(id, rest:match("|c.-|r") or ItemLink(id)) -- pipes:ok (a pattern)
+  elseif cmd == "altclick" and (rest == "cycle" or rest == "menu") then
+    KS.SetAltClick(rest)
+    Print("Alt+Click in your bags now %s.", rest == "menu" and "opens a menu to pick the mark" or "raises (Left) or lowers (Right) the mark")
   elseif cmd == "wrap" then
     if rest == "on" or rest == "off" then KS.SetWrap(rest == "on") else KS.SetWrap(not KS.GetWrap()) end
     Print("Alt+Click wrap-around is %s.", KS.GetWrap() and "on: after Always on me comes Junk, and back" or "off: it stops at Junk and at Always on me")
@@ -2577,6 +2618,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     for id in pairs(db.autoMailed or {}) do db.autoMarked[id] = db.autoMarked[id] or MAIL end
     if db.chat == nil then db.chat = false end -- Custodian's own messages: the log only, unless turned on
     if db.wrap == nil then db.wrap = true end -- Alt+Click wraps around (Always on me <-> Junk)
+    if db.altClick == nil then db.altClick = "cycle" end -- or "menu"
     db.auto = db.auto or {}
     if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
     for key, on in pairs(AUTO_DEFAULTS) do

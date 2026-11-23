@@ -516,6 +516,26 @@ KS.SetWrap(false)
 CHECK("no warning with wrap-around off", KS.WrapWarning() == nil)
 KS.SetWrap(true)
 StandingOrdersVendorDB, StandingOrdersMailDB = nil, nil
+
+-- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
+CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
+CALL("/soc altclick menu", SlashCmdList.SOC, "altclick menu")
+KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
+altClick("menu mode: Alt+Left-click opens the menu", elv, 7001, L.NORMAL)
+local menu = SOCustodianMarkMenu
+CHECK("the mark menu is open on the item", menu and menu:IsShown() and menu.itemID == 7001)
+CHECK("the menu has one button per level, own mark ticked", menu and #menu.buttons == #KS.ORDER and menu.buttons[3].check:IsShown() and not menu.buttons[1].check:IsShown())
+if menu then
+  for _, b in ipairs(menu.buttons) do if b.level == L.LOCK then CALL("pick Locked", b:GetScript("OnClick"), b) end end
+end
+CHECK("picking Locked marks it and closes the menu", KS.GetLevel(7001) == L.LOCK and not menu:IsShown(), KS.GetLevel(7001))
+CALL("/soc mark 7001", SlashCmdList.SOC, "mark 7001")
+CHECK("/soc mark opens the menu", menu:IsShown() and menu.itemID == 7001)
+menu.char:SetChecked(true)
+CALL("pick Mail for this character only", KS.PickMark, L.MAIL)
+CHECK("the menu's This character only applies", KS.GetLevel(7001) == L.MAIL and KS.GetItemScope(7001) == "char", KS.GetItemScope(7001))
+CALL("/soc altclick cycle", SlashCmdList.SOC, "altclick cycle")
+KS.SetLevel(7001, L.ONME, nil, { quiet = true, scope = "account" })
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
 
 local undefined = {}
