@@ -120,7 +120,7 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
 <main id="app">
   <header>
     <h1>Custodian Release Checklist</h1>
-    <p class="sub">Standing Orders: Custodian, the first release.</p>
+    <p class="sub">Standing Orders: Custodian, the next release.</p>
   </header>
   <p class="sub" id="loading">Loading the checklist…</p>
 </main>
@@ -295,7 +295,7 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
     var header = el("header");
     header.appendChild(el("span", "build", "Build under test: " + esc(state.build || "not stamped")));
     header.appendChild(el("h1", null, "Custodian Release Checklist"));
-    header.appendChild(el("p", "sub", "Standing Orders: Custodian, the first release. Tick your rows as you go; press Problem on any row that doesn't do what it says. A fix restamps the build and unticks the smoke rows and every row it touches. Click a grey command to copy it."));
+    header.appendChild(el("p", "sub", "Standing Orders: Custodian, the next release. Tick your rows as you go; press Problem on any row that doesn't do what it says. A fix restamps the build and unticks the smoke rows and every row it touches. Click a grey command to copy it."));
     header.appendChild(el("p", "waiting", esc(WAITING)));
     var bar = el("div", "bar");
     var meter = el("div", "meter"); meter.setAttribute("role", "progressbar");
@@ -424,7 +424,7 @@ footer { color: var(--muted); font-size: .82rem; text-align: center; max-width: 
       "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
       "<link rel=\"stylesheet\" href=\"" + (fonts ? fonts.getAttribute("href") : "") + "\">\n" +
       "<style id=\"app-style\">" + document.getElementById("app-style").textContent + "</style>\n\n" +
-      "<main id=\"app\">\n  <header>\n    <h1>Custodian Release Checklist</h1>\n    <p class=\"sub\">Standing Orders: Custodian, the first release.</p>\n  </header>\n  <p class=\"sub\" id=\"loading\">Loading the checklist…</p>\n</main>\n\n" +
+      "<main id=\"app\">\n  <header>\n    <h1>Custodian Release Checklist</h1>\n    <p class=\"sub\">Standing Orders: Custodian, the next release.</p>\n  </header>\n  <p class=\"sub\" id=\"loading\">Loading the checklist…</p>\n</main>\n\n" +
       "<" + S + " type=\"application/json\" id=\"state\">" + json + "</" + S + ">\n" +
       "<" + S + " id=\"app-script\">" + document.getElementById("app-script").textContent + "</" + S + ">\n" +
       "</body></html>";
