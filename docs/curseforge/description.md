@@ -26,6 +26,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Level | Icon | What happens |
 |---|---|---|
 | Junk | coin | Safe to lose. Standing Orders: Vendor (coming soon) will sell these when a vendor opens |
+| Disenchant | sparkle (the Disenchant spell's icon) | To disenchant. Never sold: if you sell one by mistake it's bought straight back, and Standing Orders: Vendor never sells it. Disenchanting, trading and mailing it are fine. An advanced mark: offered once **Show advanced options** is ticked |
 | Mail | letter | To send to your bank character. Standing Orders: Mail (coming soon) will mail these |
 | Normal | none | The default |
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
@@ -33,7 +34,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 
 **Alt+Click** in your bags moves an item's mark along a sequence. New installs use the **Quick loop**: **Alt+Left-click** goes Junk, then Locked, then Mail, then no mark again, and **Alt+Right-click** takes the mark off, so a Locked item is never one click from Junk. If you had 1.0.0, you keep its clicks, the **Protection dial** (Alt+Left-click protects more: Junk, Mail, Normal, Locked, Always on me; Alt+Right-click protects less; both ends stop), and Custodian offers you the Quick loop once. Pick either in `/soc settings` or with `/soc click loop` and `/soc click dial`, or make your own: `/soc click order junk lock mail` (any marks, in any order), `/soc click right clear` or `back` (Alt+Right-click takes the mark off or steps back) and `/soc click ends loop` or `stop`. If one click in your sequence can take a Locked or Always on me item straight to Junk while Standing Orders: Vendor sells Junk on its own, Custodian warns you.
 
-Prefer picking from a list? `/soc altclick menu` (or the switch in `/soc settings`) makes Alt+Click open a **mark menu**: every level with its icon, the current one ticked, and "This character only". `/soc mark <item>` opens the same menu for any item. You can also use `/soc junk|mail|normal|lock|onme <shift-clicked item or ID> [char|account]`. `/soc list` opens the **Marked items** window: every marked item plus the items in your bags, with a search box that narrows the list as you type (item name or mark; shift-click an item or drag it onto the box to search for it), and three columns for each item: **This character** (a dropdown; Account default means no mark of its own), **All characters** (a dropdown) and **Mark**, the one that counts (this character's mark wins, and an equipment set can raise it). Rows stay put while you change marks; **Re-sort** (or opening the window again) puts the most protected first. Item tooltips show the level.
+Prefer picking from a list? `/soc altclick menu` (or the switch in `/soc settings`) makes Alt+Click open a **mark menu**: every level with its icon, the current one ticked, and "This character only". `/soc mark <item>` opens the same menu for any item. You can also use `/soc junk|disenchant|mail|normal|lock|onme <shift-clicked item or ID> [char|account]`. `/soc list` opens the **Marked items** window: every marked item plus the items in your bags, with a search box that narrows the list as you type (item name or mark; shift-click an item or drag it onto the box to search for it), and three columns for each item: **This character** (a dropdown; Account default means no mark of its own), **All characters** (a dropdown) and **Mark**, the one that counts (this character's mark wins, and an equipment set can raise it). Rows stay put while you change marks; **Re-sort** (or opening the window again) puts the most protected first. Item tooltips show the level.
 
 The icons sit in the bottom left of the item button, 40% of its width across (so they cover about a sixth of it), at 75% opacity, so stack counts stay readable. Change their size (10% to 100% of the button's width), corner (or center) and opacity in `/soc settings` under Mark icons, or with `/soc icon size 50`, `/soc icon position center`, `/soc icon opacity 60` and `/soc icon reset`.
 
@@ -101,8 +102,8 @@ If the [Mechanic](https://github.com/Falkicon/Mechanic) dev tool is installed, S
 ```lua
 if StandingOrdersCustodian and StandingOrdersCustodian.IsLocked(itemID) then --[[ skip it ]] end
 if StandingOrdersCustodian and StandingOrdersCustodian.Guard(itemID, link, "disenchant") then return end -- shows the error for you
-local level = StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemID) -- StandingOrdersCustodian.LEVELS.JUNK / MAIL / NORMAL / LOCK / ONME (CONFIRM exists but is held back: GetLevel never returns it yet)
--- MAIL is 1.5 (between JUNK 1 and NORMAL 2), so compare with StandingOrdersCustodian.LEVELS, not with level + 1.
+local level = StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemID) -- StandingOrdersCustodian.LEVELS.JUNK / DISENCHANT / MAIL / NORMAL / LOCK / ONME (CONFIRM exists but is held back: GetLevel never returns it yet)
+-- DISENCHANT is 1.25 and MAIL 1.5 (between JUNK 1 and NORMAL 2), so compare with StandingOrdersCustodian.LEVELS, not with level + 1.
 if StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemID) == StandingOrdersCustodian.LEVELS.MAIL then --[[ send it to the bank character ]] end
 ```
 

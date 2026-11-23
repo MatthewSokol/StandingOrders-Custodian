@@ -10,7 +10,7 @@ local ADDON = ...
 local KS = StandingOrdersCustodian
 local L = KS.LEVELS
 local MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\Media\\"
-local BADGES = { [L.JUNK] = "Junk", [L.MAIL] = "Mail", [L.LOCK] = "Locked", [L.ONME] = "OnMe" }
+local BADGES = { [L.JUNK] = "Junk", [L.DISENCHANT] = "Disenchant", [L.MAIL] = "Mail", [L.LOCK] = "Locked", [L.ONME] = "OnMe" }
 
 KS.ICON_STYLES = { "game", "addon" }
 KS.ICON_STYLE_NAMES = { game = "Game icons", addon = "Addon icons" }
@@ -79,7 +79,7 @@ end
 -- The compare window (/soc icon compare): one row per mark, one column per style, each over an item from your
 -- bags (one with that mark when you have one), at your icon size, position and opacity. Use picks a style.
 
-local SHOWN = { L.JUNK, L.MAIL, L.LOCK, L.ONME }
+local SHOWN = { L.JUNK, L.DISENCHANT, L.MAIL, L.LOCK, L.ONME }
 local win
 
 -- Item icons from your bags: the first one with each mark, and up to eight of any kind.
