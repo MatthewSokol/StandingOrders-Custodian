@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Changed
+
+- **Quieter chat:** Custodian's own messages (what it auto-marked, bought back or moved back, and actions it blocked) now go to the log only (`/soc log`). Turn them back on in chat with `/soc chat on` or the new **Chat** switch in `/soc settings`. The red error on screen still shows when an action is blocked, and replies to your own clicks and commands always show.
+
 ### Fixed
 
 - **Profession tools aren't Junk:** auto-marks no longer mark fishing poles, mining picks, blacksmith hammers, spanners, skinning knives, enchanting rods and other profession tools Junk (white ones looked like plain white weapons). A Junk auto-mark 1.0.0 put on one comes off at your next login.

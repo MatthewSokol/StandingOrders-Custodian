@@ -105,4 +105,4 @@ if StandingOrdersCustodian and StandingOrdersCustodian.GetLevel(itemID) == Stand
 
 Every command also works as `/custodian` instead of `/soc` (handy if another addon has taken `/soc`).
 
-`/soc selftest` (checks this install and saves the results; handy for bug reports), `/soc settings` (auto-marks, where new marks go, mark icons, equipment sets), `/soc icon` (mark icon size, position and opacity), `/soc help`, `/soc intro` (what protection covers, also shown once on first login), `/soc status` (which guards are active), `/soc log` (recent guard decisions), `/soc debug`.
+`/soc selftest` (checks this install and saves the results; handy for bug reports), `/soc settings` (auto-marks, where new marks go, mark icons, equipment sets), `/soc icon` (mark icon size, position and opacity), `/soc help`, `/soc intro` (what protection covers, also shown once on first login), `/soc status` (which guards are active), `/soc log` (recent guard decisions and Custodian's own messages), `/soc chat on|off` (also show those messages in chat: what it auto-marked, bought back or moved back, and actions it blocked; off by default), `/soc debug`.

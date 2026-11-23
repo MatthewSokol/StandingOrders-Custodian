@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.0.0): 2 changes, 2 rows.**
+**Waiting since the last release (1.0.0): 3 changes, 3 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -82,7 +82,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 2</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 3</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
@@ -99,6 +99,13 @@ yet (no test journal; see `BACKLOG.md`).
 <summary><b>2.2.2 Profession tools aren't Junk</b> (#41) · open · 0 / 1</summary>
 
 - [ ] 2.2.2.1 `TESTING.md` 5.39: a Fishing Pole (and other profession tools) in your bags stays unmarked, and 1.0.0's Junk auto-mark on one comes off at login
+
+</details>
+
+<details open>
+<summary><b>2.2.3 Custodian's own messages: log only unless chat is on</b> (#42) · open · 0 / 1</summary>
+
+- [ ] 2.2.3.1 `TESTING.md` 5.40: auto-mark, buyback and blocked-action messages stay out of chat by default (the red error still shows) and are in `/soc log`; `/soc chat on` or the Chat switch brings them back
 
 </details>
 
