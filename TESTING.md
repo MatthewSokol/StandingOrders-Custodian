@@ -49,7 +49,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>5 Other guards</b> · 0 / 34</summary>
+<summary><b>5 Other guards</b> · 0 / 35</summary>
 
 - [ ] 5.1 A Locked item sold by right-click or dragged onto the vendor is bought straight back
 - [ ] 5.3 Buyback only ever buys back the Locked item, never a neighbouring buyback slot
@@ -85,6 +85,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.38 Mailbox with Posty Forever (or Postal) and its Express module on: open the Send Mail page and Alt+Left-click a Normal item in your bags: Express attaches it and its mark stays Normal (chat says once that Alt+Left-click belongs to Express there); Alt+Right-click still lowers a mark; close the mailbox and Alt+Left-click raises marks again; with Express turned off in Posty's options, Alt+Left-click at the mailbox raises the mark as usual
 - [ ] 5.39 Profession tools: put a Fishing Pole (and, if you have them, a Mining Pick, Blacksmith Hammer or Skinning Knife) in your bags: it isn't auto-marked Junk (no coin icon); a fishing pole that 1.0.0 had auto-marked Junk is unmarked after logging in on this build
 - [ ] 5.40 Chat: on a fresh install (or with `/soc chat off`) looting a gray or white item marks it with no "Marked as" line in chat, and selling a Locked item shows the red error on screen but no chat line; `/soc log` lists both. `/soc chat on` (or the Chat switch in `/soc settings`) brings those lines back to chat; Alt+Click replies ("... is now Locked.") show either way
+- [ ] 5.41 Wrap-around: Alt+Left-click an Always on me item: it becomes Junk; Alt+Right-click a Junk item: it becomes Always on me; `/soc wrap off` (or the switch in `/soc settings`): both ends stop again ("... is already ..."). With Standing Orders: Vendor installed (it sells Junk at vendors by default), `/soc settings` shows an orange warning under the switch, turning wrap-around on prints it, a /reload prints it once (not again on the next /reload), and a click that wraps onto Junk says Vendor will sell it
 
 </details>
 

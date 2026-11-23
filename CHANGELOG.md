@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Added
+
+- **Wrap-around:** Alt+Left-click on an Always on me item goes on to Junk, and Alt+Right-click on Junk to Always on me (on by default; `/soc wrap off` or the switch in `/soc settings` turns it off). If Standing Orders: Vendor sells Junk on its own or Standing Orders: Mail sends Mail on its own, Custodian warns you (in the settings, when you turn wrap-around on, once at login, and when a click wraps onto Junk).
+
 ### Changed
 
 - **Quieter chat:** Custodian's own messages (what it auto-marked, bought back or moved back, and actions it blocked) now go to the log only (`/soc log`). Turn them back on in chat with `/soc chat on` or the new **Chat** switch in `/soc settings`. The red error on screen still shows when an action is blocked, and replies to your own clicks and commands always show.

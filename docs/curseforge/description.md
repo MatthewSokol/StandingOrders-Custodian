@@ -31,7 +31,7 @@ Levels are per item ID. A mark applies to all your characters, or to one charact
 | Locked | key | Never sold, disenchanted, destroyed, traded or mailed |
 | Always on me | purple diamond | Locked, and also kept out of the bank: anything you put in the bank is moved straight back to your bags |
 
-Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). You can also use `/soc junk|mail|normal|lock|onme <shift-clicked item or ID> [char|account]`. `/soc list` shows every marked item. Item tooltips show the level.
+Change a level with **Alt+Left-click** in your bags (more protected) or **Alt+Right-click** (less protected). It wraps around: after Always on me comes Junk, and before Junk comes Always on me (`/soc wrap off` stops at both ends). With Standing Orders: Vendor selling Junk or Standing Orders: Mail sending Mail on their own, that's one click from losing a protected item, so Custodian warns you. You can also use `/soc junk|mail|normal|lock|onme <shift-clicked item or ID> [char|account]`. `/soc list` shows every marked item. Item tooltips show the level.
 
 The icons sit in the bottom left of the item button, 40% of its width across (so they cover about a sixth of it), at 75% opacity, so stack counts stay readable. Change their size (10% to 100% of the button's width), corner (or center) and opacity in `/soc settings` under Mark icons, or with `/soc icon size 50`, `/soc icon position center`, `/soc icon opacity 60` and `/soc icon reset`.
 
