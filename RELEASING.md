@@ -201,10 +201,10 @@ yet (no test journal; see `BACKLOG.md`).
 - [ ] 3.9.2.1 File `<repo>\docs\screenshots\bags-levels.png`; title `Item levels`; description `Mark items with Alt+Click; an icon shows each level (Junk coin, Mail letter, Locked key, Always on me diamond).`
 - [ ] 3.9.2.2 File `<repo>\docs\screenshots\guard.png`; title `Sell guard`; description `Sold by mistake? It's bought straight back.`
 - [ ] 3.9.2.3 File `<repo>\docs\screenshots\disenchant-blocker.png`; title `Disenchant blocker`; description `Disenchant, Prospect and Mill can't touch a Locked item.`
-- [ ] 3.9.2.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Choose what's marked for you and how the icons look.`
+- [ ] 3.9.2.4 File `<repo>\docs\screenshots\settings.png`; title `Settings`; description `Simple options up front; Show advanced options for the rest.`
 - [ ] 3.9.2.5 File `<repo>\docs\screenshots\equipment-sets.png`; title `Equipment sets`; description `Items in your equipment sets are Locked automatically.`
 - [ ] 3.9.2.6 File `<repo>\docs\screenshots\bag-addon.png`; title `Bag addons`; description `Works in Blizzard bags and seven bag addons (Baganator shown).`
-- [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `What Locked protects, shown once on first login.`
+- [ ] 3.9.2.7 File `<repo>\docs\screenshots\intro.png`; title `Intro`; description `A short intro on first login, with Show details for the rest.`
 - [ ] 3.9.2.8 File `<repo>\docs\screenshots\marked-items.png`; title `Marked items`; description `Every mark in one window: this character, all characters, and the mark that counts.`
 - [ ] 3.9.3 Files → Upload File: file `<repo>\dist\StandingOrders_Custodian-1.0.0.zip`; display name `Standing Orders: Custodian 1.0.0`; release type Release; game version WoW Forever (Interface 16001)
 - [ ] 3.9.4 In the same upload form, Changelog: set it to Markdown and paste this `paste · docs/curseforge/changelog-1.0.0.md`
