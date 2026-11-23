@@ -49,7 +49,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 </details>
 
 <details open>
-<summary><b>5 Other guards</b> · 0 / 37</summary>
+<summary><b>5 Other guards</b> · 0 / 38</summary>
 
 - [ ] 5.1 A Locked item sold by right-click or dragged onto the vendor is bought straight back
 - [ ] 5.3 Buyback only ever buys back the Locked item, never a neighbouring buyback slot
@@ -88,6 +88,7 @@ Part of the release pipeline in `RELEASING.md`. Before you start: `node tools/gr
 - [ ] 5.41 Wrap-around: Alt+Left-click an Always on me item: it becomes Junk; Alt+Right-click a Junk item: it becomes Always on me; `/soc wrap off` (or the switch in `/soc settings`): both ends stop again ("... is already ..."). With Standing Orders: Vendor installed (it sells Junk at vendors by default), `/soc settings` shows an orange warning under the switch, turning wrap-around on prints it, a /reload prints it once (not again on the next /reload), and a click that wraps onto Junk says Vendor will sell it
 - [ ] 5.42 Unusable soulbound gear: with the rule off (the default) nothing new is marked; turn on "Soulbound gear this character can't use" in `/soc settings`: a soulbound item the class can never use (a Mage's shield, a Rogue's plate, a Paladin's wand) becomes Junk with "(this character)" in its tooltip, and isn't marked on your other characters; soulbound cloth, rings and trainable weapon types stay Normal; on an enchanter, unusable green and blue gear stays Normal
 - [ ] 5.43 Mark menu: `/soc settings` > Alt+Click in your bags > "Alt+Click opens a menu to pick the mark" (or `/soc altclick menu`): Alt+Left-click and Alt+Right-click on an item open a small menu at the mouse with the item's name, the five levels with icons (its own mark ticked) and "This character only"; clicking a level sets it and closes the menu; Esc or the X closes it without a change; the item isn't picked up. `/soc mark <shift-clicked item>` opens the same menu. Switching back to cycling restores raise/lower
+- [ ] 5.44 Marked items window: `/soc list` (or Marked items in `/soc settings`) opens it: your marked items, most protected first, then the items in your bags; typing in the search box narrows the list with each letter (try part of an item name, then "locked"); clicking a row's mark opens the mark menu under it, and picking a level updates the row and the item's icon in your bags; unticking Items in my bags leaves only marked items; hovering a row shows the item's tooltip; Esc closes the window
 
 </details>
 
