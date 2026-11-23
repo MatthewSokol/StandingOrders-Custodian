@@ -170,6 +170,16 @@ local function Entries(text, withBags)
       end
     end
   end
+  -- A row whose mark you just took off (Account default and Normal) stays until Re-sort or the next opening, so
+  -- the list doesn't jump under the mouse.
+  if order then
+    for id in pairs(order) do
+      if not seen[id] then
+        seen[id] = true
+        list[#list + 1] = { id = id }
+      end
+    end
+  end
   local out = {}
   text = (text or ""):lower()
   for _, e in ipairs(list) do
@@ -346,7 +356,7 @@ local function BuildWindow()
   win.bags:SetPoint("LEFT", win.search, "RIGHT", 10, 0)
   win.bags.Text:SetText("Items in my bags")
   win.bags:SetChecked(true)
-  win.bags:SetScript("OnClick", function() Refresh() end)
+  win.bags:SetScript("OnClick", function() order = nil; Refresh() end) -- a new set of rows: sort afresh
 
   ColumnHeader("Item", 4)
   ColumnHeader("This character", COL_NAME)

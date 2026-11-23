@@ -732,10 +732,20 @@ CHECK("with the window closed, shift-click is the game's again", not KS.MarkList
 marks:Show()
 search("")
 marks.bags:SetChecked(false)
+CALL("untick Items in my bags", marks.bags:GetScript("OnClick"), marks.bags)
 search("")
 local onlyMarked = true
 for _, e in ipairs(marks.entries) do if not e.scope then onlyMarked = false end end
 CHECK("untick Items in my bags: only marked items", onlyMarked and #marks.entries > 0)
+-- Taking a mark off (Account default and Normal) keeps the row in place until Re-sort.
+local function shown(id) for i, e in ipairs(marks.entries) do if e.id == id then return i end end end
+local at = shown(4306)
+KS.SetMarkIn(4306, "char", nil)
+KS.SetMarkIn(4306, "account", L.NORMAL)
+CHECK("an unmarked row stays where it was", at and shown(4306) == at, tostring(shown(4306)) .. " vs " .. tostring(at))
+CALL("Re-sort", marks.resort:GetScript("OnClick"), marks.resort)
+CHECK("Re-sort drops it (Items in my bags is off)", shown(4306) == nil)
+KS.SetMarkIn(4306, "account", L.LOCK)
 CALL("/soc list print", SlashCmdList.SOC, "list print")
 KS.SetLevel(4306, L.NORMAL, nil, { quiet = true, scope = "account" })
 CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAddonStatus())
