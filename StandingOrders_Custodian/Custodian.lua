@@ -949,6 +949,15 @@ local function PreClick(btn, mouse)
     return
   end
 
+  -- Shift+Left-click while the Marked items window is open: search it for the item (Marks.lua), instead of
+  -- splitting the stack.
+  if IsShiftKeyDown() and not IsControlKeyDown() and mouse == "LeftButton" and KS.MarkListTakesShiftClick
+      and KS.MarkListTakesShiftClick() then
+    btn.favesHandled, btn.favesCursorEmpty, btn.favesNoSplit = true, GetCursorInfo() == nil, true
+    KS.SearchMarkList(info.hyperlink or info.itemID)
+    return
+  end
+
   if SpellIsTargeting() then
     local kind, spellID, how = TargetingKind()
     Log("targeting click on %s (%s): %s, spell %s, via %s", info.hyperlink, NAMES[KS.GetLevel(info.itemID)],
@@ -969,7 +978,9 @@ end
 local function PostClick(btn)
   -- If the default click went on to pick the item up, put it back.
   if btn.favesHandled and btn.favesCursorEmpty and GetCursorInfo() then ClearCursor() end
-  btn.favesHandled = nil
+  -- A shift-click that searched the Marked items window: close the split-stack box the default click opened.
+  if btn.favesNoSplit and StackSplitFrame and StackSplitFrame:IsShown() then StackSplitFrame:Hide() end
+  btn.favesHandled, btn.favesNoSplit = nil, nil
 end
 
 local function HookButton(btn)

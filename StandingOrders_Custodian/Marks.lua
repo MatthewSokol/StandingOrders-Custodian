@@ -391,13 +391,22 @@ function KS.SearchMarkList(item)
   Refresh()
 end
 
--- Shift-click an item (bags, chat, a vendor...) while the window is open and no chat box is being typed in, or
--- while the search box has focus: it searches for that item. A hook, so chat links work as before.
+-- True while a shift-click should search the window: it's open, and you aren't typing in a chat box (or the
+-- search box has focus). Bag clicks come here from Custodian's bag-button hook (Custodian.lua's PreClick), since
+-- the game's own shift-click (split the stack, or link it in chat) doesn't reliably pass through a hook here.
+function KS.MarkListTakesShiftClick()
+  if not (win and win:IsShown()) then return false end
+  local chat = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
+  return (win.search:HasFocus() or not chat) and true or false
+end
+
+-- Other shift-clicks (chat links, a vendor, the auction house) reach the game's link insert: a hook, so chat
+-- links work as before.
 if ChatEdit_InsertLink then
   hooksecurefunc("ChatEdit_InsertLink", function(link)
-    if not (win and win:IsShown() and type(link) == "string" and link:find("item:", 1, true)) then return end
-    local chat = ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()
-    if win.search:HasFocus() or not chat then KS.SearchMarkList(link) end
+    if type(link) == "string" and link:find("item:", 1, true) and KS.MarkListTakesShiftClick() then
+      KS.SearchMarkList(link)
+    end
   end)
 end
 

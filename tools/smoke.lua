@@ -720,6 +720,17 @@ CALL("drop Silk Cloth on the search box", marks.search:GetScript("OnReceiveDrag"
 CHECK("a dropped item fills the search and goes back to the bags", marks.search:GetText() == "Silk Cloth" and STUB_CURSOR == nil, marks.search:GetText())
 CALL("click the search box with nothing held", marks.search:GetScript("OnReceiveDrag"), marks.search)
 CHECK("nothing held: the search is left alone", marks.search:GetText() == "Silk Cloth")
+-- Shift+Left-click on a bag button (a stack too): Custodian's own click hook searches, not the game's link insert.
+search("")
+STUB_SHIFT = true
+CALL("Shift+Left-click a bag item", elv.__h_PreClick, elv, "LeftButton")
+CALL("its PostClick", elv.__h_PostClick, elv, "LeftButton")
+STUB_SHIFT = false
+CHECK("a shift-clicked bag item fills the search", marks.search:GetText() == GetItemInfo(7001), marks.search:GetText())
+marks:Hide()
+CHECK("with the window closed, shift-click is the game's again", not KS.MarkListTakesShiftClick())
+marks:Show()
+search("")
 marks.bags:SetChecked(false)
 search("")
 local onlyMarked = true
