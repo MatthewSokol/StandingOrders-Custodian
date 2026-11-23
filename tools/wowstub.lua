@@ -109,7 +109,7 @@ STUB_LINK = link
 local function info(id)
   local i = STUB_ITEMDB[id]
   if not i then return nil end
-  return i.name, link(id), i.quality, 1, 1, "", "", 20, i.equipLoc or "", 134400, i.sellPrice or 0,
+  return i.name, link(id), i.quality, 1, i.minLevel or 1, "", "", 20, i.equipLoc or "", 134400, i.sellPrice or 0,
     i.classID, i.subclassID or 0, i.bindType or 0, 0, nil, i.isCrafting or false
 end
 GetItemInfo = info
@@ -196,6 +196,9 @@ GetMerchantItemLink = function(i) return STUB_MERCHANT[i] and link(STUB_MERCHANT
 BuyMerchantItem = function() end
 GetNumBuybackItems = function() return 0 end
 STUB_PROFESSIONS = {} -- { { name, skillLine }, ... }
+STUB_CLASS, STUB_LEVEL = "WARRIOR", 60
+UnitClass = function() return STUB_CLASS, STUB_CLASS end
+UnitLevel = function() return STUB_LEVEL end
 GetProfessions = function()
   local p = STUB_PROFESSIONS
   return p[1] and 1, p[2] and 2, nil, nil, nil, nil

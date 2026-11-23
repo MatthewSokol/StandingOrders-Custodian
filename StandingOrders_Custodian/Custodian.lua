@@ -1177,8 +1177,10 @@ end
 
 KS.AUTO_MARKS = true -- Standing Orders: Vendor checks this and leaves auto-marking to Custodian
 
-local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, boeMail = true, matsMail = true, keepReceived = true }
-local AUTO_KEYS = { "grayJunk", "whiteJunk", "boeMail", "matsMail", "keepReceived" }
+-- unusableJunk is off by default: it's new, it can only guess which gear a character will grow into, and with
+-- Standing Orders: Vendor selling Junk by itself a wrong guess is sold at the next vendor.
+local AUTO_DEFAULTS = { grayJunk = true, whiteJunk = true, unusableJunk = false, boeMail = true, matsMail = true, keepReceived = true }
+local AUTO_KEYS = { "grayJunk", "whiteJunk", "unusableJunk", "boeMail", "matsMail", "keepReceived" }
 
 local CLASS = (Enum and Enum.ItemClass) or {}
 local CONSUMABLE, CONTAINER, WEAPON, REAGENT, PROJECTILE, TRADEGOODS, RECIPE, QUIVER, QUEST, KEY, MISC =
@@ -1402,12 +1404,78 @@ local function QueueScan(fn)
   end)
 end
 
+-- Soulbound gear this character can't use: never (its class can't wear that armor or train that weapon type), or
+-- not for a while (more than SOON levels away, counting armor a class learns later: Mail at 40 for Hunters and
+-- Shamans, Plate at 40 for Warriors and Paladins). Weapon types a class can train count as usable now. Classic
+-- proficiencies; an unknown class or item kind is never called unusable. A do block: the main chunk is at Lua's
+-- 200-local limit.
+do
+  local ARMOR_CLASS, WEAPON_CLASS = ITEM_CLASS.Armor or 4, ITEM_CLASS.Weapon or 2
+  local SOON = 5
+  -- Armor subclasses only some classes wear (2 Leather, 3 Mail, 4 Plate, 6 Shield, 7 Libram, 8 Idol, 9 Totem):
+  -- [subclass] = the level a class can wear it from. Cloth, Miscellaneous (rings, necks, trinkets, held items) and
+  -- anything else count as wearable by everyone.
+  local CLASS_ARMOR = { [2] = true, [3] = true, [4] = true, [6] = true, [7] = true, [8] = true, [9] = true }
+  local ARMOR = {
+    WARRIOR = { [2] = 1, [3] = 1, [4] = 40, [6] = 1 },
+    PALADIN = { [2] = 1, [3] = 1, [4] = 40, [6] = 1, [7] = 1 },
+    HUNTER = { [2] = 1, [3] = 40 },
+    ROGUE = { [2] = 1 },
+    PRIEST = {}, MAGE = {}, WARLOCK = {},
+    SHAMAN = { [2] = 1, [3] = 40, [6] = 1, [9] = 1 },
+    DRUID = { [2] = 1, [8] = 1 },
+  }
+  -- Weapon types each class can train (0 1H Axe, 1 2H Axe, 2 Bow, 3 Gun, 4 1H Mace, 5 2H Mace, 6 Polearm, 7 1H Sword,
+  -- 8 2H Sword, 10 Staff, 13 Fist, 15 Dagger, 16 Thrown, 18 Crossbow, 19 Wand). Other subclasses (Miscellaneous,
+  -- Fishing Poles, spears...) count as usable by everyone.
+  local CLASS_WEAPON = { [0] = true, [1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true,
+    [8] = true, [10] = true, [13] = true, [15] = true, [16] = true, [18] = true, [19] = true }
+  local WEAPONS = {
+    WARRIOR = " 0 1 2 3 4 5 6 7 8 10 13 15 16 18 ",
+    PALADIN = " 0 1 4 5 6 7 8 ",
+    HUNTER = " 0 1 2 3 6 7 8 10 13 15 16 18 ",
+    ROGUE = " 2 3 4 7 13 15 16 18 ",
+    PRIEST = " 4 10 15 19 ",
+    SHAMAN = " 0 1 4 5 10 13 15 ",
+    MAGE = " 7 10 15 19 ",
+    WARLOCK = " 7 10 15 19 ",
+    DRUID = " 4 5 10 13 15 ",
+  }
+  -- "never", "later" (more than SOON levels away), or nil (usable now or soon, or unknown). class and level
+  -- default to this character's.
+  function KS.UnusableReason(classID, subclassID, minLevel, class, level)
+    class = class or (UnitClass and select(2, UnitClass("player")))
+    level = level or (UnitLevel and UnitLevel("player")) or 1
+    local from = 1
+    if classID == ARMOR_CLASS and CLASS_ARMOR[subclassID] then
+      local wears = ARMOR[class]
+      if not wears then return nil end
+      from = wears[subclassID]
+      if not from then return "never" end
+    elseif classID == WEAPON_CLASS and CLASS_WEAPON[subclassID] then
+      local trains = WEAPONS[class]
+      if not trains then return nil end
+      if not trains:find(" " .. subclassID .. " ", 1, true) then return "never" end
+    elseif classID ~= ARMOR_CLASS and classID ~= WEAPON_CLASS then
+      return nil
+    end
+    if math.max(from, minLevel or 0) > level + SOON then return "later" end
+    return nil
+  end
+
+  -- Enchanters keep green and better gear they can't use: they disenchant it.
+  function KS.IsEnchanter()
+    local profs = MyProfessions()
+    return ((profs and profs.Enchanting) or (cdb and cdb.scanned and cdb.scanned.Enchanting)) and true or false
+  end
+end
+
 -- The level the rules give an item, false when the rules leave it alone for good, or nil when it
 -- can't be decided yet (item data not loaded, or the deciding rule is off: decide again later).
 -- The second value is "char" when the decision is for this character only.
 local function AutoLevel(info, bag, slot)
   local id = info.itemID
-  local name, _, _, _, _, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
+  local name, _, _, _, minLevel, _, _, _, equipLoc, _, _, classID, subclassID, bindType, _, _, isCrafting = GetItemInfo(id)
   if not name then return nil end
   if KS.IsPersonal(id) then return false end -- consumables, reagents, vendor trade goods
   if KS.IsProfessionTool(id) then return false end -- fishing poles, mining picks, hammers...
@@ -1449,6 +1517,13 @@ local function AutoLevel(info, bag, slot)
   if quality and quality >= 2 and bindType == BIND_ON_EQUIP and not info.isBound then
     if not auto.boeMail then return nil end
     return MAIL
+  end
+  -- Soulbound gear this character can't use (or not for more than a few levels): Junk, on this character only.
+  if info.isBound and (classID == WEAPON or classID == ARMOR) and not NEVER_JUNK_SLOT[equipLoc]
+      and KS.UnusableReason(classID, subclassID, minLevel) then
+    if not auto.unusableJunk then return nil end
+    if (quality or 0) >= 2 and KS.IsEnchanter() then return false, "char" end -- theirs to disenchant
+    return JUNK, "char"
   end
   return false
 end
@@ -1545,7 +1620,7 @@ local tradeOpen = false
 
 local function AutoMark()
   if not db or tradeOpen then return end
-  local marked = { [JUNK] = {}, [MAIL] = {}, here = {} }
+  local marked = { [JUNK] = {}, [MAIL] = {}, here = {}, junkHere = {} }
   profState = nil
   for bag = 0, NUM_BAGS do
     for slot = 1, (C.GetContainerNumSlots(bag) or 0) do
@@ -1561,12 +1636,12 @@ local function AutoMark()
         if level then
           (here and cdb.autoMarked or db.autoMarked)[id] = level
           KS.SetLevel(id, level, info.hyperlink, { scope = here and "char" or "account", quiet = true })
-          table.insert(here and marked.here or marked[level], info.hyperlink)
+          table.insert(here and (level == JUNK and marked.junkHere or marked.here) or marked[level], info.hyperlink)
         end
       end
     end
   end
-  for _, key in ipairs({ JUNK, MAIL, "here" }) do
+  for _, key in ipairs({ JUNK, MAIL, "here", "junkHere" }) do
     local list = marked[key]
     if #list > 0 then
       local shown = table.concat(list, ", ", 1, math.min(#list, 5))
@@ -1574,6 +1649,8 @@ local function AutoMark()
       if key == "here" then
         KS.Notify("Marked as %s on this character (none of your professions use them): %s. (/soc settings)",
           LevelText(MAIL), shown)
+      elseif key == "junkHere" then
+        KS.Notify("Marked as %s on this character (soulbound gear it can't use): %s. (/soc settings)", LevelText(JUNK), shown)
       else
         KS.Notify("Marked as %s: %s. (/soc settings to change this)", LevelText(key), shown)
       end
@@ -1693,6 +1770,7 @@ end
 local AUTO_TEXT = {
   grayJunk = "Gray items become |cff9d9d9dJunk|r",
   whiteJunk = "White gear, weapons and junk (no profession or quest use) become |cff9d9d9dJunk|r",
+  unusableJunk = "Soulbound gear this character can't use (or not for 5+ levels) becomes |cff9d9d9dJunk|r, this character only",
   matsMail = "Crafting materials none of this character's professions use become |cff4fb3ffMail|r (this character only)",
   boeMail = "Bind on Equip items (green and up, not yet bound) become |cff4fb3ffMail|r",
   keepReceived = "Except items you got on purpose: traded, bought (AH or vendor) or mailed to you by a player",
@@ -1730,7 +1808,7 @@ local function CreatePanel()
     refreshers[#refreshers + 1] = function() cb:SetChecked(KS.GetAuto(key)) end
     prev, first = cb, false
   end
-  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
+  prev = Note(panel, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters. Soulbound gear counts as usable when the class can train that weapon type or will wear that armor within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins); enchanters keep green and better to disenchant.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
   prev = Header(panel, "New marks (Alt+Click, /soc <level>)", prev)
   local acct = Check(panel, "Apply to all my characters", prev, -6, function()

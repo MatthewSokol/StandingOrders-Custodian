@@ -160,6 +160,47 @@ CALL("/soc chat off", SlashCmdList.SOC, "chat off")
 STUB_BAGS[3] = nil
 CHECK("/soc chat off turns them off", KS.GetChat() == false)
 
+-- Soulbound gear this character can't use (off by default): Junk on this character only; enchanters keep green+
+CHECK("unusable soulbound gear: the rule is off by default", KS.GetAuto("unusableJunk") == false)
+STUB_CLASS, STUB_LEVEL = "WARRIOR", 20
+STUB_ITEMDB[7100] = { name = "Test Plate Helm", quality = 2, sellPrice = 300, classID = 4, subclassID = 4, equipLoc = "INVTYPE_HEAD", minLevel = 40 }
+STUB_ITEMDB[7101] = { name = "Test Cloth Robe", quality = 2, sellPrice = 300, classID = 4, subclassID = 1, equipLoc = "INVTYPE_CHEST" }
+STUB_ITEMDB[7102] = { name = "Test Wand", quality = 2, sellPrice = 300, classID = 2, subclassID = 19, equipLoc = "INVTYPE_RANGEDRIGHT" }
+STUB_ITEMDB[7104] = { name = "Test Mail Belt", quality = 2, sellPrice = 300, classID = 4, subclassID = 3, equipLoc = "INVTYPE_WAIST", minLevel = 22 }
+STUB_ITEMDB[7105] = { name = "Test Shield", quality = 2, sellPrice = 300, classID = 4, subclassID = 6, equipLoc = "INVTYPE_SHIELD" }
+for _, id in ipairs({ 7100, 7101, 7102, 7104, 7105 }) do STUB_BOUND[id] = true end
+STUB_BAGS[3] = { 7100, 7101, 7102, 7104 }
+FIRE("BAG_UPDATE_DELAYED")
+RUN_TIMERS()
+CHECK("rule off: soulbound gear stays unmarked", KS.GetLevel(7100) == L.NORMAL and KS.GetLevel(7102) == L.NORMAL)
+CALL("turn the unusable-gear rule on", KS.SetAuto, "unusableJunk", true)
+RUN_TIMERS()
+CHECK("a Warrior at 20: plate from 40 becomes Junk, this character only", KS.GetLevel(7100) == L.JUNK and KS.GetItemScope(7100) == "char", KS.GetLevel(7100))
+CHECK("a Warrior: a wand (can't train wands) becomes Junk, this character only", KS.GetLevel(7102) == L.JUNK and KS.GetItemScope(7102) == "char", KS.GetLevel(7102))
+CHECK("cloth (everyone can wear it) stays", KS.GetLevel(7101) == L.NORMAL, KS.GetLevel(7101))
+CHECK("mail usable within 5 levels stays", KS.GetLevel(7104) == L.NORMAL, KS.GetLevel(7104))
+STUB_CLASS = "MAGE"
+STUB_PROFESSIONS = { { "Tailoring", 197 }, { "Enchanting", 333 } }
+STUB_BAGS[3][5] = 7105
+FIRE("BAG_UPDATE_DELAYED")
+RUN_TIMERS()
+CHECK("an enchanter's unusable green (a Mage's shield) stays, to disenchant", KS.GetLevel(7105) == L.NORMAL, KS.GetLevel(7105))
+STUB_PROFESSIONS = { { "Tailoring", 197 } }
+CHECK("Shaman at 37: Mail (from 40) is soon", KS.UnusableReason(4, 3, 40, "SHAMAN", 37) == nil)
+CHECK("Shaman at 20: Mail (from 40) is later", KS.UnusableReason(4, 3, 1, "SHAMAN", 20) == "later")
+CHECK("Mage: shields never", KS.UnusableReason(4, 6, 1, "MAGE", 60) == "never")
+CHECK("Rogue: cloth is fine", KS.UnusableReason(4, 1, 1, "ROGUE", 10) == nil)
+CHECK("Priest: daggers are fine", KS.UnusableReason(2, 15, 1, "PRIEST", 10) == nil)
+CHECK("Paladin: wands never", KS.UnusableReason(2, 19, 1, "PALADIN", 10) == "never")
+CHECK("Warrior: polearms can be trained", KS.UnusableReason(2, 6, 1, "WARRIOR", 10) == nil)
+CHECK("Druid: an idol is fine, a totem never", KS.UnusableReason(4, 8, 1, "DRUID", 30) == nil and KS.UnusableReason(4, 9, 1, "DRUID", 30) == "never")
+CHECK("rings and trinkets (Miscellaneous): everyone", KS.UnusableReason(4, 0, 1, "MAGE", 1) == nil)
+CHECK("an unknown class is never guessed", KS.UnusableReason(4, 4, 1, "DEATHKNIGHT", 60) == nil)
+CHECK("any class: a level 50 item at level 30 is later", KS.UnusableReason(4, 1, 50, "PRIEST", 30) == "later")
+STUB_CLASS, STUB_LEVEL = "WARRIOR", 60
+STUB_BAGS[3] = nil
+KS.SetAuto("unusableJunk", false)
+
 -- Slash commands
 for _, cmd in ipairs({ "help", "list", "status", "settings", "scope char", "scope account", "log 5", "debug", "debug", "intro" }) do
   CALL("/soc " .. cmd, SlashCmdList.SOC, cmd)
