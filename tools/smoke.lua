@@ -671,11 +671,32 @@ search("no such item")
 CHECK("no match: an empty list and a note", #marks.entries == 0 and marks.count:GetText() == "Nothing matches.")
 search("silk")
 CHECK("an unmarked bag item shows as Normal", #marks.entries == 1 and marks.entries[1].level == L.NORMAL and marks.entries[1].scope == nil)
-CALL("click the row's mark", marks.rows[1].mark:GetScript("OnClick"), marks.rows[1].mark)
-CHECK("the row's mark button opens the menu on that item", SOCustodianMarkMenu:IsShown() and SOCustodianMarkMenu.itemID == 4306)
-SOCustodianMarkMenu.char:SetChecked(false)
-CALL("pick Locked from the row's menu", KS.PickMark, L.LOCK)
-CHECK("the pick is saved and the list follows", KS.GetLevel(4306) == L.LOCK and marks.entries[1].level == L.LOCK, marks.entries[1] and marks.entries[1].level)
+-- Two dropdown columns (This character, All characters) and the mark that counts.
+local row = marks.rows[1]
+CHECK("both columns are dropdowns", row.char.isDropdown and row.account.isDropdown)
+local charMenu, acctMenu = MENU_RADIOS(row.char), MENU_RADIOS(row.account)
+CHECK("This character starts at Account default", charMenu[1] and charMenu[1].text:find("Account default", 1, true) and charMenu[1].selected(), charMenu[1] and charMenu[1].text)
+CHECK("All characters has no default choice and starts at Normal", acctMenu[1] and not acctMenu[1].text:find("default", 1, true) and #acctMenu == #charMenu - 1, #acctMenu)
+local function pick(menu, level)
+  for _, r in ipairs(menu) do if r.text == KS.LevelText(level) then CALL("pick " .. KS.NAMES[level], r.pick); return end end
+  CHECK("menu offers " .. KS.NAMES[level], false)
+end
+pick(acctMenu, L.LOCK)
+CHECK("All characters: Locked is saved and the list follows", KS.GetMarkIn(4306, "account") == L.LOCK and KS.GetLevel(4306) == L.LOCK and marks.entries[1].level == L.LOCK, marks.entries[1] and marks.entries[1].level)
+CHECK("the Mark column says Locked", row.mark:GetText() == KS.LevelText(L.LOCK), row.mark:GetText())
+pick(MENU_RADIOS(row.char), L.JUNK)
+CHECK("This character: Junk wins and keeps the account-wide Locked", KS.GetLevel(4306) == L.JUNK and KS.GetMarkIn(4306, "account") == L.LOCK and KS.GetItemScope(4306) == "char", KS.GetLevel(4306))
+CALL("pick Account default", MENU_RADIOS(row.char)[1].pick)
+CHECK("Account default clears this character's mark: Locked again", KS.GetMarkIn(4306, "char") == nil and KS.GetLevel(4306) == L.LOCK, KS.GetLevel(4306))
+pick(MENU_RADIOS(row.char), L.NORMAL)
+CHECK("This character: Normal overrides the account-wide mark", KS.GetLevel(4306) == L.NORMAL and KS.GetMarkIn(4306, "char") == L.NORMAL, KS.GetLevel(4306))
+CALL("pick Account default", MENU_RADIOS(row.char)[1].pick)
+search("junk")
+CHECK("the search matches either column's mark", #marks.entries == 0 or marks.entries[1].id ~= 4306)
+search("locked")
+local found = false
+for _, e in ipairs(marks.entries) do if e.id == 4306 then found = true end end
+CHECK("the search finds the account-wide Locked", found)
 marks.bags:SetChecked(false)
 search("")
 local onlyMarked = true

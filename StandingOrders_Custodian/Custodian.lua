@@ -182,6 +182,25 @@ function KS.IsLocked(id) return KS.GetLevel(id) >= CONFIRM end
 
 local RefreshBags -- defined with the bag hooks below
 
+-- The Marked items window's two columns, each on its own: this character's own mark ("char") and the mark for all
+-- characters ("account"). GetMarkIn returns nil when that column has none. SetMarkIn with level nil clears it (for
+-- this character: back to the account-wide mark); unlike SetLevel, neither column changes the other.
+function KS.GetMarkIn(id, scope)
+  local t = (scope == "char") and cdb or db
+  local l = id and t and t.items[id]
+  return l and Effective(l) or nil
+end
+function KS.SetMarkIn(id, scope, level)
+  if not id then return end
+  if scope == "char" then
+    cdb.items[id] = level and Effective(level) or nil
+  else
+    db.items[id] = (level and level ~= NORMAL) and Effective(level) or nil
+  end
+  KS.Notify("%s is now %s%s.", ItemLink(id), LevelText(KS.GetOwnLevel(id)), ScopeText(KS.GetItemScope(id)))
+  RefreshBags()
+end
+
 -- Per-character items: consumables, spell reagents (ankhs, feathers, powders...) and trade goods that
 -- vendors sell (thread, vials, flux, dyes, salt, spices...). Each character keeps its own stock of
 -- these, so they're never auto-marked, and a mark on one stays on that character unless you ask for
