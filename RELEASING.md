@@ -164,7 +164,7 @@ yet (no test journal; see `BACKLOG.md`).
 <details open>
 <summary><b>2.2.11 Marked items: columns for this character, all characters, and the mark that counts</b> (#51) · open · 0 / 1</summary>
 
-- [ ] 2.2.11.1 `TESTING.md` 5.44 again: the This character and All characters dropdowns and the Mark column (Account default, a character mark winning, back to Account default)
+- [ ] 2.2.11.1 The same steps as 2.2.7.1 (the Marked items window; its text now includes the new columns): the This character and All characters dropdowns and the Mark column. Tick this when 2.2.7.1 passes
 
 </details>
 
