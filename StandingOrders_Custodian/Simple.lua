@@ -89,7 +89,8 @@ function KS.ShownLevels(own)
   for _, level in ipairs(KS.GetClick().order) do inSequence[level] = true end
   local out = {}
   for _, level in ipairs(KS.ORDER) do
-    if level ~= L.ONME or KS.GetShowAdvanced() or inSequence[level] or own == level then out[#out + 1] = level end
+    local advanced = level == L.ONME or level == L.DISENCHANT -- offered once the advanced options are shown
+    if not advanced or KS.GetShowAdvanced() or inSequence[level] or own == level then out[#out + 1] = level end
   end
   return out
 end

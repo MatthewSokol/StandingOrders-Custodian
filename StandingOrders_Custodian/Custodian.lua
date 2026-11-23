@@ -3,6 +3,8 @@
 --
 -- Levels (stored per item ID, account wide):
 --   Junk     safe to get rid of (Standing Orders: Vendor sells these automatically when a vendor opens)
+--   Disenchant  to disenchant: kept from vendors (bought straight back, never sold by Standing Orders: Vendor),
+--            free to disenchant, trade and mail
 --   Mail     to be mailed to a bank character (for a mailing addon; Standing Orders: Vendor never sells these).
 --   Auto-marks (on by default, /soc settings): grays and useless whites become Junk, crafting
 --   materials and unbound BoE items become Mail, except items you got on purpose (see Auto-marks)
@@ -27,6 +29,9 @@ KS.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Icon"
 -- compare against the old numbers (Standing Orders: Vendor: Normal 2, Confirm 3) keep working.
 local JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME = 1, 1.5, 2, 3, 4, 5
 KS.LEVELS = { JUNK = JUNK, MAIL = MAIL, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK = LOCK, ONME = ONME }
+-- Disenchant (1.2.0) sits between Junk and Mail: stopped only from being sold. A field, not a local: this file's
+-- main chunk is at Lua's 200-local limit.
+KS.LEVELS.DISENCHANT = 1.25
 -- Confirm (a temp hold that asks before allowing an action once) is held back from the first release: its
 -- "Allow once" didn't let a sale through in testing (BACKLOG.md). While it's off, nothing offers it, and a
 -- saved Confirm mark or set choice counts as Locked; the saved data keeps the 3, so turning it back on
@@ -34,14 +39,15 @@ KS.LEVELS = { JUNK = JUNK, MAIL = MAIL, NORMAL = NORMAL, CONFIRM = CONFIRM, LOCK
 local CONFIRM_ENABLED = false
 KS.CONFIRM_ENABLED = CONFIRM_ENABLED
 local function Effective(level) return (level == CONFIRM and not CONFIRM_ENABLED) and LOCK or level end
-local ORDER = CONFIRM_ENABLED and { JUNK, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
-  or { JUNK, MAIL, NORMAL, LOCK, ONME }
+local ORDER = CONFIRM_ENABLED and { JUNK, KS.LEVELS.DISENCHANT, MAIL, NORMAL, CONFIRM, LOCK, ONME } -- lowest to highest protection
+  or { JUNK, KS.LEVELS.DISENCHANT, MAIL, NORMAL, LOCK, ONME }
 local CONFIRM_LATER = "Confirm is coming in a later version; use Locked (lock) for now."
 
-local NAMES = { [JUNK] = "Junk", [MAIL] = "Mail", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
-local COLORS = { [JUNK] = "ff9d9d9d", [MAIL] = "ff4fb3ff", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
+local NAMES = { [JUNK] = "Junk", [KS.LEVELS.DISENCHANT] = "Disenchant", [MAIL] = "Mail", [NORMAL] = "Normal", [CONFIRM] = "Confirm", [LOCK] = "Locked", [ONME] = "Always on me" }
+local COLORS = { [JUNK] = "ff9d9d9d", [KS.LEVELS.DISENCHANT] = "ff3fd6c4", [MAIL] = "ff4fb3ff", [NORMAL] = "ffffffff", [CONFIRM] = "ffffd100", [LOCK] = "ffff4040", [ONME] = "ffc069ff" }
 local ICONS = {
   [JUNK] = "Interface\\Buttons\\UI-GroupLoot-Coin-Up",
+  [KS.LEVELS.DISENCHANT] = "Interface\\Icons\\INV_Enchant_Disenchant",
   [MAIL] = "Interface\\Icons\\INV_Letter_15",
   [CONFIRM] = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1",
   [LOCK] = "Interface\\Icons\\INV_Misc_Key_03",
@@ -351,11 +357,14 @@ end
 
 function KS.Guard(id, link, action)
   local level = KS.GetLevel(id)
-  if level < (GUARD_FROM[action] or CONFIRM) then return false end
+  local keepFromVendor = level == KS.LEVELS.DISENCHANT and action == "sell" -- Disenchant: only selling stops
+  if not keepFromVendor and level < (GUARD_FROM[action] or CONFIRM) then return false end
   link = link or ItemLink(id)
   if level == CONFIRM and UsePass(id, action) then return false end
   local msg
-  if level == CONFIRM then
+  if keepFromVendor then
+    msg = ("%s is marked Disenchant. Disenchant it, or lower it to Junk to sell it (/soc junk <item>)."):format(link)
+  elseif level == CONFIRM then
     msg = ("%s is on hold (Confirm)."):format(link)
   else
     local how = (action == "bank") and "Lower it to Locked to bank it (Alt+Right-click it in your bags)"
@@ -497,7 +506,7 @@ local function RescueBuyback()
   for i = GetNumBuybackItems(), 1, -1 do
     local link = GetBuybackItemLink(i)
     local id = LinkID(link)
-    if id and KS.IsLocked(id) then
+    if id and (KS.IsLocked(id) or KS.GetLevel(id) == KS.LEVELS.DISENCHANT) then
       rescuing = true
       KS.Guard(id, link, "sell")
       KS.Notify("Bought %s back.", link)
@@ -2208,6 +2217,7 @@ local INTRO_LINES = {
   { "", 0, 6 }, -- how Alt+Click works now (UI.FullLines)
   -- The marks' lines are made when shown (UI.FullLines), so their icons follow the icon style.
   { function() return LevelLine(JUNK, "happy to lose (Standing Orders: Vendor, coming soon, will sell them at any vendor)") end, 10, 4 },
+  { function() return LevelLine(KS.LEVELS.DISENCHANT, "to disenchant: never sold (bought straight back), but free to disenchant, trade and mail") end, 10, 3 },
   { function() return LevelLine(MAIL, "to send to your bank character (Standing Orders: Mail, coming soon, will mail them)") end, 10, 3 },
   { function() return LevelLine(LOCK, "protected: never sold, disenchanted, destroyed, traded or mailed by accident") end, 10, 3 },
   { function() return LevelLine(ONME, "Locked, and also kept out of the bank") end, 10, 3 },
@@ -2663,7 +2673,7 @@ end
 
 local function Help()
   Print("Commands (/custodian works the same as /soc):")
-  print("  /soc junk||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level")
+  print("  /soc junk||disenchant||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level (disenchant: kept from vendors, free to disenchant)")
   print("  /soc list [search] - the Marked items window: search, then change any mark (/soc list print: in chat)")
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
   print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
@@ -2711,7 +2721,7 @@ local function Status()
   end
 end
 
-local LEVEL_CMDS = { junk = JUNK, mail = MAIL, normal = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+local LEVEL_CMDS = { junk = JUNK, disenchant = KS.LEVELS.DISENCHANT, de = KS.LEVELS.DISENCHANT, mail = MAIL, normal = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 if CONFIRM_ENABLED then LEVEL_CMDS.confirm = CONFIRM end
 
 -- /custodian always works: another addon (Pocket Social - Forever) also uses /soc, and which one wins is up to load order.

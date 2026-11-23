@@ -457,7 +457,7 @@ StandingOrdersCustodianDB.icon.style = "badges"
 CHECK("a saved \"badges\" reads as addon icons", KS.GetIconStyleName() == "addon")
 CALL("/soc icon compare", SlashCmdList.SOC, "icon compare")
 local cmp = SOCustodianIconCompare
-CHECK("the compare window shows four marks in two styles", cmp and cmp:IsShown() and #cmp.cells == 8, cmp and #cmp.cells)
+CHECK("the compare window shows five marks in two styles", cmp and cmp:IsShown() and #cmp.cells == 10, cmp and #cmp.cells)
 CHECK("its cells show items from the bags", cmp.cells[1].item:GetTexture() ~= nil)
 CALL("Use game icons", cmp.use[1]:GetScript("OnClick"), cmp.use[1])
 CHECK("Use puts the style on", KS.GetIconStyleName() == "game" and StandingOrdersCustodianDB.icon.style == "game")
@@ -619,16 +619,36 @@ CHECK("settings: Protection dial picked, and the note says so", KS.ClickPreset()
 CALL("settings: pick Quick loop", seqMenu[1] and seqMenu[1].pick)
 -- The sequence editor (advanced options): the marks in order, then those left out; Up and Down move, the box puts in.
 local ed = panel.clickEditor
-CHECK("editor: the Quick loop's marks in order, Always on me left out", ed.rows[1].level == L.NORMAL and ed.rows[2].level == L.JUNK and ed.rows[3].level == L.LOCK and ed.rows[4].level == L.MAIL and ed.rows[5].level == L.ONME and not ed.rows[5].check:GetChecked())
+CHECK("editor: the Quick loop's marks in order, Disenchant and Always on me left out", ed.rows[1].level == L.NORMAL and ed.rows[2].level == L.JUNK and ed.rows[3].level == L.LOCK and ed.rows[4].level == L.MAIL and ed.rows[5].level == L.DISENCHANT and ed.rows[6].level == L.ONME and not ed.rows[6].check:GetChecked())
 CALL("editor: Down on Junk", ed.rows[2].down:GetScript("OnClick"), ed.rows[2].down)
 CHECK("editor: Junk moved after Locked, so it's Custom", KS.GetClick().order[2] == L.LOCK and KS.GetClick().order[3] == L.JUNK and KS.ClickPreset() == "custom")
-ed.rows[5].check:SetChecked(true)
-CALL("editor: put Always on me in", ed.rows[5].check:GetScript("OnClick"), ed.rows[5].check)
+ed.rows[6].check:SetChecked(true)
+CALL("editor: put Always on me in", ed.rows[6].check:GetScript("OnClick"), ed.rows[6].check)
 CHECK("editor: Always on me joins at the end", KS.GetClick().order[5] == L.ONME, KS.GetClick().order[5])
 panel.clickBack:SetChecked(true)
 CALL("settings: tick Alt+Right-click goes back", panel.clickBack:GetScript("OnClick"), panel.clickBack)
 CHECK("settings: Alt+Right-click now steps back", KS.GetClick().back == true and KS.ClickStep(L.JUNK, false) == L.LOCK)
 CALL("/soc click loop", SlashCmdList.SOC, "click loop")
+
+-- The Disenchant level (1.2.0): kept from vendors, free to disenchant, trade and mail.
+CHECK("Disenchant sits between Junk and Mail", L.DISENCHANT > L.JUNK and L.DISENCHANT < L.MAIL and KS.ORDER[2] == L.DISENCHANT)
+CHAT = {}
+CALL("/soc disenchant 7001", SlashCmdList.SOC, "disenchant 7001")
+CHECK("/soc disenchant marks it Disenchant", KS.GetLevel(7001) == L.DISENCHANT, KS.GetLevel(7001))
+CHECK("it isn't Locked", not KS.IsLocked(7001))
+CHAT = {}
+CHECK("selling it is stopped", KS.Guard(7001, nil, "sell") == true)
+CHECK("the error says to disenchant it or lower it to Junk", CHAT_HAS("marked Disenchant"), CHAT[1])
+CHECK("disenchanting, trading, mailing and destroying it are allowed", not KS.Guard(7001, nil, "disenchant") and not KS.Guard(7001, nil, "trade") and not KS.Guard(7001, nil, "mail") and not KS.Guard(7001, nil, "destroy"))
+CALL("/soc de 7001", SlashCmdList.SOC, "de 7001")
+CHECK("/soc de works too", KS.GetLevel(7001) == L.DISENCHANT)
+CHECK("Disenchant is an advanced mark: offered once the advanced options are shown", (function()
+  local was = KS.GetShowAdvanced(); KS.SetShowAdvanced(false)
+  local hidden = true; for _, l in ipairs(KS.ShownLevels(L.NORMAL)) do if l == L.DISENCHANT then hidden = false end end
+  KS.SetShowAdvanced(true)
+  local shown = false; for _, l in ipairs(KS.ShownLevels(L.NORMAL)) do if l == L.DISENCHANT then shown = true end end
+  KS.SetShowAdvanced(was); return hidden and shown end)())
+KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
@@ -637,7 +657,7 @@ KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 altClick("menu mode: Alt+Left-click opens the menu", elv, 7001, L.NORMAL)
 local menu = SOCustodianMarkMenu
 CHECK("the mark menu is open on the item", menu and menu:IsShown() and menu.itemID == 7001)
-CHECK("the menu has one button per level, own mark ticked", menu and #menu.buttons == #KS.ORDER and menu.buttons[3].check:IsShown() and not menu.buttons[1].check:IsShown())
+CHECK("the menu has one button per level, own mark ticked", menu and #menu.buttons == #KS.ORDER and menu.buttons[4].check:IsShown() and not menu.buttons[1].check:IsShown())
 if menu then
   for _, b in ipairs(menu.buttons) do if b.level == L.LOCK then CALL("pick Locked", b:GetScript("OnClick"), b) end end
 end

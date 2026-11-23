@@ -40,6 +40,8 @@ const stroke = (ax, ay, bx, by, w) => (x, y) => { // a line w wide from a to b, 
 const BADGES = [
   { name: "Junk", fill: "868686", // a coin: a disc with a rim line
     glyph: minus(disc(C, C, 19.5), ring(C, C, 9.5, 14.5)) },
+  { name: "Disenchant", fill: "17867a", // a four-point sparkle, like the enchanting glow
+    glyph: union(diamond(C, C, 7, 22), diamond(C, C, 22, 7)) },
   { name: "Mail", fill: "3a8fd6", // an envelope: a rectangle with a V flap
     glyph: minus(roundRect(12, 18, 52, 46, 3), stroke(15, 21, C, 36, 4), stroke(49, 21, C, 36, 4)) },
   { name: "Locked", fill: "e03c3c", // a padlock: shackle arc, body, keyhole

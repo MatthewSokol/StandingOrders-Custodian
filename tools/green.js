@@ -67,12 +67,12 @@ for (const f of files.filter(f => f.endsWith(".lua"))) {
 // --- Mark badges (Icons.lua's "badges" style): the four TGAs tools/badges.js draws, in Icon.tga's format.
 {
   const bad = [];
-  for (const name of ["Junk", "Mail", "Locked", "OnMe"]) {
+  for (const name of ["Junk", "Disenchant", "Mail", "Locked", "OnMe"]) {
     const f = path.join(ADDON, "Media", name + ".tga");
     const b = fs.existsSync(f) && fs.readFileSync(f);
     if (!b || b[2] !== 2 || b.readUInt16LE(12) !== 64 || b.readUInt16LE(14) !== 64 || b[16] !== 32 || b.length !== 18 + 64 * 64 * 4) bad.push(name);
   }
-  say(bad.length ? "FAIL" : "PASS", "badges", bad.length ? `bad or missing: ${bad.join(", ")} (node tools/badges.js)` : "Media/Junk, Mail, Locked, OnMe.tga: 64x64, 32-bit");
+  say(bad.length ? "FAIL" : "PASS", "badges", bad.length ? `bad or missing: ${bad.join(", ")} (node tools/badges.js)` : "Media/Junk, Disenchant, Mail, Locked, OnMe.tga: 64x64, 32-bit");
 }
 
 // --- Smoke tests (addon loaded in a Lua VM with a stubbed WoW API): smoke.lua starts from 1.0.0's saved data,

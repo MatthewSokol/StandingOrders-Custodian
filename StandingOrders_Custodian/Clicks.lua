@@ -18,7 +18,7 @@ local PRESETS = {
 KS.CLICK_PRESETS = PRESETS
 KS.CLICK_PRESET_NAMES = { loop = "Quick loop", dial = "Protection dial", custom = "Custom" }
 
-local KNOWN = { [JUNK] = true, [MAIL] = true, [NORMAL] = true, [LOCK] = true, [ONME] = true }
+local KNOWN = { [JUNK] = true, [L.DISENCHANT] = true, [MAIL] = true, [NORMAL] = true, [LOCK] = true, [ONME] = true }
 if KS.CONFIRM_ENABLED then KNOWN[L.CONFIRM] = true end
 
 local function DB() return StandingOrdersCustodianDB end
@@ -215,7 +215,7 @@ function KS.OfferQuickLoop()
   StaticPopup_Show("SOC_CLICK_OFFER")
 end
 
-local WORDS = { junk = JUNK, mail = MAIL, normal = NORMAL, none = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
+local WORDS = { junk = JUNK, disenchant = L.DISENCHANT, de = L.DISENCHANT, mail = MAIL, normal = NORMAL, none = NORMAL, lock = LOCK, locked = LOCK, onme = ONME, always = ONME }
 
 -- /soc click [loop | dial | order <marks> | right clear|back | ends loop|stop]
 function KS.ClickCommand(rest)
