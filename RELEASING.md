@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.1.0): 1 change, 1 row.**
+**Waiting since the last release (1.1.0): 2 changes, 2 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -72,6 +72,13 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
+<summary><b>2.2.2 Chat logging levels: off, basic, verbose</b> (#54) · open · 0 / 1</summary>
+
+- [ ] 2.2.2.1 `TESTING.md` 5.40: /soc log off, basic and verbose, the settings dropdown, /soc chat and /soc debug as aliases, the default by build
+
+</details>
+
+<details open>
 <summary><b>2 Smoke, then acceptance</b> · 0 / 2 sections</summary>
 
 <details open>
@@ -85,11 +92,12 @@ problems); finished sections start closed, and a section with an open problem or
 - [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
 - [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done` `auto validated · restore verified`
 - [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soc selftest` passes, no Custodian errors `auto validated · saved self-test and BugGrabber`
+- [ ] 2.1.9 Chat logging (`sm-chatlog`): on this dev build `/soc log` says Basic before you choose anything, and the settings dropdown (advanced options > Chat) offers Off, Basic and Verbose; the zip under test (3.7) says Off and offers Off and Basic. `/soc log off` quiets Custodian's own lines (the red error still shows), `/soc log basic` brings them back
 
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 1</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 2</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven

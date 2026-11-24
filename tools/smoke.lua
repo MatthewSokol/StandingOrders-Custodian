@@ -146,7 +146,7 @@ local function logHas(text)
   for _, line in ipairs(StandingOrdersCustodianDB.log or {}) do if line:find(text, 1, true) then return true end end
   return false
 end
-CHECK("chat messages are off by default", KS.GetChat() == false and StandingOrdersCustodianDB.chat == false)
+CHECK("chat logging is off by default in a release build, and nothing is saved", KS.ChatLevel() == "off" and KS.GetChat() == false and StandingOrdersCustodianDB.chatLog == nil and StandingOrdersCustodianDB.chat == nil)
 CHECK("auto-mark and moved-back messages stay out of chat by default", not CHAT_HAS("Marked as") and not CHAT_HAS("back to your bags"))
 CHECK("...and are kept in the log", logHas("Marked as") and logHas("back to your bags"))
 CALL("/soc chat on", SlashCmdList.SOC, "chat on")
@@ -159,6 +159,51 @@ CHECK("with chat on, an auto-mark shows in chat", CHAT_HAS("Marked as") and KS.G
 CALL("/soc chat off", SlashCmdList.SOC, "chat off")
 STUB_BAGS[3] = nil
 CHECK("/soc chat off turns them off", KS.GetChat() == false)
+-- Chat logging levels (wow-mod-dev ui.md 5): off, basic, verbose; the default follows the build; only choices are saved.
+local getMeta = C_AddOns.GetAddOnMetadata
+StandingOrdersCustodianDB.chatLog = nil
+C_AddOns.GetAddOnMetadata = function(_, key) return key == "Version" and "candidate/v1.1.0-9-g5cf6270" or nil end
+CHECK("a dev build (git describe) defaults to basic", KS.IsDevBuild() and KS.ChatLevel() == "basic" and StandingOrdersCustodianDB.chatLog == nil)
+CHECK("a dev build's settings offer Verbose", #KS.ChatLevels() == 3)
+C_AddOns.GetAddOnMetadata = function(_, key) return key == "Version" and "@project-version@" or nil end
+CHECK("an unfilled packager token counts as a dev build", KS.IsDevBuild())
+CHECK("a bare hash (no tag yet) counts as a dev build", KS.IsDevVersion("5cf6270") and KS.IsDevVersion("5CF6270"))
+CHECK("an install exactly at a candidate tag counts as a dev build", KS.IsDevVersion("candidate/v1.2.0"))
+CHECK("a dirty tree and dev count as dev builds", KS.IsDevVersion("v1.1.0-dirty") and KS.IsDevVersion("dev"))
+CHECK("a release tag doesn't", not KS.IsDevVersion("v1.1.0") and not KS.IsDevVersion("1.1.0"))
+C_AddOns.GetAddOnMetadata = function(_, key) if key == "X-Dev-Build" then return "v1.1.0-12-g1d9d2a0" end return key == "Version" and "v1.1.0" or nil end
+CHECK("an ## X-Dev-Build line stamped by the install script makes it a dev build", KS.IsDevBuild())
+C_AddOns.GetAddOnMetadata = getMeta
+CHECK("a release build offers Off and Basic only", not KS.IsDevBuild() and #KS.ChatLevels() == 2)
+CHAT = {}
+CALL("/soc log basic", SlashCmdList.SOC, "log basic")
+CHECK("/soc log basic saves the choice and says so", StandingOrdersCustodianDB.chatLog == "basic" and CHAT_HAS("Chat logging: Basic"), CHAT[1])
+CHAT = {}
+KS.Notify("routine line")
+CHECK("at basic, routine lines show in chat", CHAT_HAS("routine line"))
+CALL("/soc log off", SlashCmdList.SOC, "log off")
+CHAT = {}
+KS.Notify("quiet line")
+CHECK("at off, routine lines stay in the log only", not CHAT_HAS("quiet line") and logHas("quiet line"))
+CALL("/soc debug", SlashCmdList.SOC, "debug")
+CHECK("/soc debug switches verbose on", KS.ChatLevel() == "verbose" and KS.ChatAllows("basic"))
+CALL("/soc debug", SlashCmdList.SOC, "debug")
+CHECK("...and off again, back to the build's default", StandingOrdersCustodianDB.chatLog == nil and KS.ChatLevel() == "off")
+CHAT = {}
+CALL("/soc log", SlashCmdList.SOC, "log")
+CHECK("/soc log alone names the level, then the log", CHAT_HAS("Chat logging: Off"), CHAT[1])
+CHAT = {}
+CALL("/soc log loud", SlashCmdList.SOC, "log loud")
+CHECK("an unknown level isn't saved", StandingOrdersCustodianDB.chatLog == nil)
+local mig = { chat = true }
+KS.MigrateChat(mig)
+CHECK("1.1.0's chat on carries over as basic", mig.chatLog == "basic" and mig.chat == nil)
+mig = { chat = false, debug = true }
+KS.MigrateChat(mig)
+CHECK("an old debug switch carries over as verbose; chat off isn't saved", mig.chatLog == "verbose" and mig.chat == nil and mig.debug == nil)
+mig = { chat = false }
+KS.MigrateChat(mig)
+CHECK("1.1.0's default (chat off) isn't saved as a choice", mig.chatLog == nil)
 
 -- Soulbound gear this character can't use (off by default): Junk on this character only; enchanters keep green+
 CHECK("unusable soulbound gear: the rule is off by default", KS.GetAuto("unusableJunk") == false)
@@ -803,7 +848,7 @@ CHECK("status lists the hooked bag addons", #KS.BagAddonStatus() == 6, #KS.BagAd
 KS.SetChat(true)
 STUB_POPUP = nil
 CALL("Back to simple", panel.simpleButton:GetScript("OnClick"), panel.simpleButton)
-CHECK("Back to simple asks first, naming the options", STUB_POPUP and STUB_POPUP.which == "SOC_BACK_TO_SIMPLE" and tostring(STUB_POPUP.a1):find("messages in chat", 1, true) ~= nil, STUB_POPUP and STUB_POPUP.a1)
+CHECK("Back to simple asks first, naming the options", STUB_POPUP and STUB_POPUP.which == "SOC_BACK_TO_SIMPLE" and tostring(STUB_POPUP.a1):find("chat logging", 1, true) ~= nil, STUB_POPUP and STUB_POPUP.a1)
 local hearth = KS.GetLevel(6948)
 CALL("confirm Back to simple", StaticPopupDialogs.SOC_BACK_TO_SIMPLE.OnAccept)
 CHECK("every advanced option is back at its simple default", #KS.AdvancedOn() == 0 and not KS.GetChat() and not KS.GetAuto("whiteJunk") and KS.ClickPreset() == "loop", table.concat(KS.AdvancedOn(), ", "))

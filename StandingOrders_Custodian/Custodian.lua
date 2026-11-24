@@ -81,7 +81,7 @@ local function Print(msg, ...)
 end
 
 local function Debug(msg, ...)
-  if db and db.debug then Print("|cff888888[debug]|r " .. msg, ...) end
+  if KS.ChatAllows and KS.ChatAllows("verbose") then Print("|cff888888[debug]|r " .. msg, ...) end -- ChatLog.lua
 end
 
 -- Always-on log of guard decisions, kept in SavedVariables (StandingOrdersCustodianDB.log) so a miss can be
@@ -103,10 +103,8 @@ end
 function KS.Notify(msg, ...)
   if select("#", ...) > 0 then msg = msg:format(...) end
   Log(msg)
-  if db and db.chat then Print(msg) end
+  if KS.ChatAllows and KS.ChatAllows("basic") then Print(msg) end -- the chat logging level (ChatLog.lua)
 end
-function KS.GetChat() return (db and db.chat) and true or false end
-function KS.SetChat(on) if db then db.chat = on and true or false end end
 
 -- What Alt+Click in your bags does (StandingOrdersCustodianDB.altClick): "cycle" (the default: Alt+Left-click and
 -- Alt+Right-click move the mark along the Alt+Click sequence, Clicks.lua) or "menu" (either one opens the mark
@@ -1984,13 +1982,15 @@ local function CreatePanel()
   -- Advanced: Custodian's own messages in chat.
   local chatHeader = Header(adv, "Chat", prev)
   chatHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local chat = Check(adv, "Show Custodian's own messages in chat", chatHeader, -6, function(self)
-    KS.SetChat(self:GetChecked())
-    RefreshPanel()
-  end)
-  refreshers[#refreshers + 1] = function() chat:SetChecked(KS.GetChat()) end
-  panel.chatCheck = chat
-  prev = Note(adv, "What it auto-marked, bought back or moved back, and actions it blocked. Off: they're kept in the log instead (/soc log); the red error still shows on screen. Alt+Click replies (\"... is now Junk.\") follow this too; typed commands always answer.", chat, 26, -2)
+  local chatLabel = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  chatLabel:SetPoint("TOPLEFT", chatHeader, "BOTTOMLEFT", 4, -10)
+  chatLabel:SetText("Chat logging")
+  local chatChoice, showChat = ChoiceControl(adv, 160, KS.ChatLevels, KS.ChatLevel,
+    function(c) return KS.CHAT_LEVEL_NAMES[c] or c end, function(c) KS.SetChatLevel(c) end)
+  chatChoice:SetPoint("LEFT", chatLabel, "RIGHT", 10, 0)
+  refreshers[#refreshers + 1] = showChat
+  panel.chatChoice = chatChoice
+  prev = Note(adv, "Off: only warnings and replies to your commands. Basic: also what Custodian did on its own (auto-marks, buybacks, items moved back, blocked actions) and the replies to your Alt+Clicks (\"... is now Junk.\"). Verbose (dev builds): debugging detail too. Everything is kept in the log either way (/soc log); the red error always shows on screen.", chatLabel, -4, -14)
 
   -- Equipment sets: the default for sets, then one row per set on this character, rebuilt each time the
   -- panel opens. Last on the panel, since the number of rows changes. Each row is a dropdown (a cycling button on clients without one).
@@ -2478,6 +2478,16 @@ local TESTS = {
     local apiOk = KS.LEVELS.MAIL == MAIL and KS.LEVELS.NORMAL == 2 and KS.LEVELS.CONFIRM == 3
     d[#d + 1] = Detail("LEVELS numbers other addons rely on", apiOk and "unchanged" or "CHANGED", apiOk and "pass" or "fail")
     d[#d + 1] = Detail("bank blocked from", NAMES[GUARD_FROM.bank], GUARD_FROM.bank == ONME and "pass" or "fail")
+    -- Chat logging (ChatLog.lua): a known level; with no saved choice, basic in a dev build and off in a release.
+    local chosen = db and db.chatLog
+    local level = KS.ChatLevel()
+    local chatOk = KS.CHAT_LEVEL_NAMES[level] ~= nil and (chosen ~= nil or level == (KS.IsDevBuild() and "basic" or "off"))
+    d[#d + 1] = Detail("chat logging", ("%s (%s, %s build)"):format(level, chosen and "chosen" or "default",
+      KS.IsDevBuild() and "dev" or "release"), chatOk and "pass" or "fail")
+    local devOk = KS.IsDevVersion("@project-version@") and KS.IsDevVersion("v1.1.0-9-g5cf6270")
+      and KS.IsDevVersion("5cf6270") and KS.IsDevVersion("candidate/v1.2.0") and KS.IsDevVersion("dev")
+      and KS.IsDevVersion("") and not KS.IsDevVersion("v1.1.0")
+    d[#d + 1] = Detail("dev build check (token, git describe, bare hash, candidate tag, release)", devOk and "right" or "WRONG", devOk and "pass" or "fail")
     return Result(d)
   end },
   { id = "saved", name = "Saved marks", run = function()
@@ -2629,8 +2639,8 @@ local function RegisterMechanic()
     settings = {
       debug = {
         type = "toggle", name = "Debug messages", order = 1,
-        get = function() return db and db.debug and true or false end,
-        set = function(_, v) if db then db.debug = v and true or false end end,
+        get = function() return KS.ChatLevel() == "verbose" end,
+        set = function(_, v) KS.SetChatLevel(v and "verbose" or nil) end,
       },
     },
   })
@@ -2692,9 +2702,9 @@ local function Help()
   print("  /soc why <item> - would soulbound gear this character can't use become Junk? (no copy needed)")
   print("  /soc simple - put the advanced options back to their simple defaults (asks first; marks stay)")
   print("  /soc altclick cycle||menu - Alt+Click moves along the sequence, or opens the menu (now " .. KS.GetAltClick() .. ")")
-  print("  /soc chat on||off - show Custodian's own messages (auto-marks, buybacks, blocked actions) in chat, or only in the log (now " .. (KS.GetChat() and "on" or "off") .. ")")
-  print("  /soc log [n] - show the last n log lines (default 25)")
-  print("  /soc debug - toggle debug messages")
+  print("  /soc log off||basic||verbose - chat logging: basic adds Custodian's own messages (auto-marks, buybacks, blocked actions, Alt+Click replies), verbose debugging detail (now " .. KS.CHAT_LEVEL_NAMES[KS.ChatLevel()] .. ")")
+  print("  /soc log [n] - the chat logging level and the last n log lines (default 25)")
+  print("  /soc chat on||off - the same as /soc log basic or off; /soc debug - verbose on and off")
   print("  /soc selftest - check this install (results are saved for bug reports)")
   print("  In bags: " .. KS.ClickText())
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
@@ -2782,8 +2792,12 @@ SlashCmdList.SOC = function(msg)
     KS.AskBackToSimple()
   elseif cmd == "chat" then
     if rest == "on" or rest == "off" then KS.SetChat(rest == "on") else KS.SetChat(not KS.GetChat()) end
-    Print("Custodian's own messages now show %s.", KS.GetChat() and "in chat and the log" or "only in the log (/soc log)")
+    Print("Chat logging: %s.", KS.CHAT_LEVEL_NAMES[KS.ChatLevel()])
+  elseif cmd == "log" and KS.CHAT_LEVEL_NAMES[rest] then
+    KS.SetChatLevel(rest)
+    Print("Chat logging: %s.", KS.CHAT_LEVEL_NAMES[KS.ChatLevel()])
   elseif cmd == "log" then
+    Print("Chat logging: %s (/soc log off||basic||verbose).", KS.CHAT_LEVEL_NAMES[KS.ChatLevel()])
     local log = db.log or {}
     local n = tonumber(rest) or 25
     Print("Last %d log lines (of %d):", math.min(n, #log), #log)
@@ -2791,8 +2805,8 @@ SlashCmdList.SOC = function(msg)
   elseif cmd == "selftest" or cmd == "test" then
     KS.SelfTest()
   elseif cmd == "debug" then
-    db.debug = not db.debug
-    Print("Debug messages %s.", db.debug and "on" or "off")
+    KS.SetChatLevel(KS.ChatLevel() ~= "verbose" and "verbose" or nil) -- /soc debug: verbose on and off
+    Print("Chat logging: %s.", KS.CHAT_LEVEL_NAMES[KS.ChatLevel()])
   else
     Help()
   end
@@ -2844,7 +2858,7 @@ f:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4)
     db.autoSeen = db.autoSeen or db.autoMailSeen or {} -- item IDs the auto-marks have decided on
     db.autoMarked = db.autoMarked or {}  -- item ID -> the level auto-marks gave it
     for id in pairs(db.autoMailed or {}) do db.autoMarked[id] = db.autoMarked[id] or MAIL end
-    if db.chat == nil then db.chat = false end -- Custodian's own messages: the log only, unless turned on
+    KS.MigrateChat(db) -- 1.1.0's chat and debug switches become chat logging levels (ChatLog.lua)
     KS.InitClick(db, fresh) -- the Alt+Click sequence: the Quick loop when new, 1.0.0's clicks otherwise
     db.auto = db.auto or {}
     if db.autoMail == false and db.auto.boeMail == nil then db.auto.boeMail = false end
