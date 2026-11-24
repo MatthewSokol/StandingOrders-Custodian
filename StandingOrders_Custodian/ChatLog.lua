@@ -15,11 +15,17 @@ local KS = StandingOrdersCustodian
 local RANK = { off = 0, basic = 1, verbose = 2 }
 KS.CHAT_LEVEL_NAMES = { off = "Off", basic = "Basic", verbose = "Verbose" }
 
-function KS.IsDevBuild()
-  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
-  local v = (get and get(ADDON, "Version")) or ""
+-- A version string from a dev build: empty, "dev", the unfilled packager token, git describe (-g<hash>) or dirty.
+-- Plain finds take the token literally: "@project%-version@" with plain = true would never match.
+function KS.IsDevVersion(v)
+  v = v or ""
   return v == "" or v == "dev" or v:find("@project-version@", 1, true) ~= nil or v:find("%-g%x+") ~= nil
     or v:find("dirty", 1, true) ~= nil
+end
+
+function KS.IsDevBuild()
+  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  return KS.IsDevVersion(get and get(ADDON, "Version"))
 end
 
 function KS.ChatLevel()

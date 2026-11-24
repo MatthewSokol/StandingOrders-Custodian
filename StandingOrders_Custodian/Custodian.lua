@@ -2484,6 +2484,9 @@ local TESTS = {
     local chatOk = KS.CHAT_LEVEL_NAMES[level] ~= nil and (chosen ~= nil or level == (KS.IsDevBuild() and "basic" or "off"))
     d[#d + 1] = Detail("chat logging", ("%s (%s, %s build)"):format(level, chosen and "chosen" or "default",
       KS.IsDevBuild() and "dev" or "release"), chatOk and "pass" or "fail")
+    local devOk = KS.IsDevVersion("@project-version@") and KS.IsDevVersion("candidate/v1.1.0-9-g5cf6270")
+      and KS.IsDevVersion("") and not KS.IsDevVersion("v1.1.0")
+    d[#d + 1] = Detail("dev build check (unfilled token, git describe, release)", devOk and "right" or "WRONG", devOk and "pass" or "fail")
     return Result(d)
   end },
   { id = "saved", name = "Saved marks", run = function()
