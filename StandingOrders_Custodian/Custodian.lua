@@ -832,6 +832,8 @@ local function ButtonSlot(btn)
   local parent = btn:GetParent()
   return parent and parent:GetID(), btn:GetID()
 end
+KS.ButtonSlot = ButtonSlot -- for Highlights.lua
+function KS.BagButtons() return hooked end
 
 -- Mark icons: how much of the item button they cover, where they sit, and how opaque they are, so
 -- they don't hide counts and other addons' text. Account-wide (StandingOrdersCustodianDB.icon).
@@ -900,6 +902,7 @@ local function UpdateButton(btn)
     tex:Hide()
   end
   if tex then KS.MarkEdge(btn, tex, level) end
+  if KS.UpdateHighlight then KS.UpdateHighlight(btn, bag, slot) end -- the vendor/mailbox tint (Highlights.lua)
 end
 
 -- True while the Send Mail page is open and Postal's (or its Forever port Posty's) Express module is on: Express
@@ -2078,7 +2081,16 @@ local function CreatePanel()
     KS.MarkEdge(sample, mark, LOCK)
   end
 
-  prev = Header(adv, "Equipment sets protect their items", iconRows[4], -22)
+  local highlight = Check(adv, "At a vendor or the mailbox, tint items: red can't go, blue is marked for it", iconRows[4], -10, function(self)
+    KS.SetHighlight(self:GetChecked())
+    RefreshPanel()
+  end)
+  refreshers[#refreshers + 1] = function() highlight:SetChecked(KS.GetHighlight()) end
+  panel.highlightCheck = highlight
+  local highlightNote = Note(adv, "Vendor: red for Locked, Always on me and Disenchant, blue for Junk. Mailbox: red for Locked and Always on me, blue for Mail.", highlight, 26, -2)
+
+  prev = Header(adv, "Equipment sets protect their items", highlightNote, -22)
+  prev:SetPoint("TOPLEFT", highlightNote, "BOTTOMLEFT", -26, -22)
   local setsNote = Note(adv, "", prev, 0, -6)
   local rows = {}
   panel.setRows = rows
@@ -2478,6 +2490,12 @@ local TESTS = {
     local apiOk = KS.LEVELS.MAIL == MAIL and KS.LEVELS.NORMAL == 2 and KS.LEVELS.CONFIRM == 3
     d[#d + 1] = Detail("LEVELS numbers other addons rely on", apiOk and "unchanged" or "CHANGED", apiOk and "pass" or "fail")
     d[#d + 1] = Detail("bank blocked from", NAMES[GUARD_FROM.bank], GUARD_FROM.bank == ONME and "pass" or "fail")
+    -- Vendor and mailbox tints (Highlights.lua): red for what can't go, blue for what's marked for it.
+    local H = KS.HighlightColor
+    local tintOk = H and H(LOCK, "vendor") and H(KS.LEVELS.DISENCHANT, "vendor") and H(JUNK, "vendor")
+      and not H(MAIL, "vendor") and H(LOCK, "mail") and H(MAIL, "mail") and not H(KS.LEVELS.DISENCHANT, "mail")
+      and not H(NORMAL, "vendor") and not H(NORMAL, "mail")
+    d[#d + 1] = Detail("vendor and mailbox tints", tintOk and "right" or "WRONG", tintOk and "pass" or "fail")
     -- Chat logging (ChatLog.lua): a known level; with no saved choice, basic in a dev build and off in a release.
     local chosen = db and db.chatLog
     local level = KS.ChatLevel()
@@ -2705,6 +2723,7 @@ local function Help()
   print("  /soc log off||basic||verbose - chat logging: basic adds Custodian's own messages (auto-marks, buybacks, blocked actions, Alt+Click replies), verbose debugging detail (now " .. KS.CHAT_LEVEL_NAMES[KS.ChatLevel()] .. ")")
   print("  /soc log [n] - the chat logging level and the last n log lines (default 25)")
   print("  /soc chat on||off - the same as /soc log basic or off; /soc debug - verbose on and off")
+  print("  /soc highlight on||off - at a vendor or the mailbox, tint what can't go red and what's marked for it blue (now " .. (KS.GetHighlight() and "on" or "off") .. ")")
   print("  /soc selftest - check this install (results are saved for bug reports)")
   print("  In bags: " .. KS.ClickText())
   print("  Alt+Shift+Left-click moves a mark between all characters and this character only.")
@@ -2788,6 +2807,8 @@ SlashCmdList.SOC = function(msg)
     local id = LinkID(rest) or tonumber(rest)
     if not id then return Err("Use /soc why <shift-clicked item or item ID>.") end
     KS.WhyUnusable(id, rest:match("|c.-|r") or ItemLink(id)) -- pipes:ok (a pattern)
+  elseif cmd == "highlight" then
+    KS.HighlightCommand(rest)
   elseif cmd == "simple" then
     KS.AskBackToSimple()
   elseif cmd == "chat" then
