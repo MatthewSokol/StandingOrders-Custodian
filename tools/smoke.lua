@@ -167,6 +167,12 @@ CHECK("a dev build (git describe) defaults to basic", KS.IsDevBuild() and KS.Cha
 CHECK("a dev build's settings offer Verbose", #KS.ChatLevels() == 3)
 C_AddOns.GetAddOnMetadata = function(_, key) return key == "Version" and "@project-version@" or nil end
 CHECK("an unfilled packager token counts as a dev build", KS.IsDevBuild())
+CHECK("a bare hash (no tag yet) counts as a dev build", KS.IsDevVersion("5cf6270") and KS.IsDevVersion("5CF6270"))
+CHECK("an install exactly at a candidate tag counts as a dev build", KS.IsDevVersion("candidate/v1.2.0"))
+CHECK("a dirty tree and dev count as dev builds", KS.IsDevVersion("v1.1.0-dirty") and KS.IsDevVersion("dev"))
+CHECK("a release tag doesn't", not KS.IsDevVersion("v1.1.0") and not KS.IsDevVersion("1.1.0"))
+C_AddOns.GetAddOnMetadata = function(_, key) if key == "X-Dev-Build" then return "v1.1.0-12-g1d9d2a0" end return key == "Version" and "v1.1.0" or nil end
+CHECK("an ## X-Dev-Build line stamped by the install script makes it a dev build", KS.IsDevBuild())
 C_AddOns.GetAddOnMetadata = getMeta
 CHECK("a release build offers Off and Basic only", not KS.IsDevBuild() and #KS.ChatLevels() == 2)
 CHAT = {}

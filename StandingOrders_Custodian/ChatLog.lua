@@ -15,16 +15,23 @@ local KS = StandingOrdersCustodian
 local RANK = { off = 0, basic = 1, verbose = 2 }
 KS.CHAT_LEVEL_NAMES = { off = "Off", basic = "Basic", verbose = "Verbose" }
 
--- A version string from a dev build: empty, "dev", the unfilled packager token, git describe (-g<hash>) or dirty.
+-- A version string from a dev build (wow-mod-dev 1.9.2): empty, "dev", the unfilled packager token, git describe
+-- (-g<hash>), a bare hash, a candidate tag or dirty.
 -- Plain finds take the token literally: "@project%-version@" with plain = true would never match.
 function KS.IsDevVersion(v)
   v = v or ""
-  return v == "" or v == "dev" or v:find("@project-version@", 1, true) ~= nil or v:find("%-g%x+") ~= nil
+  return v == "" or v == "dev"
+    or v:find("@project-version@", 1, true) ~= nil -- the unfilled packager token
+    or v:find("%-g%x+") ~= nil                      -- git describe past a tag (v1.2.0-3-gabc1234)
+    or v:find("^%x+$") ~= nil                       -- a bare hash, before the first tag
+    or v:find("candidate/", 1, true) ~= nil         -- installed exactly at a candidate tag
     or v:find("dirty", 1, true) ~= nil
 end
 
+-- A dev build: the version says so, or the install script stamped ## X-Dev-Build (release zips never have it).
 function KS.IsDevBuild()
   local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  if get and get(ADDON, "X-Dev-Build") then return true end
   return KS.IsDevVersion(get and get(ADDON, "Version"))
 end
 
