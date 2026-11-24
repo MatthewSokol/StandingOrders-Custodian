@@ -12,6 +12,7 @@ gets its own version, and a release publishes one of them.
 
 ### Added
 
+- **Vendor and mailbox tints:** at a vendor, items that can't be sold (Locked, Always on me, Disenchant) are tinted red in your bags and Junk blue; at the mailbox, items that can't be mailed (Locked, Always on me) are red and Mail blue. A tint only: clicks work as usual. `/soc highlight off` (or the switch under Mark icons in the advanced options) turns it off.
 - **Disenchant mark:** a second kind of junk, for gear you mean to disenchant. A Disenchant item is never sold (if you sell one by mistake it's bought straight back, and Standing Orders: Vendor never sells it), but disenchanting, trading and mailing it are fine. Mark it with `/soc disenchant <item>` (or `/soc de`), the mark menu, the Marked items window or your Alt+Click sequence; it's offered once **Show advanced options** is ticked. Its icon is the Disenchant spell's, or a teal sparkle badge in the Addon icons style.
 
 ## [1.1.0] - 2026-11-23

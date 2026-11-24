@@ -75,6 +75,8 @@ Every action that would lose an item goes through one check, `StandingOrdersCust
 | Mail | The attachment is removed |
 | Bank (Always on me only) | While the bank is open, the item is moved straight back to your bags (if they have room) |
 
+**At a vendor or the mailbox** your bags are tinted so you see at a glance what can go: at a vendor, red for what can't be sold (Locked, Always on me, Disenchant) and blue for Junk; at the mailbox, red for what can't be mailed (Locked, Always on me) and blue for Mail. It's only a tint: clicks work as usual. Turn it off with `/soc highlight off` or the switch under Mark icons in the advanced options.
+
 **Limits:** Alt+Click, bag icons and the disenchant guard work in the default bags and the bag addons listed below. The vendor, destroy, trade and mail guards work everywhere. Auction house posting isn't guarded yet.
 
 ## Equipment sets
