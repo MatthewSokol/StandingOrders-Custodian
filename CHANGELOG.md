@@ -6,6 +6,10 @@ gets its own version, and a release publishes one of them.
 
 ## [Unreleased]
 
+### Changed
+
+- **Chat logging levels:** Off, Basic and Verbose (`/soc log off|basic|verbose`, or Chat logging in the advanced options of `/soc settings`). Off shows only warnings and replies to your commands; Basic adds Custodian's own messages (auto-marks, buybacks, blocked actions, Alt+Click replies); Verbose adds debugging detail. Off by default; if you had turned 1.1.0's chat messages on, you're at Basic. `/soc chat on|off` and `/soc debug` still work.
+
 ### Added
 
 - **Disenchant mark:** a second kind of junk, for gear you mean to disenchant. A Disenchant item is never sold (if you sell one by mistake it's bought straight back, and Standing Orders: Vendor never sells it), but disenchanting, trading and mailing it are fine. Mark it with `/soc disenchant <item>` (or `/soc de`), the mark menu, the Marked items window or your Alt+Click sequence; it's offered once **Show advanced options** is ticked. Its icon is the Disenchant spell's, or a teal sparkle badge in the Addon icons style.

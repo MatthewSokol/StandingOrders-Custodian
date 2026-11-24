@@ -85,6 +85,7 @@ problems); finished sections start closed, and a section with an open problem or
 - [ ] 2.1.6 Exit the game fully and tell Claude the clean install is done (closing the game restores nothing, so restart as often as you like)
 - [ ] 2.1.7 `<env> restore` puts your saved marks and every addon's on/off state back `auto executed · after you say the clean install is done` `auto validated · restore verified`
 - [ ] 2.1.8 Upgrade: start the game and log in with your own data and addons: your marks are back, `/soc selftest` passes, no Custodian errors `auto validated · saved self-test and BugGrabber`
+- [ ] 2.1.9 Chat logging (`sm-chatlog`): on this dev build `/soc log` says Basic before you choose anything, and the settings dropdown (advanced options > Chat) offers Off, Basic and Verbose; the zip under test (3.7) says Off and offers Off and Basic. `/soc log off` quiets Custodian's own lines (the red error still shows), `/soc log basic` brings them back
 
 </details>
 
