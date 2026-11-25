@@ -733,34 +733,52 @@ CHECK("Disenchant is an advanced mark: offered once the advanced options are sho
   KS.SetShowAdvanced(was); return hidden and shown end)())
 KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 
--- Per-copy marks (Copies.lua, 1.2.0): a mark for an item's bound copies and for copies with an enchant.
-local ENCHANTED = "|cffffffff|Hitem:7001:1897::::::::60:::::|h[Test]|h|r"
-local PLAIN = "|cffffffff|Hitem:7001::::::::60:::::|h[Test]|h|r"
-CHECK("the enchant comes from the link", KS.LinkEnchant(ENCHANTED) == 1897 and KS.LinkEnchant(PLAIN) == nil, KS.LinkEnchant(ENCHANTED))
-CHECK("no copy marks: a copy has the item's mark", KS.GetCopyLevel(7001, ENCHANTED, true) == KS.GetLevel(7001) and not KS.HasCopyMarks(7001))
-KS.SetCopyMark(7001, 1897, "account", L.LOCK)
-CHECK("an enchant mark applies to copies with that enchant", KS.GetCopyLevel(7001, ENCHANTED, false) == L.LOCK, KS.GetCopyLevel(7001, ENCHANTED, false))
-CHECK("...and not to copies without it", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL, KS.GetCopyLevel(7001, PLAIN, false))
+-- Per-copy marks (Copies.lua, 1.2.0): one exact copy (its item GUID). A soulbound copy takes its item's mark only
+-- where it fits: never Mail, and a BoE item's Junk or Disenchant neither.
+STUB_ITEMDB[7201] = { name = "Test Bracers", quality = 2, sellPrice = 500, classID = 4, subclassID = 2, bindType = 2, stack = 1, equipLoc = "INVTYPE_WRIST" }
+STUB_ITEMDB[7202] = { name = "Test Cloak", quality = 2, sellPrice = 300, classID = 4, subclassID = 1, bindType = 1, stack = 1, equipLoc = "INVTYPE_CLOAK" }
+STUB_ITEMDB[7203] = { name = "Test Draught", quality = 1, sellPrice = 10, classID = 0, subclassID = 0, stack = 5 }
+local spare, worn, cloak = { id = 7201, guid = "Item-0-0-A" }, { id = 7201, guid = "Item-0-0-B", bound = true }, { id = 7202, guid = "Item-0-0-C", bound = true }
+STUB_BAGS[4] = { spare, worn, cloak, { id = 7203, guid = "Item-0-0-D", bound = true } }
+local copyA, copyB = KS.CopyAt(4, 1), KS.CopyAt(4, 2)
+CHECK("a copy is one exact item (its GUID), soulbound or not", copyA and copyA.guid == "Item-0-0-A" and not copyA.soulbound and copyB and copyB.soulbound)
+CHECK("an item that stacks, or without a GUID, has no copy marks", KS.CopyAt(4, 4) == nil and KS.CopyAt(2, 1) == nil)
+local function A(id, level) KS.SetLevel(id, level, nil, { quiet = true, scope = "account" }) end
+A(7201, L.MAIL)
+CHECK("an unbound copy takes its item's Mail mark", KS.GetSlotLevel(4, 1) == L.MAIL, KS.GetSlotLevel(4, 1))
+CHECK("a soulbound copy can't be mailed: no mark", KS.GetSlotLevel(4, 2) == L.NORMAL, KS.GetSlotLevel(4, 2))
+A(7201, L.JUNK)
+CHECK("a BoE item's soulbound copy doesn't take its Junk mark", KS.GetSlotLevel(4, 1) == L.JUNK and KS.GetSlotLevel(4, 2) == L.NORMAL)
+A(7201, L.LOCK)
+CHECK("...but does take its protection", KS.GetSlotLevel(4, 2) == L.LOCK)
+A(7202, L.JUNK)
+CHECK("a BoP item's soulbound copy keeps its Junk mark", KS.GetSlotLevel(4, 3) == L.JUNK)
+A(7202, L.MAIL)
+CHECK("...but not Mail", KS.GetSlotLevel(4, 3) == L.NORMAL)
+A(7202, L.NORMAL)
+KS.SetCopyMark(copyB, L.JUNK, { quiet = true })
+local rB = StandingOrdersCustodianDB.copyMarks["Item-0-0-B"]
+CHECK("a copy mark counts for that copy only", KS.GetSlotLevel(4, 2) == L.JUNK and KS.GetSlotLevel(4, 1) == L.LOCK and KS.GetLevel(7201) == L.LOCK)
+CHECK("it's kept by GUID, with the copy's place", rB and rB.level == L.JUNK and rB.bound == true and rB.where == "bags" and rB.owner == "Player-1-0000000A")
+STUB_BAGS[4][2], STUB_BAGS[4][5] = nil, worn
+CHECK("the mark goes with the copy when it moves", KS.GetSlotLevel(4, 5) == L.JUNK and KS.GetSlotLevel(4, 2) == L.NORMAL)
+STUB_BAGS[4][2], STUB_BAGS[4][5] = worn, nil
 CHAT = {}
-CHECK("selling the enchanted copy is stopped", KS.Guard(7001, ENCHANTED, "sell") == true)
-CHECK("selling a plain copy isn't", KS.Guard(7001, PLAIN, "sell") == false)
-KS.SetCopyMark(7001, 1897, "account", nil)
-KS.SetCopyMark(7001, "bound", "account", L.LOCK)
-CHECK("a bound-copies mark applies to bound copies", KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
-CHECK("...and not to unbound ones", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL)
-CHECK("disenchanting a bound copy is stopped, an unbound one isn't", KS.Guard(7001, PLAIN, "disenchant", true) == true and KS.Guard(7001, PLAIN, "disenchant", false) == false)
-KS.SetCopyMark(7001, "bound", "char", L.NORMAL)
-CHECK("this character's copy mark comes first (Normal here frees them)", KS.GetCopyLevel(7001, PLAIN, true) == L.NORMAL)
-KS.SetCopyMark(7001, "bound", "char", nil)
-KS.SetCopyMark(7001, 1897, "account", L.JUNK)
-CHECK("an enchant mark comes before the bound one", KS.GetCopyLevel(7001, ENCHANTED, true) == L.JUNK and KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
-STUB_BOUND[7001] = true
-CHECK("a bag slot's level uses that copy's bound status", KS.GetSlotLevel(2, 1) == L.LOCK, KS.GetSlotLevel(2, 1))
-STUB_BOUND[7001] = nil
-CHECK("...an unbound copy in the slot keeps the item's mark", KS.GetSlotLevel(2, 1) == L.NORMAL, KS.GetSlotLevel(2, 1))
-KS.SetCopyMark(7001, 1897, "account", nil)
-KS.SetCopyMark(7001, "bound", "account", nil)
-CHECK("clearing every copy mark leaves no copies entry", not KS.HasCopyMarks(7001) and StandingOrdersCustodianDB.copies[7001] == nil)
+CHECK("the guard goes by the copy's level", KS.Guard(7201, nil, "sell", KS.GetSlotLevel(4, 2)) == false and KS.Guard(7201, nil, "sell", KS.GetSlotLevel(4, 1)) == true)
+A(7201, L.NORMAL)
+KS.SetCopyMark(copyA, L.LOCK, { quiet = true })
+spare.locked = true
+CHECK("the copy on its way out (its slot locked) is the one guarded", KS.LockedCopyLevel(7201) == L.LOCK)
+spare.locked = nil
+CHECK("...and with none on its way out, the item's mark", KS.LockedCopyLevel(7201) == L.NORMAL)
+A(7202, L.MAIL)
+STUB_BUYBACK = { { id = 7202, bound = true }, 7202 }
+CHECK("buyback: a soulbound copy's level comes from its tooltip", KS.BuybackLevel(1, 7202, STUB_LINK(7202)) == L.NORMAL and KS.BuybackLevel(2, 7202, STUB_LINK(7202)) == L.MAIL)
+STUB_BUYBACK = {}
+A(7202, L.NORMAL)
+KS.SetCopyMark(copyA, nil, { quiet = true })
+KS.SetCopyMark(copyB, nil, { quiet = true })
+CHECK("taking the copy marks off leaves none", next(StandingOrdersCustodianDB.copyMarks) == nil)
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")

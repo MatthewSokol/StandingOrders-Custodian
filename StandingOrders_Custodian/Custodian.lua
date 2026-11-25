@@ -172,10 +172,11 @@ function KS.GetItemScope(id)
   if id and db and db.items[id] then return "account" end
 end
 
--- Where new marks go (Alt+Click, /soc <level> <item>): "account" (default) or "char".
+-- Where new marks go (Alt+Click, the mark menu, /soc <level> <item>): "account" (default), "char", or "copy" (the copy
+-- you click; Copies.lua. A typed command names an item, not a copy, so it marks the item for all characters).
 function KS.GetScope() return (db and db.scope) or "account" end
 function KS.SetScope(scope)
-  db.scope = (scope == "char") and "char" or "account"
+  db.scope = (scope == "char" or scope == "copy") and scope or nil
 end
 
 local function ScopeText(scope)
@@ -354,9 +355,10 @@ local function AskToAllow(id, link, action)
   StaticPopup_Show("SOC_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
 end
 
--- bound (optional): whether the copy being acted on is bound, for per-copy marks (Copies.lua).
-function KS.Guard(id, link, action, bound)
-  local level = KS.GetCopyLevel and KS.GetCopyLevel(id, link, bound) or KS.GetLevel(id)
+-- level (optional): the level of the copy being acted on (Copies.lua: its own mark, or its item's mark as it applies
+-- to that copy). Other addons leave it out: then it's the item's mark.
+function KS.Guard(id, link, action, level)
+  level = (type(level) == "number") and level or KS.GetLevel(id)
   local keepFromVendor = level == KS.LEVELS.DISENCHANT and action == "sell" -- Disenchant: only selling stops
   if not keepFromVendor and level < (GUARD_FROM[action] or CONFIRM) then return false end
   link = link or ItemLink(id)
@@ -503,16 +505,18 @@ local rescuing = false
 
 local function RescueBuyback()
   if rescuing or not merchantOpen then return end
+  if KS.ScanCopies then KS.ScanCopies() end -- so a marked copy sold just now is known (CopyTrack.lua)
   for i = GetNumBuybackItems(), 1, -1 do
     local link = GetBuybackItemLink(i)
     local id = LinkID(link)
-    local bound = id and KS.HasCopyMarks(id) and KS.BuybackBound(i)
-    local level = id and KS.GetCopyLevel(id, link, bound)
+    local level, sold
+    if id then level, sold = KS.BuybackLevel(i, id, link) end -- that copy's level (Copies.lua)
     if id and (level >= CONFIRM or level == KS.LEVELS.DISENCHANT) then
       rescuing = true
-      KS.Guard(id, link, "sell", bound)
+      KS.Guard(id, link, "sell", level)
       KS.Notify("Bought %s back.", link)
       BuybackItem(i)
+      if sold and KS.CopyBoughtBack then KS.CopyBoughtBack(sold) end
       C_Timer.After(0.7, function()
         rescuing = false
         RescueBuyback()
@@ -542,6 +546,7 @@ local function IsPlayerBag(b)
   local bi = Enum and Enum.BagIndex
   return (b >= 0 and b <= NUM_BAGS) or (bi and b == bi.ReagentBag) or false
 end
+KS.IsPlayerBag = IsPlayerBag -- for CopyTrack.lua
 
 -- Every bank container. Forever's bank is tabs (each its own container) listed by C_Bank, like
 -- retail; the old Classic IDs (-1, bank bag slots) are only used when the client has no tabs.
@@ -574,6 +579,7 @@ local function BankBags()
   end
   return bags
 end
+KS.BankBags = BankBags -- for Copies.lua and CopyTrack.lua
 
 -- Puts the item on the cursor into the first normal player bag with room. True when it landed.
 local function PutInBags()
@@ -617,7 +623,7 @@ local function RescueBank()
           return
         end
         warnedFull[info.itemID] = nil
-        KS.Guard(info.itemID, info.hyperlink, "bank")
+        KS.Guard(info.itemID, info.hyperlink, "bank", KS.GetSlotLevel(bag, slot))
         KS.Notify("Moved %s back to your bags.", info.hyperlink)
         bankRescuing = true
         C_Timer.After(0.5, function()
@@ -786,7 +792,7 @@ local function HookDestroy()
   hooksecurefunc("StaticPopup_Show", function(which)
     if not DELETE_POPUPS[which] then return end
     local kind, id, link = GetCursorInfo()
-    if kind == "item" and KS.Guard(id, link, "destroy", KS.CursorBound(id)) then
+    if kind == "item" and KS.Guard(id, link, "destroy", KS.LockedCopyLevel(id)) then -- the copy picked up (Copies.lua)
       StaticPopup_Hide(which)
       ClearCursor()
     end
@@ -798,7 +804,7 @@ end
 
 local function CheckTrade(slot)
   local link = GetTradePlayerItemLink(slot)
-  if link and KS.Guard(LinkID(link), link, "trade") then
+  if link and KS.Guard(LinkID(link), link, "trade", KS.LockedCopyLevel(LinkID(link))) then
     ClearCursor()
     ClickTradeButton(slot) -- picks the item up off the trade window...
     ClearCursor()          -- ...and drops it back in your bags
@@ -808,7 +814,7 @@ end
 local function CheckMail()
   for i = 1, ATTACHMENTS_MAX_SEND or 12 do
     local link = GetSendMailItemLink(i)
-    if link and KS.Guard(LinkID(link), link, "mail") then
+    if link and KS.Guard(LinkID(link), link, "mail", KS.LockedCopyLevel(LinkID(link))) then
       ClickSendMailItemButton(i, true) -- true = remove the attachment
     end
   end
@@ -983,7 +989,7 @@ local function PreClick(btn, mouse)
     elseif spellID == 51005 then action = "mill" end
     -- No SpellStopTargeting(): it's protected on this client (ADDON_ACTION_FORBIDDEN). The click is
     -- still eaten; Esc or right-click ends the targeting cursor.
-    if KS.Guard(info.itemID, info.hyperlink, action, KS.IsSlotBound(bag, slot)) then
+    if KS.Guard(info.itemID, info.hyperlink, action, KS.GetSlotLevel(bag, slot)) then
       btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     end
   end
@@ -1126,7 +1132,7 @@ local function GetBlocker(btn)
     local info = bag and slot and C.GetContainerItemInfo(bag, slot)
     -- The blocker takes the click; it can't cancel the cursor (SpellStopTargeting is protected here).
     Log("blocker caught click on %s", info and info.hyperlink or "?")
-    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction(), KS.IsSlotBound(bag, slot)) end
+    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction(), KS.GetSlotLevel(bag, slot)) end
   end)
   b:SetScript("OnEnter", function(self)
     local bag, slot = ButtonSlot(btn)
