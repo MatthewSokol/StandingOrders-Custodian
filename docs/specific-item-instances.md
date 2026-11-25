@@ -1,5 +1,7 @@
 # Marking one specific copy of an item
 
+**Status (2026-11-25):** built for 1.2.0 in #56 (Copies.lua, CopyTrack.lua). The in-game check below (the GUID lasts a logout) is `TESTING.md` 5.52; if it fails, the marks are kept rather than cleaned up (CopyTrack.lua logs it).
+
 **Question:** can Custodian protect *this* Deviate Scale Cloak while other copies of the same cloak stay unmarked?
 
 **Short answer:** probably yes, using the item's GUID. It works cleanly for everything that happens in your bags and bank, and needs workarounds for buyback, trade and mail. One in-game check has to pass first: the GUID must stay the same across logouts and moves on WoW Forever.
