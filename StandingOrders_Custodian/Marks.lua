@@ -186,28 +186,39 @@ local function Matches(text, e)
   return false
 end
 
-local order, orderN -- itemID -> its row's place, kept while the window is open (nil: sort again)
+local order, orderN -- row key (item ID, or a copy's GUID) -> its row's place, kept while the window is open (nil: sort again)
+local rowInfo = {} -- row key -> what the row was made from, so a row whose mark came off can stay
 local function ByMark(a, b)
   if a.level ~= b.level then return a.level > b.level end
   return a.name < b.name
 end
 
--- The rows to show: { id, name, char, account, level (the one that counts), set (true when a set raises it),
--- scope }, in the window's order.
+-- The rows to show: { key, id, name, char, account, level (the one that counts), set (true when a set raises it),
+-- scope }, in the window's order. A copy's row (Copies.lua) has guid, link, soulbound and copyMark (its own mark)
+-- instead of the two columns: soulbound copies in your bags get one each, marked or not, since they're marked per
+-- copy; other copies only when they have a mark of their own.
 local function Entries(text, withBags)
   local list, seen = {}, {}
-  for _, e in ipairs(KS.MarkedItems()) do
-    list[#list + 1] = { id = e.id }
-    seen[e.id] = true
+  local function add(e)
+    if seen[e.key] then return end
+    seen[e.key] = true
+    rowInfo[e.key] = e
+    list[#list + 1] = e
+  end
+  for _, e in ipairs(KS.MarkedItems()) do add({ key = e.id, id = e.id }) end
+  for _, c in ipairs(KS.MarkedCopies and KS.MarkedCopies() or {}) do
+    add({ key = c.guid, id = c.id, guid = c.guid, link = c.link, soulbound = c.bound, where = c.where })
   end
   if withBags then
     for bag = 0, NUM_BAG_SLOTS or 4 do
       for slot = 1, (C_Container.GetContainerNumSlots(bag) or 0) do
         local info = C_Container.GetContainerItemInfo(bag, slot)
         local id = info and info.itemID
-        if id and not seen[id] then
-          seen[id] = true
-          list[#list + 1] = { id = id }
+        local copy = id and info.isBound ~= false and KS.CopyAt and KS.CopyAt(bag, slot)
+        if copy and copy.soulbound then
+          add({ key = copy.guid, id = id, guid = copy.guid, link = copy.link, soulbound = true, bag = bag, slot = slot })
+        elseif id then
+          add({ key = id, id = id })
         end
       end
     end
@@ -215,34 +226,39 @@ local function Entries(text, withBags)
   -- A row whose mark you just took off (Account default and Normal) stays until Re-sort or the next opening, so
   -- the list doesn't jump under the mouse.
   if order then
-    for id in pairs(order) do
-      if not seen[id] then
-        seen[id] = true
-        list[#list + 1] = { id = id }
-      end
+    for key in pairs(order) do
+      if not seen[key] and rowInfo[key] then add(rowInfo[key]) end
     end
   end
   local out = {}
   text = (text or ""):lower()
   for _, e in ipairs(list) do
     e.name = NameOf(e.id) or ("item " .. e.id)
-    e.char, e.account = KS.GetMarkIn(e.id, "char"), KS.GetMarkIn(e.id, "account")
-    e.scope = KS.GetItemScope(e.id)
-    e.level = KS.GetLevel(e.id)
-    e.set = e.level > KS.GetOwnLevel(e.id)
+    if e.guid then
+      e.copyMark = KS.CopyMark(e.guid)
+      e.own = e.copyMark or KS.CopyOwnLevel({ guid = e.guid, id = e.id, soulbound = e.soulbound })
+      e.char, e.account, e.scope = e.copyMark, nil, e.copyMark and "copy" or nil
+      e.level = KS.WithSet(e.id, e.own)
+      e.set = e.level > e.own
+    else
+      e.char, e.account = KS.GetMarkIn(e.id, "char"), KS.GetMarkIn(e.id, "account")
+      e.scope = KS.GetItemScope(e.id)
+      e.level = KS.GetLevel(e.id)
+      e.set = e.level > KS.GetOwnLevel(e.id)
+    end
   end
   -- Most protected first, then by name, when the window opens (or on Re-sort); after that each row keeps its
   -- place, so changing a mark doesn't move it. Items new since then go at the end.
   if not order then
     table.sort(list, ByMark)
     order, orderN = {}, #list
-    for i, e in ipairs(list) do order[e.id] = i end
+    for i, e in ipairs(list) do order[e.key] = i end
   end
   for _, e in ipairs(list) do
-    if not order[e.id] then orderN = orderN + 1; order[e.id] = orderN end
+    if not order[e.key] then orderN = orderN + 1; order[e.key] = orderN end
     if Matches(text, e) then out[#out + 1] = e end
   end
-  table.sort(out, function(a, b) return order[a.id] < order[b.id] end)
+  table.sort(out, function(a, b) return order[a.key] < order[b.key] end)
   return out
 end
 
@@ -291,14 +307,31 @@ local function Row(i)
   r.name:SetPoint("LEFT", 24, 0)
   r.name:SetWidth(COL_NAME - 26)
   r.name:SetJustifyH("LEFT")
-  r.char = Column(r, function() return (r.entry or NONE).char or DEFAULT end,
+  -- This character's column; on a copy's row, the copy's own mark ("Item's mark": none of its own; a soulbound
+  -- copy always has its own).
+  r.char = Column(r, function()
+      local e = r.entry or NONE
+      if e.guid then return e.copyMark or (e.soulbound and e.own) or DEFAULT end
+      return e.char or DEFAULT
+    end,
     function()
-      local list = { DEFAULT }
-      for _, l in ipairs(LevelChoices((r.entry or NONE).char)) do list[#list + 1] = l end
+      local e = r.entry or NONE
+      local list = (e.guid and e.soulbound) and {} or { DEFAULT }
+      for _, l in ipairs(LevelChoices(e.guid and e.own or e.char)) do list[#list + 1] = l end
       return list
     end,
-    function(c) return c == DEFAULT and "|cff9d9d9dAccount default|r" or KS.LevelText(c) end,
-    function(c) KS.SetMarkIn(r.id, "char", c ~= DEFAULT and c or nil) end)
+    function(c)
+      if c ~= DEFAULT then return KS.LevelText(c) end
+      return (r.entry or NONE).guid and "|cff9d9d9dItem's mark|r" or "|cff9d9d9dAccount default|r"
+    end,
+    function(c)
+      local e = r.entry or NONE
+      if e.guid then
+        KS.SetCopyMark({ guid = e.guid, id = e.id, link = e.link, soulbound = e.soulbound, bag = e.bag }, c ~= DEFAULT and c or nil)
+      else
+        KS.SetMarkIn(r.id, "char", c ~= DEFAULT and c or nil)
+      end
+    end)
   r.char:SetPoint("LEFT", COL_NAME, 0)
   r.account = Column(r, function() return (r.entry or NONE).account or KS.LEVELS.NORMAL end,
     function() return LevelChoices((r.entry or NONE).account) end,
@@ -312,7 +345,7 @@ local function Row(i)
   r:SetScript("OnEnter", function(self)
     if not GameTooltip then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetHyperlink("item:" .. self.id)
+    GameTooltip:SetHyperlink((self.entry and self.entry.guid and self.entry.link) or ("item:" .. self.id))
     GameTooltip:Show()
   end)
   r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -329,11 +362,14 @@ local function Refresh()
   local marked = 0
   for i, e in ipairs(list) do
     local r = Row(i)
-    r.id, r.link, r.entry = e.id, ItemLink(e.id), e
+    r.id, r.link, r.entry = e.id, e.link or ItemLink(e.id), e
     r.icon:SetTexture((GetInstant and select(5, GetInstant(e.id))) or 134400)
-    r.name:SetText(GetItemInfo(e.id) and r.link or e.name)
+    local name = (e.link or GetItemInfo(e.id)) and r.link or e.name
+    if e.guid then name = name .. " |cff9d9d9d(" .. (e.where == "bank" and "a copy in the bank" or "this copy") .. ")|r" end
+    r.name:SetText(name)
     r.char.Update()
     r.account.Update()
+    r.account[e.guid and "Hide" or "Show"](r.account)
     r.mark:SetText(KS.LevelText(e.level) .. (e.set and " |cff9d9d9d(set)|r" or ""))
     r:Show()
     if e.scope then marked = marked + 1 end
@@ -343,7 +379,7 @@ local function Refresh()
   if #list == 0 then
     win.count:SetText(text ~= "" and "Nothing matches." or "Nothing marked yet: Alt+Click an item in your bags, or tick Items in my bags.")
   else
-    win.count:SetText(("%d shown, %d with a mark. This character's mark wins over All characters."):format(#list, marked))
+    win.count:SetText(("%d shown, %d with a mark. This character's mark wins over All characters; a copy's own mark wins over both."):format(#list, marked))
   end
 end
 KS.RefreshMarkList = Refresh

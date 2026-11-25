@@ -1576,9 +1576,10 @@ local function AutoLevel(info, bag, slot)
     if not auto.boeMail then return nil end
     return MAIL
   end
-  -- Soulbound gear this character can't use (or not for more than a few levels): Junk, on this character only.
+  -- Soulbound gear this character can't use (or not for more than a few levels): Junk, on this character only. Not a
+  -- BoE item that's become soulbound: that copy is yours, and never takes its item's Junk mark (Copies.lua).
   if info.isBound and (classID == WEAPON or classID == ARMOR) and not NEVER_JUNK_SLOT[equipLoc]
-      and KS.UnusableReason(classID, subclassID, minLevel) then
+      and KS.BindKind(id) ~= "boe" and KS.UnusableReason(classID, subclassID, minLevel) then
     if not auto.unusableJunk then return nil end
     if (quality or 0) >= 2 and KS.IsEnchanter() then return false, "char" end -- theirs to disenchant
     return JUNK, "char"
@@ -2188,6 +2189,8 @@ local function HookTooltip()
     local level = KS.GetLevel(data and data.id)
     local setName, setLevel = KS.GetSetProtection(data and data.id)
     local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set \"" .. setName .. "\")|r") or ScopeText(KS.GetItemScope(data.id))
+    local copyLevel = KS.TooltipCopyLevel and KS.TooltipCopyLevel(data) -- this copy's (Copies.lua)
+    if copyLevel then level, from = copyLevel, " |cff9d9d9d(this copy)|r" end
     if level ~= NORMAL then tip:AddLine("Standing Orders: " .. LevelText(level) .. from) end
   end)
 end
@@ -2502,6 +2505,13 @@ local TESTS = {
       and not H(MAIL, "vendor") and H(LOCK, "mail") and H(MAIL, "mail") and not H(KS.LEVELS.DISENCHANT, "mail")
       and not H(NORMAL, "vendor") and not H(NORMAL, "mail")
     d[#d + 1] = Detail("vendor and mailbox tints", tintOk and "right" or "WRONG", tintOk and "pass" or "fail")
+    -- Copy marks (Copies.lua): what a soulbound copy takes from its item's mark, and item GUIDs on this client.
+    local S = KS.SoulboundLevel
+    local boundOk = S and S(0, MAIL) == NORMAL and S(0, LOCK) == LOCK and S(0, ONME) == ONME
+    d[#d + 1] = Detail("soulbound copies: no Mail mark, protection kept", boundOk and "right" or "WRONG", boundOk and "pass" or "fail")
+    local guids = C_Item and C_Item.GetItemGUID and ItemLocation and ItemLocation.CreateFromBagAndSlot and true or false
+    d[#d + 1] = Detail("item GUIDs for copy marks", guids and ("yes; %d copy marks on this character"):format(#KS.MarkedCopies())
+      or "not on this client: no copy marks", guids and "pass" or "warn")
     -- Chat logging (ChatLog.lua): a known level; with no saved choice, basic in a dev build and off in a release.
     local chosen = db and db.chatLog
     local level = KS.ChatLevel()
@@ -2687,6 +2697,10 @@ local function ListItems()
         end
       end
     end
+  end
+  for _, c in ipairs(KS.MarkedCopies()) do
+    any = true
+    Print("%s: %s |cff9d9d9d(one copy%s)|r", LevelText(c.level), c.link or ItemLink(c.id), c.where == "bank" and ", in the bank" or "")
   end
   if not any then Print("No items are marked. Alt+Click an item in your bags to mark it.") end
 end

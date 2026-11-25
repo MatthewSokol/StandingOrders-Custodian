@@ -224,6 +224,11 @@ CHECK("a Warrior at 20: plate from 40 becomes Junk, this character only", KS.Get
 CHECK("a Warrior: a wand (can't train wands) becomes Junk, this character only", KS.GetLevel(7102) == L.JUNK and KS.GetItemScope(7102) == "char", KS.GetLevel(7102))
 CHECK("cloth (everyone can wear it) stays", KS.GetLevel(7101) == L.NORMAL, KS.GetLevel(7101))
 CHECK("mail usable within 5 levels stays", KS.GetLevel(7104) == L.NORMAL, KS.GetLevel(7104))
+STUB_ITEMDB[7106] = { name = "Test Plate Boots", quality = 2, sellPrice = 300, classID = 4, subclassID = 4, equipLoc = "INVTYPE_FEET", minLevel = 40, bindType = 2 }
+STUB_BOUND[7106], STUB_BAGS[3][6] = true, 7106
+FIRE("BAG_UPDATE_DELAYED")
+RUN_TIMERS()
+CHECK("a BoE item that's soulbound isn't made Junk (its copy is yours)", KS.GetLevel(7106) == L.NORMAL, KS.GetLevel(7106))
 STUB_CLASS = "MAGE"
 STUB_PROFESSIONS = { { "Tailoring", 197 }, { "Enchanting", 333 } }
 STUB_BAGS[3][5] = 7105
@@ -883,6 +888,27 @@ CALL("/soc mark 7201", SlashCmdList.SOC, "mark 7201")
 CHECK("/soc mark (no copy): no This copy only", mm:IsShown() and not mm.copy:IsShown())
 mm:Hide()
 CALL("/soc altclick cycle", SlashCmdList.SOC, "altclick cycle")
+KS.SetCopyMark(KS.CopyAt(4, 1), L.LOCK, { quiet = true })
+CALL("/soc list", SlashCmdList.SOC, "list")
+local mw = SOCustodianMarks
+local function rowOf(key) for i, e in ipairs(mw.entries or {}) do if e.key == key then return mw.rows[i], e end end end
+local rG, eG = rowOf("Item-0-0-G")
+local rF, eF = rowOf("Item-0-0-F")
+CHECK("Marked items: a row for the soulbound copy and for a copy with its own mark", rG and eG.copyMark == L.LOCK and rF and eF.copyMark == L.LOCK and rowOf(7201) ~= nil)
+CHECK("...a copy's row has one column (no All characters)", rG and not rG.account:IsShown() and rG.name:GetText():find("this copy", 1, true) ~= nil)
+local gMenu, fMenu = MENU_RADIOS(rG.char), MENU_RADIOS(rF.char)
+CHECK("...no Item's mark choice for a soulbound copy; there is for another copy", gMenu[1] and gMenu[1].text ~= "|cff9d9d9dItem's mark|r" and fMenu[1] and fMenu[1].text == "|cff9d9d9dItem's mark|r")
+CALL("pick Item's mark for the unbound copy", fMenu[1].pick)
+CHECK("...which takes its own mark off", KS.CopyMark("Item-0-0-F") == nil and KS.GetSlotLevel(4, 1) == L.MAIL)
+for _, radio in ipairs(gMenu) do if radio.text == KS.LevelText(L.JUNK) then CALL("pick Junk for the soulbound copy", radio.pick) end end
+CHECK("...and a level there marks the copy", KS.CopyMark("Item-0-0-G") == L.JUNK)
+mw:Hide()
+KS.ResortMarkList()
+CHECK("tooltip: a copy's own mark", KS.TooltipCopyLevel({ id = 7201, guid = "Item-0-0-G" }) == L.JUNK)
+CHECK("...a soulbound copy of a Mail item: none", KS.TooltipCopyLevel({ id = 7201, lines = { { leftText = "Soulbound" } } }) == L.NORMAL and KS.TooltipCopyLevel({ id = 7201, lines = {} }) == nil)
+CHAT = {}
+CALL("/soc list print", SlashCmdList.SOC, "list print")
+CHECK("/soc list print lists copy marks", CHAT_HAS("(one copy)"))
 CHECK("simple mode lists Per copy as changed", table.concat(KS.AdvancedOn(), ","):find("new marks per copy", 1, true) ~= nil)
 local scopeMenu = MENU_RADIOS(panel.scopeChoice)
 CHECK("settings: Default marking offers Account wide, Per character, Per copy", #scopeMenu == 3 and scopeMenu[1].text == "Account wide" and scopeMenu[3].selected(), #scopeMenu)

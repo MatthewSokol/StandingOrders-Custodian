@@ -188,10 +188,16 @@ function KS.SetCopyMark(copy, level, opts)
     marks[copy.guid] = nil
   else
     level = KS.Effective(level)
-    local where, account = "bags", false
-    if KS.CopyPlace then where, account = KS.CopyPlace(copy.bag) end
-    marks[copy.guid] = { id = copy.id, link = link, level = level, bound = copy.soulbound and true or false,
-      owner = account and "account" or KS.CopyOwner(), where = where, seen = time() }
+    local r = marks[copy.guid]
+    if r then -- it keeps its place; marked while soulbound, the mark stays
+      r.level, r.link = level, link
+      if copy.soulbound then r.bound = true end
+    else
+      local where, account = "bags", false
+      if KS.CopyPlace then where, account = KS.CopyPlace(copy.bag) end
+      marks[copy.guid] = { id = copy.id, link = link, level = level, bound = copy.soulbound and true or false,
+        owner = account and "account" or KS.CopyOwner(), where = where, seen = time() }
+    end
   end
   if not (opts and opts.quiet) then
     if level == nil then
@@ -220,12 +226,12 @@ function KS.ToggleScopeAt(bag, slot, id, link)
 end
 
 -- This character's copy marks (and those in the warband bank), for the Marked items window and /soc list print:
--- { guid, id, link, level, where }.
+-- { guid, id, link, level, where, bound }.
 function KS.MarkedCopies()
   local out, me = {}, KS.CopyOwner()
   for guid, r in pairs(Marks() or {}) do
     if r.owner == me or r.owner == "account" then
-      out[#out + 1] = { guid = guid, id = r.id, link = r.link, level = KS.Effective(r.level), where = r.where }
+      out[#out + 1] = { guid = guid, id = r.id, link = r.link, level = KS.Effective(r.level), where = r.where, bound = r.bound }
     end
   end
   return out
@@ -278,6 +284,20 @@ function KS.LockedCopyLevel(id)
     end
   end
   return best or KS.GetLevel(id)
+end
+
+-- For the tooltip line: the level of the copy a tooltip shows (data.guid, for items in your bags), when it has a mark
+-- of its own or its item's mark doesn't apply to it as is (soulbound, from the tooltip's lines); else nil.
+function KS.TooltipCopyLevel(data)
+  local id = data and data.id
+  if not id then return nil end
+  local own = KS.CopyMark(data.guid)
+  if own then return KS.WithSet(id, own) end
+  local item = KS.GetOwnLevel(id)
+  if not ((item == MAIL or item == JUNK or item == DISENCHANT) and type(data.lines) == "table") then return nil end
+  for _, line in ipairs(data.lines) do
+    if line.leftText == (ITEM_SOULBOUND or "Soulbound") then return KS.WithSet(id, KS.SoulboundLevel(id, item)) end
+  end
 end
 
 -- Whether buyback slot i holds a soulbound item: from its tooltip ("Soulbound").
