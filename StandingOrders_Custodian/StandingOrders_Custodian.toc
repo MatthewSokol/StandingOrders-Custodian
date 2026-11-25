@@ -15,6 +15,7 @@
 
 Custodian.lua
 Copies.lua
+CopyTrack.lua
 ChatLog.lua
 Highlights.lua
 Clicks.lua

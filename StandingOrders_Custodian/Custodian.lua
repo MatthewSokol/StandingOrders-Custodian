@@ -96,6 +96,7 @@ local function Log(msg, ...)
   Debug(msg)
   if mechanic then mechanic:Log(ADDON, msg, mechanic.Categories and mechanic.Categories.CORE) end
 end
+KS.Log = Log -- for CopyTrack.lua
 
 -- Messages about what Custodian did on its own (auto-marks, buybacks, items moved back, blocked actions): always
 -- kept in the log (/soc log), and shown in chat too only with "Show Custodian's own messages in chat" on

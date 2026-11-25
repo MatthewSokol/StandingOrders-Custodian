@@ -780,6 +780,62 @@ KS.SetCopyMark(copyA, nil, { quiet = true })
 KS.SetCopyMark(copyB, nil, { quiet = true })
 CHECK("taking the copy marks off leaves none", next(StandingOrdersCustodianDB.copyMarks) == nil)
 
+-- CopyTrack.lua: soulbound copies stop following their item's mark; a sold copy keeps its mark through a buyback;
+-- marks of copies that are gone come off at the next login.
+local function scan(event) FIRE(event or "BAG_UPDATE_DELAYED"); RUN_TIMERS() end
+local cm = StandingOrdersCustodianDB.copyMarks
+A(7201, L.MAIL)
+scan()
+CHECK("a soulbound copy of a Mail item gets its own mark: none", cm["Item-0-0-B"] and cm["Item-0-0-B"].level == L.NORMAL and cm["Item-0-0-B"].bound == true)
+CHECK("...an unbound copy keeps following its item", cm["Item-0-0-A"] == nil and KS.GetSlotLevel(4, 1) == L.MAIL)
+CHECK("...and you're told", LOG_HAS("These copies are soulbound"))
+A(7201, L.LOCK)
+CHECK("from then on the soulbound copy doesn't follow its item's mark", KS.GetSlotLevel(4, 2) == L.NORMAL and KS.GetSlotLevel(4, 1) == L.LOCK)
+KS.SetCopyMark(KS.CopyAt(4, 2), L.JUNK, { quiet = true })
+scan()
+CHECK("a mark given after it's soulbound stays", KS.GetSlotLevel(4, 2) == L.JUNK)
+A(7201, L.NORMAL)
+KS.SetCopyMark(KS.CopyAt(4, 1), L.JUNK, { quiet = true })
+CHECK("an unbound copy can have a Junk mark of its own", KS.GetSlotLevel(4, 1) == L.JUNK and cm["Item-0-0-A"].bound == false)
+STUB_BAGS[4][1], spare.bound, STUB_EQUIPPED[9] = nil, true, spare
+scan("PLAYER_EQUIPMENT_CHANGED")
+CHECK("equipped (now soulbound): its Junk mark comes off", cm["Item-0-0-A"].level == L.NORMAL and cm["Item-0-0-A"].bound == true and cm["Item-0-0-A"].where == "bags")
+STUB_EQUIPPED[9], STUB_BAGS[4][1] = nil, spare
+KS.SetCopyMark(KS.CopyAt(4, 1), L.LOCK, { quiet = true })
+scan("MERCHANT_SHOW")
+STUB_BAGS[4][1], STUB_BUYBACK, STUB_BUYBACK_NEWGUID = nil, { spare }, "Item-0-0-E"
+CHAT = {}
+KS.ScanCopies()
+CHECK("a sold copy is remembered", cm["Item-0-0-A"] and cm["Item-0-0-A"].where == "sold", cm["Item-0-0-A"] and cm["Item-0-0-A"].where)
+scan("MERCHANT_UPDATE")
+CHECK("a Locked copy sold by accident is bought back", #STUB_BUYBACK == 0 and CHAT_HAS("Test Bracers"))
+CHECK("...and keeps its mark, even with a new GUID", cm["Item-0-0-E"] and cm["Item-0-0-E"].level == L.LOCK and cm["Item-0-0-E"].where == "bags" and cm["Item-0-0-A"] == nil)
+scan("MERCHANT_CLOSED")
+STUB_BUYBACK_NEWGUID = nil
+for s = 1, 16 do if STUB_BAGS[0][s] == spare then STUB_BAGS[0][s] = nil end end
+STUB_TIME = 100 -- a while after the bank closed (earlier): what leaves now isn't on its way to the bank
+scan()
+STUB_TIME = nil
+CHECK("a marked copy that leaves with no window open is gone", cm["Item-0-0-E"].where == "gone", cm["Item-0-0-E"].where)
+scan("BANKFRAME_OPENED")
+STUB_BAGS[4][2], STUB_BAGS[6] = nil, { worn }
+scan()
+CHECK("a marked copy put in the bank is in the bank", cm["Item-0-0-B"].where == "bank")
+scan("BANKFRAME_CLOSED")
+STUB_NOW = 10000000
+cm["Item-X"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000B", where = "bags", seen = 1 }
+cm["Item-Y"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "away", seen = 1, left = 1 }
+cm["Item-Z"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "away", seen = 1, left = STUB_NOW - 3600 }
+FIRE("PLAYER_ENTERING_WORLD", false, true); RUN_TIMERS()
+CHECK("after a /reload nothing comes off (the buyback list is still there)", cm["Item-0-0-E"] and cm["Item-Y"])
+FIRE("PLAYER_ENTERING_WORLD", true, false); RUN_TIMERS()
+CHECK("at login, the gone copy's mark comes off", cm["Item-0-0-E"] == nil, cm["Item-0-0-E"] and cm["Item-0-0-E"].where)
+CHECK("...the bank's and another character's stay", cm["Item-0-0-B"] and cm["Item-X"])
+CHECK("...and one away (mail, auction) for over 60 days goes, a recent one stays", cm["Item-Y"] == nil and cm["Item-Z"])
+STUB_BAGS[6], STUB_BAGS[4], STUB_NOW = {}, nil, nil
+for k in pairs(cm) do cm[k] = nil end
+A(7201, L.NORMAL)
+
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
 CALL("/soc altclick menu", SlashCmdList.SOC, "altclick menu")
