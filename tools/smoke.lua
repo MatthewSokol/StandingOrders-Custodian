@@ -837,6 +837,10 @@ FIRE("PLAYER_ENTERING_WORLD", true, false); RUN_TIMERS()
 CHECK("at login, the gone copy's mark comes off", cm["Item-0-0-E"] == nil, cm["Item-0-0-E"] and cm["Item-0-0-E"].where)
 CHECK("...the bank's and another character's stay", cm["Item-0-0-B"] and cm["Item-X"])
 CHECK("...and one away (mail, auction) for over 60 days goes, a recent one stays", cm["Item-Y"] == nil and cm["Item-Z"])
+cm["Item-P"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "bags", seen = 1 }
+cm["Item-Q"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "bags", seen = 1 }
+FIRE("PLAYER_ENTERING_WORLD", true, false); RUN_TIMERS()
+CHECK("at login, none of two marked copies found in the bags: both kept (GUIDs may have changed)", cm["Item-P"] and cm["Item-P"].where == "bags" and cm["Item-Q"] and LOG_HAS("found in its bags at login; kept"))
 STUB_BAGS[6], STUB_BAGS[4], STUB_NOW = {}, nil, nil
 for k in pairs(cm) do cm[k] = nil end
 A(7201, L.NORMAL)

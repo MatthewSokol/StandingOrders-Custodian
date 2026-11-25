@@ -89,8 +89,8 @@ local function Short(links)
 end
 
 -- One pass over your bags and equipped items, and the bank's while it's open. Returns the copy GUIDs it saw, or nil
--- when your bags can't be read yet.
-function KS.ScanCopies()
+-- when your bags can't be read yet. login: the first pass after logging in (see the hold below).
+function KS.ScanCopies(login)
   local marks = KS.CopyMarks()
   if not marks or (C_Container.GetContainerNumSlots(0) or 0) == 0 then return nil end
   local me, now = KS.CopyOwner(), time()
@@ -154,8 +154,22 @@ function KS.ScanCopies()
     end
   end
   present = seen
+  -- At login, when none of this character's marked copies that were in its bags is found (two or more), their item
+  -- GUIDs may not have lasted the logout: keep them as they are rather than count them all as gone.
+  local held = false
+  if login then
+    local expected, found = 0, 0
+    for guid, r in pairs(marks) do
+      if r.owner == me and r.where == "bags" then
+        expected = expected + 1
+        if seen[guid] then found = found + 1 end
+      end
+    end
+    held = expected >= 2 and found == 0
+    if held and KS.Log then KS.Log("copy marks: none of this character's %d found in its bags at login; kept", expected) end
+  end
   -- Marked copies that were here and aren't any more (only once GUIDs could be read at all).
-  if guids > 0 then
+  if guids > 0 and not held then
     for guid, r in pairs(marks) do
       local mine = r.owner == me or (r.owner == "account" and bankRead)
       if not seen[guid] and mine and (r.where == "bags" or (bankRead and r.where == "bank")) then
@@ -192,7 +206,7 @@ end
 local function CleanUp(seen)
   local marks, me, now, n = KS.CopyMarks(), KS.CopyOwner(), time(), 0
   for guid, r in pairs(marks) do
-    local gone = r.owner == me and not seen[guid] and (r.where == "bags" or r.where == "sold" or r.where == "gone")
+    local gone = r.owner == me and not seen[guid] and (r.where == "sold" or r.where == "gone")
     local stale = r.where == "away" and now - (r.left or r.seen or now) > KEEP_AWAY
     if gone or stale then
       marks[guid] = nil
@@ -226,7 +240,7 @@ f:SetScript("OnEvent", function(_, event, isLogin)
   if event == "PLAYER_ENTERING_WORLD" then
     -- A while after login (not a /reload: the buyback list is still there), once your bags are surely loaded.
     C_Timer.After(10, function()
-      local seen = KS.ScanCopies()
+      local seen = KS.ScanCopies(isLogin == true)
       if seen and isLogin == true then CleanUp(seen) end
     end)
   elseif OPENS[event] then
