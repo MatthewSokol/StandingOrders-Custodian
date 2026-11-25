@@ -19,11 +19,29 @@ function KS.SetHighlight(on)
   end
   KS.RefreshHighlights()
 end
-function KS.HighlightPlace() return where end
+-- The window that's open, checked against the game's own frames each time: an event the client skips or another
+-- addon closing the window can't leave the tints on. Where a frame doesn't exist (a replacement UI), the events decide.
+local FRAMES = { vendor = "MerchantFrame", mail = "MailFrame" }
+local watched = {}
+local function Watch(frame)
+  if watched[frame] or not frame.HookScript then return end
+  watched[frame] = true
+  frame:HookScript("OnShow", function() KS.RefreshHighlights() end)
+  frame:HookScript("OnHide", function() KS.RefreshHighlights() end)
+end
+function KS.HighlightPlace()
+  if not where then return nil end
+  local frame = _G[FRAMES[where]]
+  if type(frame) == "table" and frame.IsVisible then
+    Watch(frame)
+    if not frame:IsVisible() then return nil end
+  end
+  return where
+end
 
 -- The tint a level gets here: RED, BLUE or nil.
 function KS.HighlightColor(level, place)
-  place = place or where
+  place = place or KS.HighlightPlace()
   if place == "vendor" then
     if level >= L.CONFIRM or level == L.DISENCHANT then return RED end
     if level == L.JUNK then return BLUE end
@@ -35,7 +53,7 @@ end
 
 -- Called for each bag button when its icon is updated (Custodian.lua's UpdateButton) and on a refresh.
 function KS.UpdateHighlight(btn, bag, slot)
-  local color = where and KS.GetHighlight() and bag and slot and KS.HighlightColor(KS.GetSlotLevel(bag, slot))
+  local color = KS.GetHighlight() and KS.HighlightPlace() and bag and slot and KS.HighlightColor(KS.GetSlotLevel(bag, slot))
   local tex = tints[btn]
   if not color then
     if tex then tex:Hide() end
@@ -64,6 +82,8 @@ end
 local function SetPlace(place)
   where = place
   KS.RefreshHighlights()
+  -- The game shows its window in the same event: look again once it's up.
+  if place and C_Timer then C_Timer.After(0, KS.RefreshHighlights) end
 end
 
 local f = CreateFrame("Frame")
@@ -80,7 +100,9 @@ end)
 -- /soc highlight [on|off]
 function KS.HighlightCommand(rest)
   if rest == "on" or rest == "off" then KS.SetHighlight(rest == "on") else KS.SetHighlight(not KS.GetHighlight()) end
-  KS.Print("Vendor and mailbox highlights: %s (red: can't be sold or mailed; blue: Junk at a vendor, Mail at the mailbox).",
-    KS.GetHighlight() and "on" or "off")
+  local place = KS.HighlightPlace()
+  KS.Print("Vendor and mailbox highlights: %s, %s (red: can't be sold or mailed; blue: Junk at a vendor, Mail at the mailbox).",
+    KS.GetHighlight() and "on" or "off",
+    place == "vendor" and "showing at this vendor" or place == "mail" and "showing at this mailbox" or "shown only at a vendor or the mailbox")
   if KS.RefreshSettings then KS.RefreshSettings() end
 end

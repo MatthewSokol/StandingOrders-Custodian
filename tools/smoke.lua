@@ -552,6 +552,19 @@ CALL("/soc highlight on", SlashCmdList.SOC, "highlight on")
 CHECK("/soc highlight on: tints again, nothing saved", KS.HighlightShown(elv) ~= nil and StandingOrdersCustodianDB.highlight == nil)
 FIRE("MERCHANT_CLOSED")
 CHECK("closing the vendor clears the tints", KS.HighlightPlace() == nil and not KS.HighlightShown(elv))
+local hooks = {}
+MerchantFrame = { shown = true, IsVisible = function(s) return s.shown end, HookScript = function(_, k, fn) hooks[k] = fn end }
+KS.SetLevel(7001, L.LOCK, nil, { quiet = true, scope = "account" })
+FIRE("MERCHANT_SHOW")
+CHECK("with the vendor window up, the tint shows", KS.HighlightShown(elv) ~= nil)
+MerchantFrame.shown = false
+if hooks.OnHide then hooks.OnHide() end
+CHECK("the vendor window gone without MERCHANT_CLOSED: no tint", KS.HighlightPlace() == nil and not KS.HighlightShown(elv))
+FIRE("BAG_UPDATE_DELAYED")
+CHECK("...and none after a bag update either", not KS.HighlightShown(elv))
+FIRE("MERCHANT_CLOSED")
+MerchantFrame = nil
+KS.SetLevel(7001, L.JUNK, nil, { quiet = true, scope = "account" })
 FIRE("MAIL_SHOW")
 CHECK("at the mailbox a Junk item isn't tinted", KS.HighlightPlace() == "mail" and not KS.HighlightShown(elv))
 KS.SetLevel(7001, L.MAIL, nil, { quiet = true, scope = "account" })
