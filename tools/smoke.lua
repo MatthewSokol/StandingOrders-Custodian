@@ -737,7 +737,7 @@ KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 -- where it fits: never Mail, and a BoE item's Junk or Disenchant neither.
 STUB_ITEMDB[7201] = { name = "Test Bracers", quality = 2, sellPrice = 500, classID = 4, subclassID = 2, bindType = 2, stack = 1, equipLoc = "INVTYPE_WRIST" }
 STUB_ITEMDB[7202] = { name = "Test Cloak", quality = 2, sellPrice = 300, classID = 4, subclassID = 1, bindType = 1, stack = 1, equipLoc = "INVTYPE_CLOAK" }
-STUB_ITEMDB[7203] = { name = "Test Draught", quality = 1, sellPrice = 10, classID = 0, subclassID = 0, stack = 5 }
+STUB_ITEMDB[7203] = { name = "Test Pebble", quality = 2, sellPrice = 10, classID = 15, subclassID = 0, stack = 5 }
 local spare, worn, cloak = { id = 7201, guid = "Item-0-0-A" }, { id = 7201, guid = "Item-0-0-B", bound = true }, { id = 7202, guid = "Item-0-0-C", bound = true }
 STUB_BAGS[4] = { spare, worn, cloak, { id = 7203, guid = "Item-0-0-D", bound = true } }
 local copyA, copyB = KS.CopyAt(4, 1), KS.CopyAt(4, 2)
@@ -835,6 +835,63 @@ CHECK("...and one away (mail, auction) for over 60 days goes, a recent one stays
 STUB_BAGS[6], STUB_BAGS[4], STUB_NOW = {}, nil, nil
 for k in pairs(cm) do cm[k] = nil end
 A(7201, L.NORMAL)
+
+-- Marking per copy: Alt+Click on a soulbound copy marks just it; /soc scope copy does that for any copy that doesn't
+-- stack; the mark menu's This copy only; Alt+Shift+Left-click; the Default marking dropdown.
+local loose, kept = { id = 7201, guid = "Item-0-0-F" }, { id = 7201, guid = "Item-0-0-G", bound = true }
+STUB_BAGS[4] = { loose, kept, { id = 7203, guid = "Item-0-0-H" } }
+local function elvAt(bag, slot)
+  local b = plain({ BagID = bag, SlotID = slot })
+  CALL("ElvUI UpdateSlot", ElvB.UpdateSlot, ElvB, { Bags = { [bag] = { [slot] = b } } }, bag, slot)
+  return b
+end
+local function altAt(b, shift)
+  STUB_ALT, STUB_SHIFT = true, shift
+  CALL("Alt+Left-click", b.__h_PreClick, b, "LeftButton")
+  STUB_ALT, STUB_SHIFT = false, false
+end
+local eLoose, eKept, ePebble = elvAt(4, 1), elvAt(4, 2), elvAt(4, 3)
+local up = KS.ClickStep(L.NORMAL, true)
+altAt(eKept)
+CHECK("Alt+Click on a soulbound copy marks that copy only", KS.CopyMark("Item-0-0-G") == up and KS.GetLevel(7201) == L.NORMAL and KS.GetSlotLevel(4, 1) == L.NORMAL)
+altAt(eLoose)
+CHECK("...on an unbound copy (Account wide): the item", KS.GetLevel(7201) == up and KS.CopyMark("Item-0-0-F") == nil)
+A(7201, L.NORMAL)
+CALL("/soc scope copy", SlashCmdList.SOC, "scope copy")
+CHECK("/soc scope copy", KS.GetScope() == "copy" and StandingOrdersCustodianDB.scope == "copy")
+altAt(eLoose)
+CHECK("Per copy: Alt+Click marks just the copy you click", KS.CopyMark("Item-0-0-F") == up and KS.GetLevel(7201) == L.NORMAL)
+altAt(ePebble)
+CHECK("...an item that stacks gets an item mark", KS.GetLevel(7203) == up and KS.CopyMark("Item-0-0-H") == nil)
+CHAT = {}
+altAt(eKept, true)
+CHECK("Alt+Shift+Left-click on a soulbound copy: its marks stay per copy", CHAT_HAS("its marks are for this copy only") and KS.CopyMark("Item-0-0-G") == up)
+altAt(eLoose, true)
+CHECK("...on a copy with its own mark: the mark goes to the item, all characters", KS.CopyMark("Item-0-0-F") == nil and KS.GetLevel(7201) == up and KS.GetItemScope(7201) == "account")
+CALL("/soc altclick menu", SlashCmdList.SOC, "altclick menu")
+altAt(eKept)
+local mm = SOCustodianMarkMenu
+CHECK("the menu on a soulbound copy: This copy only, ticked and fixed", mm:IsShown() and mm.copy:IsShown() and mm.copy:GetChecked() and not mm.char:IsShown())
+CALL("pick Locked", KS.PickMark, L.LOCK)
+CHECK("...picking marks that copy", KS.CopyMark("Item-0-0-G") == L.LOCK and KS.GetLevel(7201) == up)
+altAt(eLoose)
+CHECK("on an unbound copy (Per copy): This copy only ticked, This character only not", mm.copy:IsShown() and mm.copy:GetChecked() and mm.char:IsShown() and not mm.char:GetChecked())
+mm.copy:SetChecked(false)
+CALL("pick Mail with This copy only unticked", KS.PickMark, L.MAIL)
+CHECK("...the pick marks the item", KS.GetLevel(7201) == L.MAIL and KS.CopyMark("Item-0-0-F") == nil)
+CALL("/soc mark 7201", SlashCmdList.SOC, "mark 7201")
+CHECK("/soc mark (no copy): no This copy only", mm:IsShown() and not mm.copy:IsShown())
+mm:Hide()
+CALL("/soc altclick cycle", SlashCmdList.SOC, "altclick cycle")
+CHECK("simple mode lists Per copy as changed", table.concat(KS.AdvancedOn(), ","):find("new marks per copy", 1, true) ~= nil)
+local scopeMenu = MENU_RADIOS(panel.scopeChoice)
+CHECK("settings: Default marking offers Account wide, Per character, Per copy", #scopeMenu == 3 and scopeMenu[1].text == "Account wide" and scopeMenu[3].selected(), #scopeMenu)
+CALL("settings: pick Account wide", scopeMenu[1] and scopeMenu[1].pick)
+CHECK("...back to Account wide (nothing saved)", KS.GetScope() == "account" and StandingOrdersCustodianDB.scope == nil)
+for k in pairs(cm) do cm[k] = nil end
+STUB_BAGS[4] = nil
+A(7201, L.NORMAL)
+A(7203, L.NORMAL)
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")

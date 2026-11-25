@@ -30,6 +30,16 @@ end
 
 local menu
 
+-- The mark the menu ticks: the copy's own with "This copy only" (Copies.lua), else the item's.
+local function MenuOwn()
+  if menu.copyRef and menu.copy:GetChecked() then return KS.CopyOwnLevel(menu.copyRef) end
+  return KS.GetOwnLevel(menu.itemID)
+end
+local function Tick()
+  local own = MenuOwn()
+  for _, b in ipairs(menu.buttons) do b.check[b.level == own and "Show" or "Hide"](b.check) end
+end
+
 local function BuildMenu()
   menu = Panel("SOCustodianMarkMenu", 214)
   menu.title = menu:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -64,6 +74,12 @@ local function BuildMenu()
   menu.char:SetSize(24, 24)
   menu.char:SetPoint("TOPLEFT", 8, y - 2)
   menu.char.Text:SetText("This character only")
+  -- Opened from a bag slot: "This copy only" (Copies.lua). The two boxes take turns.
+  menu.copy = CreateFrame("CheckButton", nil, menu, "UICheckButtonTemplate")
+  menu.copy:SetSize(24, 24)
+  menu.copy.Text:SetText("This copy only")
+  menu.char:SetScript("OnClick", function(self) if self:GetChecked() then menu.copy:SetChecked(false) end Tick() end)
+  menu.copy:SetScript("OnClick", function(self) if self:GetChecked() then menu.char:SetChecked(false) end Tick() end)
   menu:SetHeight(-y + 34)
   tinsert(UISpecialFrames, "SOCustodianMarkMenu") -- Esc closes it
 end
@@ -72,8 +88,12 @@ end
 -- ticked mark again takes it off (Normal), like unticking a box.
 function KS.PickMark(level)
   if not (menu and menu.itemID) then return end
-  if level == KS.GetOwnLevel(menu.itemID) then level = KS.LEVELS.NORMAL end
-  KS.SetLevel(menu.itemID, level, menu.link, { scope = menu.char:GetChecked() and "char" or "account" })
+  if level == MenuOwn() then level = KS.LEVELS.NORMAL end
+  if menu.copyRef and menu.copy:GetChecked() then
+    KS.SetCopyMark(menu.copyRef, level)
+  else
+    KS.SetLevel(menu.itemID, level, menu.link, { scope = menu.char:GetChecked() and "char" or "account" })
+  end
   menu:Hide()
 end
 
@@ -84,24 +104,46 @@ function KS.ShowMarkMenu(id, link, anchor, beside)
   if not menu then BuildMenu() end
   menu.itemID, menu.link = id, link or ItemLink(id)
   menu.title:SetText(menu.link)
-  local own = KS.GetOwnLevel(id)
+  local bag, slot
+  if beside and KS.ButtonSlot then bag, slot = KS.ButtonSlot(beside) end
+  local copy = bag and slot and KS.CopyAt and KS.CopyAt(bag, slot)
+  if copy and copy.id ~= id then copy = nil end
+  menu.copyRef = copy
+  local perCopy = copy and (copy.soulbound or KS.CopyMark(copy.guid) or KS.GetScope() == "copy")
+  local own = perCopy and KS.CopyOwnLevel(copy) or KS.GetOwnLevel(id)
   -- Only the marks in use (Always on me with the advanced options, in the Alt+Click sequence, or as this item's mark).
   local shown, y = {}, -32
   for _, level in ipairs(KS.ShownLevels(own)) do shown[level] = true end
   for _, b in ipairs(menu.buttons) do
     b.text:SetText(KS.LevelText(b.level))
     KS.MarkTexture(b.icon, b.level) -- in the icon style in use (Icons.lua)
-    b.check[b.level == own and "Show" or "Hide"](b.check)
     b:ClearAllPoints()
     b:SetPoint("TOPLEFT", 10, y)
     b[shown[b.level] and "Show" or "Hide"](b)
     if shown[b.level] then y = y - 22 end
   end
   menu.char:ClearAllPoints()
-  menu.char:SetPoint("TOPLEFT", 8, y - 2)
-  menu:SetHeight(-y + 34)
+  menu.copy:ClearAllPoints()
+  local height = -y + 34
+  if copy and copy.soulbound then -- soulbound: per copy, always
+    menu.char:Hide()
+    menu.copy:SetPoint("TOPLEFT", 8, y - 2)
+    menu.copy.Text:SetText("This copy only (soulbound)")
+    menu.copy:Disable()
+  else
+    menu.char:SetPoint("TOPLEFT", 8, y - 2)
+    menu.char:Show()
+    menu.copy:SetPoint("TOPLEFT", 8, y - 26)
+    menu.copy.Text:SetText("This copy only")
+    menu.copy:Enable()
+    if copy then height = height + 24 end
+  end
+  menu.copy[copy and "Show" or "Hide"](menu.copy)
+  menu.copy:SetChecked(perCopy and true or false)
   local scope = KS.GetItemScope(id)
-  menu.char:SetChecked(scope == "char" or (not scope and (KS.IsPersonal(id) or KS.GetScope() == "char")))
+  menu.char:SetChecked(not perCopy and (scope == "char" or (not scope and (KS.IsPersonal(id) or KS.GetScope() == "char"))))
+  menu:SetHeight(height)
+  Tick()
   menu:ClearAllPoints()
   local x, y = GetCursorPosition and GetCursorPosition()
   local scale = UIParent:GetEffectiveScale()
@@ -384,6 +426,7 @@ local function BuildWindow()
   hooksecurefunc(KS, "SetLevel", Refresh)
   hooksecurefunc(KS, "SetMarkIn", Refresh)
   hooksecurefunc(KS, "ToggleItemScope", Refresh)
+  hooksecurefunc(KS, "SetCopyMark", Refresh)
   local names = CreateFrame("Frame")
   pcall(names.RegisterEvent, names, "GET_ITEM_INFO_RECEIVED")
   names:SetScript("OnEvent", function()

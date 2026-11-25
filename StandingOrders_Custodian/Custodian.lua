@@ -176,6 +176,8 @@ end
 -- Where new marks go (Alt+Click, the mark menu, /soc <level> <item>): "account" (default), "char", or "copy" (the copy
 -- you click; Copies.lua. A typed command names an item, not a copy, so it marks the item for all characters).
 function KS.GetScope() return (db and db.scope) or "account" end
+KS.SCOPES = { "account", "char", "copy" }
+KS.SCOPE_NAMES = { account = "Account wide", char = "Per character", copy = "Per copy" }
 function KS.SetScope(scope)
   db.scope = (scope == "char" or scope == "copy") and scope or nil
 end
@@ -955,7 +957,7 @@ local function PreClick(btn, mouse)
   -- Alt+Shift+Left-click moves the mark between all characters and this character only.
   if IsAltKeyDown() and IsShiftKeyDown() and not IsControlKeyDown() and mouse == "LeftButton" then
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
-    KS.ToggleItemScope(info.itemID, info.hyperlink)
+    KS.ToggleScopeAt(bag, slot, info.itemID, info.hyperlink) -- a soulbound copy's marks stay per copy (Copies.lua)
     return
   end
 
@@ -966,7 +968,7 @@ local function PreClick(btn, mouse)
       KS.ShowMarkMenu(info.itemID, info.hyperlink, nil, btn)
       return
     end
-    KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton")
+    KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton", bag, slot)
     return
   end
 
@@ -1972,22 +1974,18 @@ local function CreatePanel()
   end
   prev = Note(adv, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters. Soulbound gear counts as usable when the class can train that weapon type or will wear that armor within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins); enchanters keep green and better to disenchant.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
-  -- Advanced: where new marks go.
-  local scopeHeader = Header(adv, "New marks (Alt+Click, /soc <level>)", prev)
+  -- Advanced: where new marks go (Alt+Click, the mark menu, /soc <level>).
+  local scopeHeader = Header(adv, "Default marking", prev)
   scopeHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local acct = Check(adv, "Apply to all my characters", scopeHeader, -6, function()
-    KS.SetScope("account")
-    RefreshPanel()
-  end)
-  local char = Check(adv, "Apply to this character only", acct, -2, function()
-    KS.SetScope("char")
-    RefreshPanel()
-  end)
-  refreshers[#refreshers + 1] = function()
-    acct:SetChecked(KS.GetScope() ~= "char")
-    char:SetChecked(KS.GetScope() == "char")
-  end
-  prev = Note(adv, "Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", char, 26, -2)
+  local scopeLabel = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  scopeLabel:SetPoint("TOPLEFT", scopeHeader, "BOTTOMLEFT", 4, -10)
+  scopeLabel:SetText("New marks apply")
+  local scopeChoice, showScope = ChoiceControl(adv, 160, function() return KS.SCOPES end, KS.GetScope,
+    function(c) return KS.SCOPE_NAMES[c] or c end, function(c) KS.SetScope(c) end)
+  scopeChoice:SetPoint("LEFT", scopeLabel, "RIGHT", 10, 0)
+  refreshers[#refreshers + 1] = showScope
+  panel.scopeChoice = scopeChoice
+  prev = Note(adv, "Account wide: to all your characters. Per character: to this one. Per copy: to just the item you Alt+Click (an item that stacks gets an item mark instead; /soc <level> <item> marks the item). Soulbound items are always marked per copy. Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", scopeLabel, -4, -14)
 
   -- Advanced: Custodian's own messages in chat.
   local chatHeader = Header(adv, "Chat", prev)
@@ -2158,6 +2156,7 @@ local function CreatePanel()
   KS.RefreshSettings = function() RefreshPanel(); FitPanel() end
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   outer.chatCheck, outer.clickChoice, outer.clickNote = panel.chatCheck, panel.clickChoice, panel.clickNote
+  outer.scopeChoice = panel.scopeChoice
   outer.altClickChecks, outer.marksButton = panel.altClickChecks, panel.marksButton
   outer.advCheck, outer.advNote, outer.simpleButton, outer.advanced = panel.advCheck, panel.advNote, panel.simpleButton, panel.advanced
   outer.clickEditor, outer.clickBack, outer.clickEnds, outer.grayCheck = panel.clickEditor, panel.clickBack, panel.clickEnds, panel.grayCheck
@@ -2716,7 +2715,7 @@ local function Help()
   print("  /soc junk||disenchant||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level (disenchant: kept from vendors, free to disenchant)")
   print("  /soc list [search] - the Marked items window: search, then change any mark (/soc list print: in chat)")
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
-  print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /soc scope account||char||copy - where new marks go (now " .. KS.SCOPE_NAMES[KS.GetScope()]:lower() .. "; soulbound items are always marked per copy)")
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
   print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || style game||addon || compare || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
@@ -2747,7 +2746,7 @@ local function Status()
   table.sort(parts)
   print("  professions: " .. (#parts > 0 and table.concat(parts, ", ") or "none found"))
   print("  equipment sets: " .. #KS.EquipmentSets() .. " on this character, default " .. KS.SetChoiceText(KS.GetSetDefault()))
-  print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
+  print("  new marks: " .. KS.SCOPE_NAMES[KS.GetScope()]:lower() .. "; copy marks on this character: " .. #KS.MarkedCopies())
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
     ", last cast: " .. (castRecord and (castRecord.kind .. " " .. tostring(castRecord.name or castRecord.id)) or "none") .. ")")
@@ -2784,9 +2783,10 @@ SlashCmdList.SOC = function(msg)
     KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope, reply = true }) -- pipes:ok (a pattern)
   elseif cmd == "sets" or cmd == "set" then
     SetsCommand(rest)
-  elseif cmd == "scope" and (rest == "char" or rest == "account") then
+  elseif cmd == "scope" and (rest == "char" or rest == "account" or rest == "copy") then
     KS.SetScope(rest)
-    Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
+    Print("New marks now go to %s (soulbound items: always the copy).", rest == "char" and "this character only"
+      or rest == "copy" and "just the copy you Alt+Click" or "all characters")
   elseif cmd == "icon" or cmd == "icons" then
     IconCommand(rest)
   elseif cmd == "settings" or cmd == "config" or cmd == "options" then

@@ -33,7 +33,7 @@ function KS.AdvancedOn()
   for _, key in ipairs(KS.AUTO_KEYS) do
     if AUTO_LABELS[key] and (KS.GetAuto(key) and true or false) ~= KS.AUTO_DEFAULTS[key] then out[#out + 1] = AUTO_LABELS[key] end
   end
-  if KS.GetScope() == "char" then out[#out + 1] = "new marks for this character only" end
+  if KS.GetScope() ~= "account" then out[#out + 1] = "new marks " .. KS.SCOPE_NAMES[KS.GetScope()]:lower() end
   if KS.GetHighlight and not KS.GetHighlight() then out[#out + 1] = "vendor and mailbox highlights off" end
   if StandingOrdersCustodianDB and StandingOrdersCustodianDB.chatLog then out[#out + 1] = "chat logging " .. KS.CHAT_LEVEL_NAMES[KS.ChatLevel()] end
   local size, anchor, alpha = KS.GetIconStyle()
