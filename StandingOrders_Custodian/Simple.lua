@@ -34,6 +34,7 @@ function KS.AdvancedOn()
     if AUTO_LABELS[key] and (KS.GetAuto(key) and true or false) ~= KS.AUTO_DEFAULTS[key] then out[#out + 1] = AUTO_LABELS[key] end
   end
   if KS.GetScope() == "char" then out[#out + 1] = "new marks for this character only" end
+  if KS.GetHighlight and not KS.GetHighlight() then out[#out + 1] = "vendor and mailbox highlights off" end
   if StandingOrdersCustodianDB and StandingOrdersCustodianDB.chatLog then out[#out + 1] = "chat logging " .. KS.CHAT_LEVEL_NAMES[KS.ChatLevel()] end
   local size, anchor, alpha = KS.GetIconStyle()
   local d = KS.ICON_DEFAULTS
@@ -55,6 +56,7 @@ function KS.ResetToSimple()
   end
   KS.SetScope("account")
   KS.SetChatLevel(nil) -- chat logging back to the build's default
+  if KS.SetHighlight then KS.SetHighlight(true) end
   for key, value in pairs(KS.ICON_DEFAULTS) do KS.SetIconStyle(key, value) end
   for _, set in ipairs(KS.EquipmentSets()) do KS.SetSetChoice(set.id, "default") end
   KS.SetSetChoice(nil, L.LOCK)
