@@ -7,6 +7,7 @@ KNOWN_EVENTS = {
   TRADE_PLAYER_ITEM_CHANGED = true, TRADE_SHOW = true, TRADE_CLOSED = true, TRADE_ACCEPT_UPDATE = true,
   MAIL_SEND_INFO_UPDATE = true, MAIL_SHOW = true, MAIL_CLOSED = true, EQUIPMENT_SETS_CHANGED = true, CURRENT_SPELL_CAST_CHANGED = true, UNIT_SPELLCAST_SENT = true,
   TRADE_SKILL_SHOW = true, TRADE_SKILL_UPDATE = true,
+  PLAYER_ENTERING_WORLD = true, PLAYER_EQUIPMENT_CHANGED = true, AUCTION_HOUSE_SHOW = true, AUCTION_HOUSE_CLOSED = true,
 }
 
 local frames = {}
@@ -105,14 +106,14 @@ function CHAT_HAS(text)
   return false
 end
 
--- Items: STUB_ITEMDB[id] = { name, quality, sellPrice, classID, subclassID, bindType, isCrafting, equipLoc }
+-- Items: STUB_ITEMDB[id] = { name, quality, sellPrice, classID, subclassID, bindType, isCrafting, equipLoc, stack }
 STUB_ITEMDB = {}
 local function link(id) return "|cffffffff|Hitem:" .. id .. "::::::::60:::::|h[" .. (STUB_ITEMDB[id] and STUB_ITEMDB[id].name or id) .. "]|h|r" end
 STUB_LINK = link
 local function info(id)
   local i = STUB_ITEMDB[id]
   if not i then return nil end
-  return i.name, link(id), i.quality, 1, i.minLevel or 1, "", "", 20, i.equipLoc or "", 134400, i.sellPrice or 0,
+  return i.name, link(id), i.quality, 1, i.minLevel or 1, "", "", i.stack or 20, i.equipLoc or "", 134400, i.sellPrice or 0,
     i.classID, i.subclassID or 0, i.bindType or 0, 0, nil, i.isCrafting or false
 end
 GetItemInfo = info
@@ -125,9 +126,43 @@ C_Item = {
   end,
   RequestLoadItemDataByID = function() end,
 }
--- Bags: STUB_BAGS[bag][slot] = itemID (stack of 1, unbound unless STUB_BOUND[id])
+-- Bags: STUB_BAGS[bag][slot] = itemID (stack of 1, unbound unless STUB_BOUND[id]), or one copy:
+-- { id, guid, bound, locked } (only copies have an item GUID). STUB_EQUIPPED[slot] likewise.
 STUB_BAGS = {}
 STUB_BOUND = {}
+STUB_EQUIPPED = {}
+local function slotv(bag, slot)
+  local v = STUB_BAGS[bag] and STUB_BAGS[bag][slot]
+  if type(v) == "table" then return v.id, v end
+  return v, nil
+end
+local function atLoc(loc)
+  if loc.equip then
+    local v = STUB_EQUIPPED[loc.equip]
+    if type(v) == "table" then return v.id, v end
+    return v, nil
+  end
+  return slotv(loc.bag, loc.slot)
+end
+local function boundAt(id, c) if c and c.bound ~= nil then return c.bound end return STUB_BOUND[id] or false end
+ItemLocation = {
+  CreateFromBagAndSlot = function(_, bag, slot) return { bag = bag, slot = slot } end,
+  CreateFromEquipmentSlot = function(_, slot) return { equip = slot } end,
+}
+C_Item_extra = {
+  DoesItemExist = function(loc) return atLoc(loc) ~= nil end,
+  GetItemGUID = function(loc)
+    local id, c = atLoc(loc)
+    if not id then error("GetItemGUID: no item at that location") end
+    return c and c.guid or nil
+  end,
+  IsBound = function(loc) local id, c = atLoc(loc); return boundAt(id, c) end,
+}
+GetInventoryItemID = function(_, slot) return (atLoc({ equip = slot })) end
+GetInventoryItemLink = function(_, slot) local id = atLoc({ equip = slot }); return id and STUB_LINK(id) end
+IsInventoryItemLocked = function(slot) local _, c = atLoc({ equip = slot }); return c and c.locked or false end
+UnitGUID = function(unit) return unit == "player" and (STUB_PLAYER_GUID or "Player-1-0000000A") or nil end
+time = function() return STUB_NOW or 1000000 end
 C_Container = {
   GetContainerNumSlots = function(bag) return STUB_BAGS[bag] and 16 or 0 end,
   GetContainerNumFreeSlots = function(bag)
@@ -137,15 +172,15 @@ C_Container = {
     return 16 - used, 0
   end,
   GetContainerItemInfo = function(bag, slot)
-    local id = STUB_BAGS[bag] and STUB_BAGS[bag][slot]
+    local id, c = slotv(bag, slot)
     local i = id and STUB_ITEMDB[id]
     if not i then return nil end
-    return { itemID = id, hyperlink = link(id), quality = i.quality, stackCount = 1, isLocked = false,
-      isBound = STUB_BOUND[id] or false, hasNoValue = (i.sellPrice or 0) == 0, iconFileID = 134400 }
+    return { itemID = id, hyperlink = link(id), quality = i.quality, stackCount = 1, isLocked = c and c.locked or false,
+      isBound = boundAt(id, c), hasNoValue = (i.sellPrice or 0) == 0, iconFileID = 134400 }
   end,
   GetContainerItemQuestInfo = function() return { isQuestItem = false } end,
   PickupContainerItem = function(bag, slot)
-    STUB_CURSOR = { bag = bag, slot = slot, id = STUB_BAGS[bag] and STUB_BAGS[bag][slot] }
+    STUB_CURSOR = { bag = bag, slot = slot, id = (slotv(bag, slot)), v = STUB_BAGS[bag] and STUB_BAGS[bag][slot] }
   end,
   ContainerIDToInventoryID = function(bag) return 30 + bag end,
   UseContainerItem = function() end,
@@ -155,7 +190,7 @@ local function drop(bag)
   STUB_BAGS[bag] = STUB_BAGS[bag] or {}
   for s = 1, 16 do
     if not STUB_BAGS[bag][s] then
-      STUB_BAGS[bag][s] = STUB_CURSOR.id
+      STUB_BAGS[bag][s] = STUB_CURSOR.v or STUB_CURSOR.id
       STUB_BAGS[STUB_CURSOR.bag][STUB_CURSOR.slot] = nil
       STUB_CURSOR = nil
       return
@@ -166,7 +201,13 @@ PutItemInBackpack = function() drop(0) end
 PutItemInBag = function(inv) drop(inv - 30) end
 GetCursorInfo = function() if STUB_CURSOR then return "item", STUB_CURSOR.id, link(STUB_CURSOR.id) end end
 ClearCursor = function() STUB_CURSOR = nil end
-C_Bank = { FetchPurchasedBankTabIDs = function(kind) return kind == 0 and { 6 } or {} end }
+C_Bank = {
+  FetchPurchasedBankTabIDs = function(kind) return kind == 0 and { 6 } or {} end,
+  -- The warband bank takes what isn't bound, and account-bound copies ({ account = true }).
+  IsItemAllowedInBankType = function(kind, loc) local id, c = atLoc(loc); return not boundAt(id, c) or (c and c.account) or false end,
+}
+for k, v in pairs(C_Item_extra) do C_Item[k] = v end
+C_Item_extra = nil
 Enum = {
   BankType = { Character = 0, Account = 2 },
   BagIndex = { ReagentBag = 5, CharacterBankTab_1 = 6, AccountBankTab_1 = 12 },
@@ -197,7 +238,24 @@ STUB_MERCHANT = {}
 GetMerchantNumItems = function() return #STUB_MERCHANT end
 GetMerchantItemLink = function(i) return STUB_MERCHANT[i] and link(STUB_MERCHANT[i]) end
 BuyMerchantItem = function() end
-GetNumBuybackItems = function() return 0 end
+-- Buyback: STUB_BUYBACK = { itemID or copy, ... }, the newest last. BuybackItem(i) puts it back in your bags, with
+-- a new item GUID when STUB_BUYBACK_NEWGUID is set (the game may or may not keep it).
+STUB_BUYBACK = {}
+GetNumBuybackItems = function() return #STUB_BUYBACK end
+GetBuybackItemLink = function(i) local v = STUB_BUYBACK[i]; local id = type(v) == "table" and v.id or v; return id and link(id) end
+BuybackItem = function(i)
+  local v = table.remove(STUB_BUYBACK, i)
+  if type(v) == "table" and STUB_BUYBACK_NEWGUID then v.guid = STUB_BUYBACK_NEWGUID end
+  STUB_CURSOR = { bag = 99, slot = 1, id = type(v) == "table" and v.id or v, v = v }
+  STUB_BAGS[99] = { v }
+  drop(0)
+  STUB_BAGS[99] = nil
+end
+C_TooltipInfo = { GetBuybackItem = function(i)
+  local v = STUB_BUYBACK[i]
+  local id = type(v) == "table" and v.id or v
+  return { lines = { { leftText = "item" }, boundAt(id, type(v) == "table" and v or nil) and { leftText = "Soulbound" } or nil } }
+end }
 STUB_PROFESSIONS = {} -- { { name, skillLine }, ... }
 STUB_CLASS, STUB_LEVEL = "WARRIOR", 60
 UnitClass = function() return STUB_CLASS, STUB_CLASS end

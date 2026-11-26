@@ -16,12 +16,14 @@ Other addons use its API through the `StandingOrdersCustodian` global (see below
 
 ## Item levels
 
-Levels are per item ID. A mark applies to all your characters, or to one character only:
+A mark applies to all your characters, to one character only, or to one copy of an item (that exact item, wherever it goes):
 
 - **Alt+Shift+Left-click** an item to move its mark between all characters and this character only.
-- `/soc scope char` makes new marks this-character-only by default (`/soc scope account` switches back), or use the switch in `/soc settings`.
-- A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal).
-- Tooltips and `/soc list` show *(this character)* for character marks.
+- **Default marking** (advanced options of `/soc settings`, or `/soc scope account|char|copy`): where new marks go. Account wide (the default), Per character, or Per copy (just the item you Alt+Click; an item that stacks gets an item mark instead).
+- A character's own mark wins over an account-wide one, so one character can treat an item differently (even as Normal), and a copy's own mark wins over both.
+- **Soulbound items are marked per copy.** Alt+Click (or the mark menu) on a soulbound item marks that copy only. A soulbound copy takes its item's mark only where it fits: it can't be mailed, so the item's Mail mark doesn't apply to it, and a BoE item you've equipped (so it's soulbound now) doesn't take its item's Junk or Disenchant mark either, only protection (Locked, Always on me). Such a copy gets a mark of its own, so it no longer follows its item's mark; a mark you give it afterwards (Junk, say) stays. Items that stack (potions, conjured food, quest items) can't be marked per copy.
+- Marks of copies that are gone (sold, destroyed, disenchanted, used up) are cleaned up at your next login. A Locked copy sold by mistake is still bought straight back, and keeps its mark.
+- Tooltips and `/soc list` show *(this character)* for character marks and *(this copy)* for copy marks; the Marked items window has a row for each soulbound item in your bags and each copy with a mark of its own.
 
 | Level | Icon | What happens |
 |---|---|---|

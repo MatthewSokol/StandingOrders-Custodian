@@ -96,6 +96,7 @@ local function Log(msg, ...)
   Debug(msg)
   if mechanic then mechanic:Log(ADDON, msg, mechanic.Categories and mechanic.Categories.CORE) end
 end
+KS.Log = Log -- for CopyTrack.lua
 
 -- Messages about what Custodian did on its own (auto-marks, buybacks, items moved back, blocked actions): always
 -- kept in the log (/soc log), and shown in chat too only with "Show Custodian's own messages in chat" on
@@ -172,10 +173,13 @@ function KS.GetItemScope(id)
   if id and db and db.items[id] then return "account" end
 end
 
--- Where new marks go (Alt+Click, /soc <level> <item>): "account" (default) or "char".
+-- Where new marks go (Alt+Click, the mark menu, /soc <level> <item>): "account" (default), "char", or "copy" (the copy
+-- you click; Copies.lua. A typed command names an item, not a copy, so it marks the item for all characters).
 function KS.GetScope() return (db and db.scope) or "account" end
+KS.SCOPES = { "account", "char", "copy" }
+KS.SCOPE_NAMES = { account = "Account wide", char = "Per character", copy = "Per copy" }
 function KS.SetScope(scope)
-  db.scope = (scope == "char") and "char" or "account"
+  db.scope = (scope == "char" or scope == "copy") and scope or nil
 end
 
 local function ScopeText(scope)
@@ -354,9 +358,10 @@ local function AskToAllow(id, link, action)
   StaticPopup_Show("SOC_CONFIRM", link, VERB[action] or "used up", { id = id, link = link, action = action })
 end
 
--- bound (optional): whether the copy being acted on is bound, for per-copy marks (Copies.lua).
-function KS.Guard(id, link, action, bound)
-  local level = KS.GetCopyLevel and KS.GetCopyLevel(id, link, bound) or KS.GetLevel(id)
+-- level (optional): the level of the copy being acted on (Copies.lua: its own mark, or its item's mark as it applies
+-- to that copy). Other addons leave it out: then it's the item's mark.
+function KS.Guard(id, link, action, level)
+  level = (type(level) == "number") and level or KS.GetLevel(id)
   local keepFromVendor = level == KS.LEVELS.DISENCHANT and action == "sell" -- Disenchant: only selling stops
   if not keepFromVendor and level < (GUARD_FROM[action] or CONFIRM) then return false end
   link = link or ItemLink(id)
@@ -503,16 +508,18 @@ local rescuing = false
 
 local function RescueBuyback()
   if rescuing or not merchantOpen then return end
+  if KS.ScanCopies then KS.ScanCopies() end -- so a marked copy sold just now is known (CopyTrack.lua)
   for i = GetNumBuybackItems(), 1, -1 do
     local link = GetBuybackItemLink(i)
     local id = LinkID(link)
-    local bound = id and KS.HasCopyMarks(id) and KS.BuybackBound(i)
-    local level = id and KS.GetCopyLevel(id, link, bound)
+    local level, sold
+    if id then level, sold = KS.BuybackLevel(i, id, link) end -- that copy's level (Copies.lua)
     if id and (level >= CONFIRM or level == KS.LEVELS.DISENCHANT) then
       rescuing = true
-      KS.Guard(id, link, "sell", bound)
+      KS.Guard(id, link, "sell", level)
       KS.Notify("Bought %s back.", link)
       BuybackItem(i)
+      if sold and KS.CopyBoughtBack then KS.CopyBoughtBack(sold) end
       C_Timer.After(0.7, function()
         rescuing = false
         RescueBuyback()
@@ -542,6 +549,7 @@ local function IsPlayerBag(b)
   local bi = Enum and Enum.BagIndex
   return (b >= 0 and b <= NUM_BAGS) or (bi and b == bi.ReagentBag) or false
 end
+KS.IsPlayerBag = IsPlayerBag -- for CopyTrack.lua
 
 -- Every bank container. Forever's bank is tabs (each its own container) listed by C_Bank, like
 -- retail; the old Classic IDs (-1, bank bag slots) are only used when the client has no tabs.
@@ -574,6 +582,7 @@ local function BankBags()
   end
   return bags
 end
+KS.BankBags = BankBags -- for Copies.lua and CopyTrack.lua
 
 -- Puts the item on the cursor into the first normal player bag with room. True when it landed.
 local function PutInBags()
@@ -617,7 +626,7 @@ local function RescueBank()
           return
         end
         warnedFull[info.itemID] = nil
-        KS.Guard(info.itemID, info.hyperlink, "bank")
+        KS.Guard(info.itemID, info.hyperlink, "bank", KS.GetSlotLevel(bag, slot))
         KS.Notify("Moved %s back to your bags.", info.hyperlink)
         bankRescuing = true
         C_Timer.After(0.5, function()
@@ -786,7 +795,7 @@ local function HookDestroy()
   hooksecurefunc("StaticPopup_Show", function(which)
     if not DELETE_POPUPS[which] then return end
     local kind, id, link = GetCursorInfo()
-    if kind == "item" and KS.Guard(id, link, "destroy", KS.CursorBound(id)) then
+    if kind == "item" and KS.Guard(id, link, "destroy", KS.LockedCopyLevel(id)) then -- the copy picked up (Copies.lua)
       StaticPopup_Hide(which)
       ClearCursor()
     end
@@ -798,7 +807,7 @@ end
 
 local function CheckTrade(slot)
   local link = GetTradePlayerItemLink(slot)
-  if link and KS.Guard(LinkID(link), link, "trade") then
+  if link and KS.Guard(LinkID(link), link, "trade", KS.LockedCopyLevel(LinkID(link))) then
     ClearCursor()
     ClickTradeButton(slot) -- picks the item up off the trade window...
     ClearCursor()          -- ...and drops it back in your bags
@@ -808,7 +817,7 @@ end
 local function CheckMail()
   for i = 1, ATTACHMENTS_MAX_SEND or 12 do
     local link = GetSendMailItemLink(i)
-    if link and KS.Guard(LinkID(link), link, "mail") then
+    if link and KS.Guard(LinkID(link), link, "mail", KS.LockedCopyLevel(LinkID(link))) then
       ClickSendMailItemButton(i, true) -- true = remove the attachment
     end
   end
@@ -948,7 +957,7 @@ local function PreClick(btn, mouse)
   -- Alt+Shift+Left-click moves the mark between all characters and this character only.
   if IsAltKeyDown() and IsShiftKeyDown() and not IsControlKeyDown() and mouse == "LeftButton" then
     btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
-    KS.ToggleItemScope(info.itemID, info.hyperlink)
+    KS.ToggleScopeAt(bag, slot, info.itemID, info.hyperlink) -- a soulbound copy's marks stay per copy (Copies.lua)
     return
   end
 
@@ -959,7 +968,7 @@ local function PreClick(btn, mouse)
       KS.ShowMarkMenu(info.itemID, info.hyperlink, nil, btn)
       return
     end
-    KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton")
+    KS.ClickMark(info.itemID, info.hyperlink, mouse == "LeftButton", bag, slot)
     return
   end
 
@@ -983,7 +992,7 @@ local function PreClick(btn, mouse)
     elseif spellID == 51005 then action = "mill" end
     -- No SpellStopTargeting(): it's protected on this client (ADDON_ACTION_FORBIDDEN). The click is
     -- still eaten; Esc or right-click ends the targeting cursor.
-    if KS.Guard(info.itemID, info.hyperlink, action, KS.IsSlotBound(bag, slot)) then
+    if KS.Guard(info.itemID, info.hyperlink, action, KS.GetSlotLevel(bag, slot)) then
       btn.favesHandled, btn.favesCursorEmpty = true, GetCursorInfo() == nil
     end
   end
@@ -1126,7 +1135,7 @@ local function GetBlocker(btn)
     local info = bag and slot and C.GetContainerItemInfo(bag, slot)
     -- The blocker takes the click; it can't cancel the cursor (SpellStopTargeting is protected here).
     Log("blocker caught click on %s", info and info.hyperlink or "?")
-    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction(), KS.IsSlotBound(bag, slot)) end
+    if info then KS.Guard(info.itemID, info.hyperlink, BlockAction(), KS.GetSlotLevel(bag, slot)) end
   end)
   b:SetScript("OnEnter", function(self)
     local bag, slot = ButtonSlot(btn)
@@ -1567,9 +1576,10 @@ local function AutoLevel(info, bag, slot)
     if not auto.boeMail then return nil end
     return MAIL
   end
-  -- Soulbound gear this character can't use (or not for more than a few levels): Junk, on this character only.
+  -- Soulbound gear this character can't use (or not for more than a few levels): Junk, on this character only. Not a
+  -- BoE item that's become soulbound: that copy is yours, and never takes its item's Junk mark (Copies.lua).
   if info.isBound and (classID == WEAPON or classID == ARMOR) and not NEVER_JUNK_SLOT[equipLoc]
-      and KS.UnusableReason(classID, subclassID, minLevel) then
+      and KS.BindKind(id) ~= "boe" and KS.UnusableReason(classID, subclassID, minLevel) then
     if not auto.unusableJunk then return nil end
     if (quality or 0) >= 2 and KS.IsEnchanter() then return false, "char" end -- theirs to disenchant
     return JUNK, "char"
@@ -1965,22 +1975,18 @@ local function CreatePanel()
   end
   prev = Note(adv, "Only unmarked items, each item only once: if you change an auto-marked item's level, it stays changed. Quest items, enchanting materials, profession tools (fishing poles, mining picks, hammers...), bags, ammo, recipes, shirts and tabards are left alone, and so is anything VendorFlip is holding. Open each of your profession windows once so Custodian knows which materials your recipes use. Junk and BoE Mail marks apply to all your characters. Soulbound gear counts as usable when the class can train that weapon type or will wear that armor within 5 levels (Mail at 40 for Hunters and Shamans, Plate at 40 for Warriors and Paladins); enchanters keep green and better to disenchant.\n\nNever auto-marked, and marked per character when you mark them: consumables (food, drink, potions, scrolls...), reagents (ankhs, feathers...) and trade goods sold by vendors (thread, vials, flux, dyes, salt...).", prev, 26, -2)
 
-  -- Advanced: where new marks go.
-  local scopeHeader = Header(adv, "New marks (Alt+Click, /soc <level>)", prev)
+  -- Advanced: where new marks go (Alt+Click, the mark menu, /soc <level>).
+  local scopeHeader = Header(adv, "Default marking", prev)
   scopeHeader:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", -26, -18)
-  local acct = Check(adv, "Apply to all my characters", scopeHeader, -6, function()
-    KS.SetScope("account")
-    RefreshPanel()
-  end)
-  local char = Check(adv, "Apply to this character only", acct, -2, function()
-    KS.SetScope("char")
-    RefreshPanel()
-  end)
-  refreshers[#refreshers + 1] = function()
-    acct:SetChecked(KS.GetScope() ~= "char")
-    char:SetChecked(KS.GetScope() == "char")
-  end
-  prev = Note(adv, "Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", char, 26, -2)
+  local scopeLabel = adv:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  scopeLabel:SetPoint("TOPLEFT", scopeHeader, "BOTTOMLEFT", 4, -10)
+  scopeLabel:SetText("New marks apply")
+  local scopeChoice, showScope = ChoiceControl(adv, 160, function() return KS.SCOPES end, KS.GetScope,
+    function(c) return KS.SCOPE_NAMES[c] or c end, function(c) KS.SetScope(c) end)
+  scopeChoice:SetPoint("LEFT", scopeLabel, "RIGHT", 10, 0)
+  refreshers[#refreshers + 1] = showScope
+  panel.scopeChoice = scopeChoice
+  prev = Note(adv, "Account wide: to all your characters. Per character: to this one. Per copy: to just the item you Alt+Click (an item that stacks gets an item mark instead; /soc <level> <item> marks the item). Soulbound items are always marked per copy. Alt+Shift+Left-click an item in your bags to move its mark between all characters and this one.", scopeLabel, -4, -14)
 
   -- Advanced: Custodian's own messages in chat.
   local chatHeader = Header(adv, "Chat", prev)
@@ -2151,6 +2157,7 @@ local function CreatePanel()
   KS.RefreshSettings = function() RefreshPanel(); FitPanel() end
   outer.setRows, outer.iconStyle, outer.iconSample, outer.introButton = panel.setRows, panel.iconStyle, panel.iconSample, panel.introButton
   outer.chatCheck, outer.clickChoice, outer.clickNote = panel.chatCheck, panel.clickChoice, panel.clickNote
+  outer.scopeChoice = panel.scopeChoice
   outer.altClickChecks, outer.marksButton = panel.altClickChecks, panel.marksButton
   outer.advCheck, outer.advNote, outer.simpleButton, outer.advanced = panel.advCheck, panel.advNote, panel.simpleButton, panel.advanced
   outer.clickEditor, outer.clickBack, outer.clickEnds, outer.grayCheck = panel.clickEditor, panel.clickBack, panel.clickEnds, panel.grayCheck
@@ -2182,6 +2189,8 @@ local function HookTooltip()
     local level = KS.GetLevel(data and data.id)
     local setName, setLevel = KS.GetSetProtection(data and data.id)
     local from = (setName and setLevel == level) and (" |cff9d9d9d(equipment set \"" .. setName .. "\")|r") or ScopeText(KS.GetItemScope(data.id))
+    local copyLevel = KS.TooltipCopyLevel and KS.TooltipCopyLevel(data) -- this copy's (Copies.lua)
+    if copyLevel then level, from = copyLevel, " |cff9d9d9d(this copy)|r" end
     if level ~= NORMAL then tip:AddLine("Standing Orders: " .. LevelText(level) .. from) end
   end)
 end
@@ -2496,6 +2505,13 @@ local TESTS = {
       and not H(MAIL, "vendor") and H(LOCK, "mail") and H(MAIL, "mail") and not H(KS.LEVELS.DISENCHANT, "mail")
       and not H(NORMAL, "vendor") and not H(NORMAL, "mail")
     d[#d + 1] = Detail("vendor and mailbox tints", tintOk and "right" or "WRONG", tintOk and "pass" or "fail")
+    -- Copy marks (Copies.lua): what a soulbound copy takes from its item's mark, and item GUIDs on this client.
+    local S = KS.SoulboundLevel
+    local boundOk = S and S(0, MAIL) == NORMAL and S(0, LOCK) == LOCK and S(0, ONME) == ONME
+    d[#d + 1] = Detail("soulbound copies: no Mail mark, protection kept", boundOk and "right" or "WRONG", boundOk and "pass" or "fail")
+    local guids = C_Item and C_Item.GetItemGUID and ItemLocation and ItemLocation.CreateFromBagAndSlot and true or false
+    d[#d + 1] = Detail("item GUIDs for copy marks", guids and ("yes; %d copy marks on this character"):format(#KS.MarkedCopies())
+      or "not on this client: no copy marks", guids and "pass" or "warn")
     -- Chat logging (ChatLog.lua): a known level; with no saved choice, basic in a dev build and off in a release.
     local chosen = db and db.chatLog
     local level = KS.ChatLevel()
@@ -2682,6 +2698,10 @@ local function ListItems()
       end
     end
   end
+  for _, c in ipairs(KS.MarkedCopies()) do
+    any = true
+    Print("%s: %s |cff9d9d9d(one copy%s)|r", LevelText(c.level), c.link or ItemLink(c.id), c.where == "bank" and ", in the bank" or "")
+  end
   if not any then Print("No items are marked. Alt+Click an item in your bags to mark it.") end
 end
 
@@ -2709,7 +2729,7 @@ local function Help()
   print("  /soc junk||disenchant||mail||normal||lock||onme <item link or ID> [char||account] - set an item's level (disenchant: kept from vendors, free to disenchant)")
   print("  /soc list [search] - the Marked items window: search, then change any mark (/soc list print: in chat)")
   print("  /soc sets - equipment sets and how they protect their items; /soc set <name> default||lock||onme||off")
-  print("  /soc scope account||char - where new marks go (now " .. (KS.GetScope() == "char" and "this character" or "all characters") .. ")")
+  print("  /soc scope account||char||copy - where new marks go (now " .. KS.SCOPE_NAMES[KS.GetScope()]:lower() .. "; soulbound items are always marked per copy)")
   print("  /soc settings - auto-marking (Junk and Mail), where new marks go, mark icons and equipment sets")
   print("  /soc icon size 10-100 || position bottomleft||topleft||topright||bottomright||center || opacity 10-100 || style game||addon || compare || reset - mark icons on bag items (size: % of the button's width)")
   print("  /soc status - check which guards are active")
@@ -2740,7 +2760,7 @@ local function Status()
   table.sort(parts)
   print("  professions: " .. (#parts > 0 and table.concat(parts, ", ") or "none found"))
   print("  equipment sets: " .. #KS.EquipmentSets() .. " on this character, default " .. KS.SetChoiceText(KS.GetSetDefault()))
-  print("  new marks go to: " .. (KS.GetScope() == "char" and "this character only" or "all characters"))
+  print("  new marks: " .. KS.SCOPE_NAMES[KS.GetScope()]:lower() .. "; copy marks on this character: " .. #KS.MarkedCopies())
   print("  bag buttons hooked: " .. hookedCount .. " (open your bags to hook more)")
   print("  disenchant guard: on (IsCurrentSpell " .. (IsCurrentSpell and "available" or "missing") ..
     ", last cast: " .. (castRecord and (castRecord.kind .. " " .. tostring(castRecord.name or castRecord.id)) or "none") .. ")")
@@ -2777,9 +2797,10 @@ SlashCmdList.SOC = function(msg)
     KS.SetLevel(id, LEVEL_CMDS[cmd], rest:match("|c.-|r") or ItemLink(id), { scope = scope, reply = true }) -- pipes:ok (a pattern)
   elseif cmd == "sets" or cmd == "set" then
     SetsCommand(rest)
-  elseif cmd == "scope" and (rest == "char" or rest == "account") then
+  elseif cmd == "scope" and (rest == "char" or rest == "account" or rest == "copy") then
     KS.SetScope(rest)
-    Print("New marks now go to %s.", rest == "char" and "this character only" or "all characters")
+    Print("New marks now go to %s (soulbound items: always the copy).", rest == "char" and "this character only"
+      or rest == "copy" and "just the copy you Alt+Click" or "all characters")
   elseif cmd == "icon" or cmd == "icons" then
     IconCommand(rest)
   elseif cmd == "settings" or cmd == "config" or cmd == "options" then

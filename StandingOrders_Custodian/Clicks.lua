@@ -136,12 +136,14 @@ function KS.CheckWrapWarning()
   KS.Print("|cffff8040%s|r", w)
 end
 
--- Alt+Left-click (forward) or Alt+Right-click on an item in your bags.
-function KS.ClickMark(id, link, forward)
-  local cur = KS.GetLevel(id)
+-- Alt+Left-click (forward) or Alt+Right-click on an item in your bags (at bag, slot). The mark goes to that copy when
+-- it's soulbound, has a mark of its own, or new marks are per copy (Copies.lua); otherwise to the item.
+function KS.ClickMark(id, link, forward, bag, slot)
+  local copy = bag and KS.CopyToMark and KS.CopyToMark(bag, slot)
+  local cur = copy and KS.GetSlotLevel(bag, slot) or KS.GetLevel(id)
   local new = KS.ClickStep(cur, forward)
   if new == cur then return KS.Notify("%s is already %s.", link, KS.LevelText(cur)) end
-  KS.SetLevel(id, new, link)
+  if copy then KS.SetCopyMark(copy, new) else KS.SetLevel(id, new, link) end
   if new == JUNK and cur >= LOCK and KS.SelfActing().vendor then
     KS.Print("|cffff8040That took it from %s to Junk: Standing Orders: Vendor sells it the next time you open a vendor.|r", KS.NAMES[cur])
   end

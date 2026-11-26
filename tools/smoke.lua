@@ -224,6 +224,11 @@ CHECK("a Warrior at 20: plate from 40 becomes Junk, this character only", KS.Get
 CHECK("a Warrior: a wand (can't train wands) becomes Junk, this character only", KS.GetLevel(7102) == L.JUNK and KS.GetItemScope(7102) == "char", KS.GetLevel(7102))
 CHECK("cloth (everyone can wear it) stays", KS.GetLevel(7101) == L.NORMAL, KS.GetLevel(7101))
 CHECK("mail usable within 5 levels stays", KS.GetLevel(7104) == L.NORMAL, KS.GetLevel(7104))
+STUB_ITEMDB[7106] = { name = "Test Plate Boots", quality = 2, sellPrice = 300, classID = 4, subclassID = 4, equipLoc = "INVTYPE_FEET", minLevel = 40, bindType = 2 }
+STUB_BOUND[7106], STUB_BAGS[3][6] = true, 7106
+FIRE("BAG_UPDATE_DELAYED")
+RUN_TIMERS()
+CHECK("a BoE item that's soulbound isn't made Junk (its copy is yours)", KS.GetLevel(7106) == L.NORMAL, KS.GetLevel(7106))
 STUB_CLASS = "MAGE"
 STUB_PROFESSIONS = { { "Tailoring", 197 }, { "Enchanting", 333 } }
 STUB_BAGS[3][5] = 7105
@@ -733,34 +738,190 @@ CHECK("Disenchant is an advanced mark: offered once the advanced options are sho
   KS.SetShowAdvanced(was); return hidden and shown end)())
 KS.SetLevel(7001, L.NORMAL, nil, { quiet = true, scope = "account" })
 
--- Per-copy marks (Copies.lua, 1.2.0): a mark for an item's bound copies and for copies with an enchant.
-local ENCHANTED = "|cffffffff|Hitem:7001:1897::::::::60:::::|h[Test]|h|r"
-local PLAIN = "|cffffffff|Hitem:7001::::::::60:::::|h[Test]|h|r"
-CHECK("the enchant comes from the link", KS.LinkEnchant(ENCHANTED) == 1897 and KS.LinkEnchant(PLAIN) == nil, KS.LinkEnchant(ENCHANTED))
-CHECK("no copy marks: a copy has the item's mark", KS.GetCopyLevel(7001, ENCHANTED, true) == KS.GetLevel(7001) and not KS.HasCopyMarks(7001))
-KS.SetCopyMark(7001, 1897, "account", L.LOCK)
-CHECK("an enchant mark applies to copies with that enchant", KS.GetCopyLevel(7001, ENCHANTED, false) == L.LOCK, KS.GetCopyLevel(7001, ENCHANTED, false))
-CHECK("...and not to copies without it", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL, KS.GetCopyLevel(7001, PLAIN, false))
+-- Per-copy marks (Copies.lua, 1.2.0): one exact copy (its item GUID). A soulbound copy takes its item's mark only
+-- where it fits: never Mail, and a BoE item's Junk or Disenchant neither.
+STUB_ITEMDB[7201] = { name = "Test Bracers", quality = 2, sellPrice = 500, classID = 4, subclassID = 2, bindType = 2, stack = 1, equipLoc = "INVTYPE_WRIST" }
+STUB_ITEMDB[7202] = { name = "Test Cloak", quality = 2, sellPrice = 300, classID = 4, subclassID = 1, bindType = 1, stack = 1, equipLoc = "INVTYPE_CLOAK" }
+STUB_ITEMDB[7203] = { name = "Test Pebble", quality = 2, sellPrice = 10, classID = 15, subclassID = 0, stack = 5 }
+local spare, worn, cloak = { id = 7201, guid = "Item-0-0-A" }, { id = 7201, guid = "Item-0-0-B", bound = true }, { id = 7202, guid = "Item-0-0-C", bound = true }
+STUB_BAGS[4] = { spare, worn, cloak, { id = 7203, guid = "Item-0-0-D", bound = true } }
+local copyA, copyB = KS.CopyAt(4, 1), KS.CopyAt(4, 2)
+CHECK("a copy is one exact item (its GUID), soulbound or not", copyA and copyA.guid == "Item-0-0-A" and not copyA.soulbound and copyB and copyB.soulbound)
+CHECK("an item that stacks, or without a GUID, has no copy marks", KS.CopyAt(4, 4) == nil and KS.CopyAt(2, 1) == nil)
+local function A(id, level) KS.SetLevel(id, level, nil, { quiet = true, scope = "account" }) end
+A(7201, L.MAIL)
+CHECK("an unbound copy takes its item's Mail mark", KS.GetSlotLevel(4, 1) == L.MAIL, KS.GetSlotLevel(4, 1))
+CHECK("a soulbound copy can't be mailed: no mark", KS.GetSlotLevel(4, 2) == L.NORMAL, KS.GetSlotLevel(4, 2))
+A(7201, L.JUNK)
+CHECK("a BoE item's soulbound copy doesn't take its Junk mark", KS.GetSlotLevel(4, 1) == L.JUNK and KS.GetSlotLevel(4, 2) == L.NORMAL)
+A(7201, L.LOCK)
+CHECK("...but does take its protection", KS.GetSlotLevel(4, 2) == L.LOCK)
+A(7202, L.JUNK)
+CHECK("a BoP item's soulbound copy keeps its Junk mark", KS.GetSlotLevel(4, 3) == L.JUNK)
+A(7202, L.MAIL)
+CHECK("...but not Mail", KS.GetSlotLevel(4, 3) == L.NORMAL)
+A(7202, L.NORMAL)
+KS.SetCopyMark(copyB, L.JUNK, { quiet = true })
+local rB = StandingOrdersCustodianDB.copyMarks["Item-0-0-B"]
+CHECK("a copy mark counts for that copy only", KS.GetSlotLevel(4, 2) == L.JUNK and KS.GetSlotLevel(4, 1) == L.LOCK and KS.GetLevel(7201) == L.LOCK)
+CHECK("it's kept by GUID, with the copy's place", rB and rB.level == L.JUNK and rB.bound == true and rB.where == "bags" and rB.owner == "Player-1-0000000A")
+STUB_BAGS[4][2], STUB_BAGS[4][5] = nil, worn
+CHECK("the mark goes with the copy when it moves", KS.GetSlotLevel(4, 5) == L.JUNK and KS.GetSlotLevel(4, 2) == L.NORMAL)
+STUB_BAGS[4][2], STUB_BAGS[4][5] = worn, nil
 CHAT = {}
-CHECK("selling the enchanted copy is stopped", KS.Guard(7001, ENCHANTED, "sell") == true)
-CHECK("selling a plain copy isn't", KS.Guard(7001, PLAIN, "sell") == false)
-KS.SetCopyMark(7001, 1897, "account", nil)
-KS.SetCopyMark(7001, "bound", "account", L.LOCK)
-CHECK("a bound-copies mark applies to bound copies", KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
-CHECK("...and not to unbound ones", KS.GetCopyLevel(7001, PLAIN, false) == L.NORMAL)
-CHECK("disenchanting a bound copy is stopped, an unbound one isn't", KS.Guard(7001, PLAIN, "disenchant", true) == true and KS.Guard(7001, PLAIN, "disenchant", false) == false)
-KS.SetCopyMark(7001, "bound", "char", L.NORMAL)
-CHECK("this character's copy mark comes first (Normal here frees them)", KS.GetCopyLevel(7001, PLAIN, true) == L.NORMAL)
-KS.SetCopyMark(7001, "bound", "char", nil)
-KS.SetCopyMark(7001, 1897, "account", L.JUNK)
-CHECK("an enchant mark comes before the bound one", KS.GetCopyLevel(7001, ENCHANTED, true) == L.JUNK and KS.GetCopyLevel(7001, PLAIN, true) == L.LOCK)
-STUB_BOUND[7001] = true
-CHECK("a bag slot's level uses that copy's bound status", KS.GetSlotLevel(2, 1) == L.LOCK, KS.GetSlotLevel(2, 1))
-STUB_BOUND[7001] = nil
-CHECK("...an unbound copy in the slot keeps the item's mark", KS.GetSlotLevel(2, 1) == L.NORMAL, KS.GetSlotLevel(2, 1))
-KS.SetCopyMark(7001, 1897, "account", nil)
-KS.SetCopyMark(7001, "bound", "account", nil)
-CHECK("clearing every copy mark leaves no copies entry", not KS.HasCopyMarks(7001) and StandingOrdersCustodianDB.copies[7001] == nil)
+CHECK("the guard goes by the copy's level", KS.Guard(7201, nil, "sell", KS.GetSlotLevel(4, 2)) == false and KS.Guard(7201, nil, "sell", KS.GetSlotLevel(4, 1)) == true)
+A(7201, L.NORMAL)
+KS.SetCopyMark(copyA, L.LOCK, { quiet = true })
+spare.locked = true
+CHECK("the copy on its way out (its slot locked) is the one guarded", KS.LockedCopyLevel(7201) == L.LOCK)
+spare.locked = nil
+CHECK("...and with none on its way out, the item's mark", KS.LockedCopyLevel(7201) == L.NORMAL)
+A(7202, L.MAIL)
+STUB_BUYBACK = { { id = 7202, bound = true }, 7202 }
+CHECK("buyback: a soulbound copy's level comes from its tooltip", KS.BuybackLevel(1, 7202, STUB_LINK(7202)) == L.NORMAL and KS.BuybackLevel(2, 7202, STUB_LINK(7202)) == L.MAIL)
+STUB_BUYBACK = {}
+A(7202, L.NORMAL)
+KS.SetCopyMark(copyA, nil, { quiet = true })
+KS.SetCopyMark(copyB, nil, { quiet = true })
+CHECK("taking the copy marks off leaves none", next(StandingOrdersCustodianDB.copyMarks) == nil)
+
+-- CopyTrack.lua: soulbound copies stop following their item's mark; a sold copy keeps its mark through a buyback;
+-- marks of copies that are gone come off at the next login.
+local function scan(event) FIRE(event or "BAG_UPDATE_DELAYED"); RUN_TIMERS() end
+local cm = StandingOrdersCustodianDB.copyMarks
+A(7201, L.MAIL)
+scan()
+CHECK("a soulbound copy of a Mail item gets its own mark: none", cm["Item-0-0-B"] and cm["Item-0-0-B"].level == L.NORMAL and cm["Item-0-0-B"].bound == true)
+CHECK("...an unbound copy keeps following its item", cm["Item-0-0-A"] == nil and KS.GetSlotLevel(4, 1) == L.MAIL)
+CHECK("...and you're told", LOG_HAS("These copies are soulbound"))
+A(7201, L.LOCK)
+CHECK("from then on the soulbound copy doesn't follow its item's mark", KS.GetSlotLevel(4, 2) == L.NORMAL and KS.GetSlotLevel(4, 1) == L.LOCK)
+KS.SetCopyMark(KS.CopyAt(4, 2), L.JUNK, { quiet = true })
+scan()
+CHECK("a mark given after it's soulbound stays", KS.GetSlotLevel(4, 2) == L.JUNK)
+A(7201, L.NORMAL)
+KS.SetCopyMark(KS.CopyAt(4, 1), L.JUNK, { quiet = true })
+CHECK("an unbound copy can have a Junk mark of its own", KS.GetSlotLevel(4, 1) == L.JUNK and cm["Item-0-0-A"].bound == false)
+STUB_BAGS[4][1], spare.bound, STUB_EQUIPPED[9] = nil, true, spare
+scan("PLAYER_EQUIPMENT_CHANGED")
+CHECK("equipped (now soulbound): its Junk mark comes off", cm["Item-0-0-A"].level == L.NORMAL and cm["Item-0-0-A"].bound == true and cm["Item-0-0-A"].where == "bags")
+STUB_EQUIPPED[9], STUB_BAGS[4][1] = nil, spare
+KS.SetCopyMark(KS.CopyAt(4, 1), L.LOCK, { quiet = true })
+scan("MERCHANT_SHOW")
+STUB_BAGS[4][1], STUB_BUYBACK, STUB_BUYBACK_NEWGUID = nil, { spare }, "Item-0-0-E"
+CHAT = {}
+KS.ScanCopies()
+CHECK("a sold copy is remembered", cm["Item-0-0-A"] and cm["Item-0-0-A"].where == "sold", cm["Item-0-0-A"] and cm["Item-0-0-A"].where)
+scan("MERCHANT_UPDATE")
+CHECK("a Locked copy sold by accident is bought back", #STUB_BUYBACK == 0 and CHAT_HAS("Test Bracers"))
+CHECK("...and keeps its mark, even with a new GUID", cm["Item-0-0-E"] and cm["Item-0-0-E"].level == L.LOCK and cm["Item-0-0-E"].where == "bags" and cm["Item-0-0-A"] == nil)
+scan("MERCHANT_CLOSED")
+STUB_BUYBACK_NEWGUID = nil
+for s = 1, 16 do if STUB_BAGS[0][s] == spare then STUB_BAGS[0][s] = nil end end
+STUB_TIME = 100 -- a while after the bank closed (earlier): what leaves now isn't on its way to the bank
+scan()
+STUB_TIME = nil
+CHECK("a marked copy that leaves with no window open is gone", cm["Item-0-0-E"].where == "gone", cm["Item-0-0-E"].where)
+scan("BANKFRAME_OPENED")
+STUB_BAGS[4][2], STUB_BAGS[6] = nil, { worn }
+scan()
+CHECK("a marked copy put in the bank is in the bank", cm["Item-0-0-B"].where == "bank")
+scan("BANKFRAME_CLOSED")
+STUB_NOW = 10000000
+cm["Item-X"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000B", where = "bags", seen = 1 }
+cm["Item-Y"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "away", seen = 1, left = 1 }
+cm["Item-Z"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "away", seen = 1, left = STUB_NOW - 3600 }
+FIRE("PLAYER_ENTERING_WORLD", false, true); RUN_TIMERS()
+CHECK("after a /reload nothing comes off (the buyback list is still there)", cm["Item-0-0-E"] and cm["Item-Y"])
+FIRE("PLAYER_ENTERING_WORLD", true, false); RUN_TIMERS()
+CHECK("at login, the gone copy's mark comes off", cm["Item-0-0-E"] == nil, cm["Item-0-0-E"] and cm["Item-0-0-E"].where)
+CHECK("...the bank's and another character's stay", cm["Item-0-0-B"] and cm["Item-X"])
+CHECK("...and one away (mail, auction) for over 60 days goes, a recent one stays", cm["Item-Y"] == nil and cm["Item-Z"])
+cm["Item-P"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "bags", seen = 1 }
+cm["Item-Q"] = { id = 7201, level = L.LOCK, owner = "Player-1-0000000A", where = "bags", seen = 1 }
+FIRE("PLAYER_ENTERING_WORLD", true, false); RUN_TIMERS()
+CHECK("at login, none of two marked copies found in the bags: both kept (GUIDs may have changed)", cm["Item-P"] and cm["Item-P"].where == "bags" and cm["Item-Q"] and LOG_HAS("found in its bags at login; kept"))
+STUB_BAGS[6], STUB_BAGS[4], STUB_NOW = {}, nil, nil
+for k in pairs(cm) do cm[k] = nil end
+A(7201, L.NORMAL)
+
+-- Marking per copy: Alt+Click on a soulbound copy marks just it; /soc scope copy does that for any copy that doesn't
+-- stack; the mark menu's This copy only; Alt+Shift+Left-click; the Default marking dropdown.
+local loose, kept = { id = 7201, guid = "Item-0-0-F" }, { id = 7201, guid = "Item-0-0-G", bound = true }
+STUB_BAGS[4] = { loose, kept, { id = 7203, guid = "Item-0-0-H" } }
+local function elvAt(bag, slot)
+  local b = plain({ BagID = bag, SlotID = slot })
+  CALL("ElvUI UpdateSlot", ElvB.UpdateSlot, ElvB, { Bags = { [bag] = { [slot] = b } } }, bag, slot)
+  return b
+end
+local function altAt(b, shift)
+  STUB_ALT, STUB_SHIFT = true, shift
+  CALL("Alt+Left-click", b.__h_PreClick, b, "LeftButton")
+  STUB_ALT, STUB_SHIFT = false, false
+end
+local eLoose, eKept, ePebble = elvAt(4, 1), elvAt(4, 2), elvAt(4, 3)
+local up = KS.ClickStep(L.NORMAL, true)
+altAt(eKept)
+CHECK("Alt+Click on a soulbound copy marks that copy only", KS.CopyMark("Item-0-0-G") == up and KS.GetLevel(7201) == L.NORMAL and KS.GetSlotLevel(4, 1) == L.NORMAL)
+altAt(eLoose)
+CHECK("...on an unbound copy (Account wide): the item", KS.GetLevel(7201) == up and KS.CopyMark("Item-0-0-F") == nil)
+A(7201, L.NORMAL)
+CALL("/soc scope copy", SlashCmdList.SOC, "scope copy")
+CHECK("/soc scope copy", KS.GetScope() == "copy" and StandingOrdersCustodianDB.scope == "copy")
+altAt(eLoose)
+CHECK("Per copy: Alt+Click marks just the copy you click", KS.CopyMark("Item-0-0-F") == up and KS.GetLevel(7201) == L.NORMAL)
+altAt(ePebble)
+CHECK("...an item that stacks gets an item mark", KS.GetLevel(7203) == up and KS.CopyMark("Item-0-0-H") == nil)
+CHAT = {}
+altAt(eKept, true)
+CHECK("Alt+Shift+Left-click on a soulbound copy: its marks stay per copy", CHAT_HAS("its marks are for this copy only") and KS.CopyMark("Item-0-0-G") == up)
+altAt(eLoose, true)
+CHECK("...on a copy with its own mark: the mark goes to the item, all characters", KS.CopyMark("Item-0-0-F") == nil and KS.GetLevel(7201) == up and KS.GetItemScope(7201) == "account")
+CALL("/soc altclick menu", SlashCmdList.SOC, "altclick menu")
+altAt(eKept)
+local mm = SOCustodianMarkMenu
+CHECK("the menu on a soulbound copy: This copy only, ticked and fixed", mm:IsShown() and mm.copy:IsShown() and mm.copy:GetChecked() and not mm.char:IsShown())
+CALL("pick Locked", KS.PickMark, L.LOCK)
+CHECK("...picking marks that copy", KS.CopyMark("Item-0-0-G") == L.LOCK and KS.GetLevel(7201) == up)
+altAt(eLoose)
+CHECK("on an unbound copy (Per copy): This copy only ticked, This character only not", mm.copy:IsShown() and mm.copy:GetChecked() and mm.char:IsShown() and not mm.char:GetChecked())
+mm.copy:SetChecked(false)
+CALL("pick Mail with This copy only unticked", KS.PickMark, L.MAIL)
+CHECK("...the pick marks the item", KS.GetLevel(7201) == L.MAIL and KS.CopyMark("Item-0-0-F") == nil)
+CALL("/soc mark 7201", SlashCmdList.SOC, "mark 7201")
+CHECK("/soc mark (no copy): no This copy only", mm:IsShown() and not mm.copy:IsShown())
+mm:Hide()
+CALL("/soc altclick cycle", SlashCmdList.SOC, "altclick cycle")
+KS.SetCopyMark(KS.CopyAt(4, 1), L.LOCK, { quiet = true })
+CALL("/soc list", SlashCmdList.SOC, "list")
+local mw = SOCustodianMarks
+local function rowOf(key) for i, e in ipairs(mw.entries or {}) do if e.key == key then return mw.rows[i], e end end end
+local rG, eG = rowOf("Item-0-0-G")
+local rF, eF = rowOf("Item-0-0-F")
+CHECK("Marked items: a row for the soulbound copy and for a copy with its own mark", rG and eG.copyMark == L.LOCK and rF and eF.copyMark == L.LOCK and rowOf(7201) ~= nil)
+CHECK("...a copy's row has one column (no All characters)", rG and not rG.account:IsShown() and rG.name:GetText():find("this copy", 1, true) ~= nil)
+local gMenu, fMenu = MENU_RADIOS(rG.char), MENU_RADIOS(rF.char)
+CHECK("...no Item's mark choice for a soulbound copy; there is for another copy", gMenu[1] and gMenu[1].text ~= "|cff9d9d9dItem's mark|r" and fMenu[1] and fMenu[1].text == "|cff9d9d9dItem's mark|r")
+CALL("pick Item's mark for the unbound copy", fMenu[1].pick)
+CHECK("...which takes its own mark off", KS.CopyMark("Item-0-0-F") == nil and KS.GetSlotLevel(4, 1) == L.MAIL)
+for _, radio in ipairs(gMenu) do if radio.text == KS.LevelText(L.JUNK) then CALL("pick Junk for the soulbound copy", radio.pick) end end
+CHECK("...and a level there marks the copy", KS.CopyMark("Item-0-0-G") == L.JUNK)
+mw:Hide()
+KS.ResortMarkList()
+CHECK("tooltip: a copy's own mark", KS.TooltipCopyLevel({ id = 7201, guid = "Item-0-0-G" }) == L.JUNK)
+CHECK("...a soulbound copy of a Mail item: none", KS.TooltipCopyLevel({ id = 7201, lines = { { leftText = "Soulbound" } } }) == L.NORMAL and KS.TooltipCopyLevel({ id = 7201, lines = {} }) == nil)
+CHAT = {}
+CALL("/soc list print", SlashCmdList.SOC, "list print")
+CHECK("/soc list print lists copy marks", CHAT_HAS("(one copy)"))
+CHECK("simple mode lists Per copy as changed", table.concat(KS.AdvancedOn(), ","):find("new marks per copy", 1, true) ~= nil)
+local scopeMenu = MENU_RADIOS(panel.scopeChoice)
+CHECK("settings: Default marking offers Account wide, Per character, Per copy", #scopeMenu == 3 and scopeMenu[1].text == "Account wide" and scopeMenu[3].selected(), #scopeMenu)
+CALL("settings: pick Account wide", scopeMenu[1] and scopeMenu[1].pick)
+CHECK("...back to Account wide (nothing saved)", KS.GetScope() == "account" and StandingOrdersCustodianDB.scope == nil)
+for k in pairs(cm) do cm[k] = nil end
+STUB_BAGS[4] = nil
+A(7201, L.NORMAL)
+A(7203, L.NORMAL)
 
 -- Alt+Click can open the mark menu instead; /soc mark <item> opens it for any item
 CHECK("Alt+Click cycles by default", KS.GetAltClick() == "cycle" and StandingOrdersCustodianDB.altClick == "cycle")
