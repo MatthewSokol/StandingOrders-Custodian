@@ -30,7 +30,7 @@ The release pipeline, start to finish. Claude runs it when you say you're ready 
 
 ## Release checklist (step 3)
 
-**Waiting since the last release (1.1.0): 4 changes, 6 rows.**
+**Waiting since the last release (1.1.0): 5 changes, 7 rows.**
 
 To tick rows off, use the **Custodian Release Checklist** page (https://claude.ai/artifact/Nu3af5cDhQkgSfLGdWM3bt, private to you): ticks, Problem and Override buttons, saved into the page. `node tools/checklist-page.js <out.html> --state <state.json>` builds it from this checklist and `TESTING.md` (each 2.2 group's `TESTING.md` rows written out), keeping the page's ticks; Claude republishes it whenever the checklist changes.
 
@@ -95,6 +95,13 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
+<summary><b>2.2.5 Trade: Will not be traded takes protected items</b> (#57) · open · 0 / 1</summary>
+
+- [ ] 2.2.5.1 `TESTING.md` 5.55: an Always on me item stays in Will not be traded; in the six slots above it's taken back out
+
+</details>
+
+<details open>
 <summary><b>2 Smoke, then acceptance</b> · 0 / 2 sections</summary>
 
 <details open>
@@ -113,7 +120,7 @@ problems); finished sections start closed, and a section with an open problem or
 </details>
 
 <details open>
-<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 6</summary>
+<summary><b>2.2 Acceptance: changes since the last release</b> · 0 / 7</summary>
 
 One group per unit of work, added when the work starts; the candidate version goes in its header once it merges. Rows
 point at `TESTING.md` rows (the regression suite), so a group is done when those rows are. No Custodian row is journal-proven
