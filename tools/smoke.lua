@@ -784,6 +784,15 @@ A(7202, L.NORMAL)
 KS.SetCopyMark(copyA, nil, { quiet = true })
 KS.SetCopyMark(copyB, nil, { quiet = true })
 CHECK("taking the copy marks off leaves none", next(StandingOrdersCustodianDB.copyMarks) == nil)
+-- Trade: a protected item comes back out of the trade, except from "Will not be traded" (slot 7: it stays yours).
+A(7202, L.ONME)
+STUB_TRADE_PLAYER[1], STUB_TRADE_PLAYER[7] = 7202, 7202
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 1)
+FIRE("TRADE_PLAYER_ITEM_CHANGED", 7)
+CHECK("an Always on me item is taken back out of the trade", STUB_TRADE_PLAYER[1] == nil)
+CHECK("...but can go in Will not be traded (to be enchanted)", STUB_TRADE_PLAYER[7] == 7202)
+STUB_TRADE_PLAYER[7] = nil
+A(7202, L.NORMAL)
 
 -- CopyTrack.lua: soulbound copies stop following their item's mark; a sold copy keeps its mark through a buyback;
 -- marks of copies that are gone come off at the next login.
