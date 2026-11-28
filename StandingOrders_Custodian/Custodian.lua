@@ -805,7 +805,10 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Guard: trade and mail (take a locked item back out as soon as it's put in)
 
+-- The last trade slot, "Will not be traded", only shows an item to the other player (to enchant it, say): it stays
+-- yours, so it's never checked.
 local function CheckTrade(slot)
+  if slot == (TRADE_ENCHANT_SLOT or MAX_TRADE_ITEMS or 7) then return end
   local link = GetTradePlayerItemLink(slot)
   if link and KS.Guard(LinkID(link), link, "trade", KS.LockedCopyLevel(LinkID(link))) then
     ClearCursor()
